@@ -1,15 +1,4 @@
-:root {
-  --background: #f6f7f9;
-  --surface: #ffffff;
-  --surface-muted: #edf0f4;
-  --border: #d8dde5;
-  --text: #1c2430;
-  --text-muted: #5d6878;
-  --accent: #0f766e;
-  --accent-strong: #115e59;
-  --danger: #b42318;
-  --shadow: 0 1px 2px rgb(28 36 48 / 8%);
-}
+@import "../styles/tokens.css";
 
 * {
   box-sizing: border-box;
@@ -93,6 +82,18 @@ input {
   box-shadow: var(--shadow);
 }
 
+.button-primary {
+  justify-content: center;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.button-secondary {
+  background: var(--surface);
+  color: var(--text);
+}
+
 .main {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
@@ -111,10 +112,15 @@ input {
   border-bottom: 1px solid var(--border);
 }
 
-.panel-header h1,
 .panel-header h2 {
   margin: 0;
   font-size: 20px;
+}
+
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .panel-body {
@@ -163,11 +169,29 @@ input {
   padding: 0 10px;
 }
 
-.primary-button {
-  justify-content: center;
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #ffffff;
+.button-primary:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.empty-state {
+  display: grid;
+  gap: 8px;
+}
+
+.empty-state h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.form-error {
+  margin: 0;
+  border: 1px solid rgb(180 35 24 / 28%);
+  border-radius: 6px;
+  background: rgb(180 35 24 / 8%);
+  color: var(--danger);
+  padding: 10px 12px;
+  font-size: 14px;
 }
 
 @media (max-width: 720px) {
