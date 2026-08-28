@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: financial_dashboard_postgres
+    restart: unless-stopped
+    ports:
+      - "55432:5432"
+    environment:
+      POSTGRES_DB: financial_dashboard
+      POSTGRES_USER: financial_dashboard
+      POSTGRES_PASSWORD: financial_dashboard
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - financial_dashboard
+
+networks:
+  financial_dashboard:
+    driver: bridge
+
+volumes:
+  postgres_data:
