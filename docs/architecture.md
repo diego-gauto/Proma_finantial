@@ -42,7 +42,9 @@ flowchart LR
 
 ## Estrategia de datos para desarrollo
 
-Para la Fase 0, el desarrollo usa una base PostgreSQL local levantada con `docker-compose.yml`. Esa base permite iterar el scaffold, la autenticacion, los repositorios y los tests sin depender de la disponibilidad de los flujos n8n ni arriesgar datos reales.
+Para la Fase 0 se preparo una base PostgreSQL local con `docker-compose.yml` como entorno aislado posible. Durante la conexion operativa se detecto que ya existe una base financiera local alimentada por n8n, por lo que el desarrollo actual puede apuntar a esa base existente para mostrar datos reales.
+
+La conexion efectiva de cada entorno queda en `.env.local` o en variables del deploy, y no se commitea. Antes de implementar queries nuevas hay que validar que el destino exponga las tablas de negocio esperadas: `documents`, `category_nodes`, `payment_rules` y `users`.
 
 En entornos conectados a la operacion real, la app debe apuntar a la misma base PostgreSQL que alimentan los flujos n8n mediante `DATABASE_URL`. El string esperado tiene esta forma, sin credenciales reales en el repositorio:
 
@@ -51,6 +53,8 @@ DATABASE_URL=postgresql://APP_USER:APP_PASSWORD@DB_HOST:DB_PORT/DB_NAME
 ```
 
 La app no crea una copia propia de negocio ni sincroniza datos: solo cambia el destino de conexion por entorno.
+
+El esquema real usa ids `bigint` y separa el periodo fiscal en columnas `fiscal_period_year`, `fiscal_period_month` y `fiscal_period_kind`. La UI puede mostrar un periodo derivado (`2026-01` o `2026`), pero las queries no deben depender de una columna `fiscal_period`.
 
 ## Responsabilidades
 

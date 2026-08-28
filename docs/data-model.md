@@ -15,10 +15,11 @@ Campos principales:
 - `drive_url`
 - `file_name`
 - `drive_path`
-- `category_node_id`
+- `category_node_id`: `bigint`, referencia a `category_nodes.id`
 - `payment_date`
 - `payment_time`
-- `fiscal_period`
+- `fiscal_period_year`
+- `fiscal_period_month`
 - `fiscal_period_kind`: `month`, `year` o `unknown`
 - `amount`
 - `currency`
@@ -36,6 +37,13 @@ Campos principales:
 
 `drive_url` abre el comprobante. `drive_path` conserva la ruta original de Drive para auditoria. La categoria canonica es `category_node_id`, no la ruta en texto.
 
+La app muestra el periodo fiscal como valor derivado:
+
+- `YYYY-MM` cuando `fiscal_period_kind = 'month'` y existe `fiscal_period_month`.
+- `YYYY` cuando `fiscal_period_kind = 'year'` o no existe mes.
+
+No existe una columna fisica `documents.fiscal_period` en la base real; los filtros y calculos deben usar `fiscal_period_year`, `fiscal_period_month` y `fiscal_period_kind`.
+
 ### `category_nodes`
 
 Arbol autorreferenciado de categorias de profundidad variable.
@@ -43,7 +51,7 @@ Arbol autorreferenciado de categorias de profundidad variable.
 Campos principales:
 
 - `id`
-- `parent_id`
+- `parent_id`: `bigint`, referencia a `category_nodes.id`
 - `name`
 - `active`
 - `sort_order`
@@ -59,10 +67,10 @@ Reglas que indican que periodos fiscales se esperan para una categoria.
 Campos principales:
 
 - `id`
-- `category_node_id`
+- `category_node_id`: `bigint`, referencia a `category_nodes.id`
 - `applies_to_descendants`
 - `name`
-- `cadence`: `monthly`, `bimonthly`, `quarterly`, `four_monthly`, `semiannual`, `annual`, `custom`, `no_pattern`
+- `interval_months`: `1`, `2`, `3`, `4`, `6`, `12` o nulo para patron custom/sin patron
 - `custom_period_months`
 - `anchor_period_month`
 - `fiscal_period_kind`
@@ -78,6 +86,8 @@ Campos principales:
 - `notes`
 
 Los faltantes se calculan al consultar. No se crea `expected_payments` en v1.
+
+En TypeScript la app puede mapear `interval_months` a etiquetas de UI/servicio (`monthly`, `bimonthly`, `quarterly`, `four_monthly`, `semiannual`, `annual`, `custom`, `no_pattern`), pero la columna real en PostgreSQL es `interval_months`, no `cadence`.
 
 Estas reglas tambien alimentan:
 
