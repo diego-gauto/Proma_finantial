@@ -16,7 +16,10 @@ import { getDescendantCategoryIds } from "@/server/categories/category-tree";
 import { calculateComplianceStatus } from "@/server/compliance/calculate-status";
 import { getOverduePayments } from "@/server/compliance/get-overdue-payments";
 import { getUpcomingPayments } from "@/server/compliance/get-upcoming-payments";
-import { parseDashboardFilters } from "@/server/dashboard/dashboard-filters";
+import {
+  buildAvailableFiscalPeriods,
+  parseDashboardFilters
+} from "@/server/dashboard/dashboard-filters";
 import { getCategorySpend } from "@/server/dashboard/get-category-spend";
 import { getDashboardAlerts } from "@/server/dashboard/get-dashboard-alerts";
 import { getMonthlySeries } from "@/server/dashboard/get-monthly-series";
@@ -42,14 +45,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </section>
       ) : null}
 
+      <section className="filters-panel">
+        <FiscalPeriodFilter filters={filters} periods={data.fiscalPeriods} />
+        <CategoryCloudFilter categories={data.categories} filters={filters} />
+      </section>
+
       <section className="action-grid">
         <MissingDocumentsCard missing={data.compliance.missing} />
         <DuplicateDocumentsCard duplicates={data.compliance.duplicates} />
-      </section>
-
-      <section className="filters-panel">
-        <FiscalPeriodFilter filters={filters} />
-        <CategoryCloudFilter categories={data.categories} filters={filters} />
       </section>
 
       <section className="analytics-grid">
@@ -62,11 +65,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <CategorySpendList spend={data.categorySpend} />
           </div>
         </div>
+      </section>
 
-        <div className="monthly-grid">
-          <MonthlyAmountChart series={data.monthlySeries} />
-          <MonthlyPaymentCountChart series={data.monthlySeries} />
-        </div>
+      <section className="monthly-grid">
+        <MonthlyAmountChart series={data.monthlySeries} />
+        <MonthlyPaymentCountChart series={data.monthlySeries} />
       </section>
 
       <section className="status-grid">
@@ -92,6 +95,14 @@ async function getDashboardPageData(filters: DashboardFilters) {
       },
       limit: 500
     });
+    const periodSourceDocuments = filters.fiscalPeriod
+      ? await listDocuments({
+          filters: {
+            categoryIds
+          },
+          limit: 500
+        })
+      : documents;
     const rules = await listPaymentRules();
     const [fromFiscalPeriod, toFiscalPeriod] = getFiscalPeriodRange(
       filters.fiscalPeriod
@@ -111,7 +122,8 @@ async function getDashboardPageData(filters: DashboardFilters) {
       categorySpend: getCategorySpend(categories, documents),
       compliance,
       dataNotice: null,
-      monthlySeries: filters.fiscalPeriod ? getMonthlySeries(documents) : [],
+      fiscalPeriods: buildAvailableFiscalPeriods(periodSourceDocuments),
+      monthlySeries: getMonthlySeries(documents),
       overdue: getOverduePayments(compliance),
       upcoming: getUpcomingPayments(compliance)
     };
@@ -134,6 +146,7 @@ async function getDashboardPageData(filters: DashboardFilters) {
         error instanceof Error
           ? error.message
           : "No se pudieron cargar los datos operativos.",
+      fiscalPeriods: buildAvailableFiscalPeriods([], new Date("2026-08-28")),
       monthlySeries: [],
       overdue: [],
       upcoming: []

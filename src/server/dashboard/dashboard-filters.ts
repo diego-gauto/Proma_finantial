@@ -1,4 +1,4 @@
-import type { CategoryNodeRow } from "@/db/types";
+import type { CategoryNodeRow, DocumentRow } from "@/db/types";
 
 export interface DashboardFilters {
   fiscalPeriod: string | null;
@@ -33,7 +33,39 @@ export function buildDashboardQuery(filters: DashboardFilters): string {
   }
 
   const query = params.toString();
-  return query ? `?${query}` : "";
+  return query ? `?${query}` : "/";
+}
+
+export function buildAvailableFiscalPeriods(
+  documents: DocumentRow[],
+  today = new Date()
+): string[] {
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  const years = new Set<number>([currentYear]);
+
+  for (const document of documents) {
+    if (!document.fiscalPeriod) {
+      continue;
+    }
+
+    const year = Number(document.fiscalPeriod.slice(0, 4));
+    if (Number.isInteger(year)) {
+      years.add(year);
+    }
+  }
+
+  return [...years]
+    .sort((a, b) => b - a)
+    .flatMap((year) => {
+      const monthCount = year === currentYear ? currentMonth : 12;
+      const months = Array.from({ length: monthCount }, (_, index) => {
+        const month = String(index + 1).padStart(2, "0");
+        return `${year}-${month}`;
+      });
+
+      return [String(year), ...months];
+    });
 }
 
 export function getCategoryFilterLevels(

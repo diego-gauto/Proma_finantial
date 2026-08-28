@@ -321,26 +321,22 @@ input {
   gap: 8px;
 }
 
-.analytics-grid {
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-}
-
 .spend-panel {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  align-items: center;
-  gap: 22px;
+  grid-template-columns: minmax(240px, 0.38fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 28px;
 }
 
 .spend-pie,
 .pie-empty {
-  width: 220px;
+  width: min(280px, 100%);
   aspect-ratio: 1;
   border-radius: 50%;
 }
 
 .spend-pie {
-  box-shadow: inset 0 0 0 28px #ffffff;
+  box-shadow: inset 0 0 0 46px #ffffff;
 }
 
 .pie-empty {
@@ -389,27 +385,31 @@ input {
 }
 
 .chart-panel {
-  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 18px;
 }
 
 .bar-chart {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   margin-top: 14px;
 }
 
 .bar-row {
   display: grid;
-  grid-template-columns: 74px minmax(110px, 1fr) 76px;
+  grid-template-columns: 82px minmax(160px, 1fr) 104px;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   font-size: 13px;
 }
 
 .bar-row div {
-  height: 10px;
+  height: 16px;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: 4px;
   background: var(--surface-muted);
 }
 
@@ -417,7 +417,7 @@ input {
   display: block;
   height: 100%;
   min-width: 4px;
-  border-radius: inherit;
+  border-radius: 4px;
   background: var(--accent);
 }
 
@@ -442,7 +442,6 @@ input {
   }
 
   .action-grid,
-  .analytics-grid,
   .status-grid,
   .metric-panel,
   .spend-panel {
@@ -460,6 +459,6 @@ input {
   }
 
   .bar-row {
-    grid-template-columns: 68px minmax(90px, 1fr) 56px;
+    grid-template-columns: 68px minmax(90px, 1fr) 64px;
   }
 }

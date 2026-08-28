@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildAvailableFiscalPeriods,
   buildDashboardQuery,
   getCategoryFilterLevels,
   parseDashboardFilters
@@ -50,6 +51,31 @@ describe("buildDashboardQuery", () => {
         categoryId: null
       })
     ).toBe("?fiscalPeriod=2026-01");
+  });
+
+  it("returns the dashboard path when every filter is cleared", () => {
+    expect(
+      buildDashboardQuery({
+        fiscalPeriod: null,
+        categoryId: null
+      })
+    ).toBe("/");
+  });
+});
+
+describe("buildAvailableFiscalPeriods", () => {
+  it("includes months up to the current month for the current year", () => {
+    expect(buildAvailableFiscalPeriods([], new Date("2026-08-28"))).toEqual([
+      "2026",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07",
+      "2026-08"
+    ]);
   });
 });
 

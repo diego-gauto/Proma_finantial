@@ -29,13 +29,13 @@ Al entrar, el usuario ve una alerta persistente si existen documentos con `proce
 La pantalla se compone asi:
 
 1. Alerta de documentos a revisar.
-2. Card de posibles faltantes.
-3. Card de posibles duplicados.
-4. Filtros de periodo fiscal y categorias.
+2. Filtros de periodo fiscal y categorias.
+3. Card de posibles faltantes.
+4. Card de posibles duplicados.
 5. Grafico de torta por categorias del gasto total.
 6. Listado lateral de categorias con monto gastado.
-7. Grafico de lineas por mes con importe gastado.
-8. Grafico de lineas/barras por mes con cantidad de pagos.
+7. Grafico a ancho completo por mes con importe gastado.
+8. Grafico a ancho completo por mes con cantidad de pagos.
 9. Apartado de pagos vencidos no realizados.
 10. Apartado de proximos pagos esperados.
 
@@ -48,6 +48,10 @@ Los filtros principales viven arriba del area analitica:
 - Subcategorias: aparecen progresivamente segun la categoria elegida.
 
 Las categorias y subcategorias no se eligen con un select. Se muestran como una nube de botones o chips. Cada eleccion recalcula los datos inferiores.
+
+El selector de periodo fiscal muestra el anio actual y los meses transcurridos hasta el mes corriente, ademas de periodos historicos relevantes si existen datos. El boton `Todos` debe limpiar el filtro y volver al tablero sin query params.
+
+El selector de categorias muestra primero solo categorias raiz (`parent_id is null`). Al elegir una raiz se agrega una segunda fila con sus hijos directos; al elegir un hijo se conserva el camino seleccionado y se agrega el siguiente nivel si existe. El boton `Todas` debe limpiar la categoria seleccionada sin romper el filtro de periodo fiscal vigente.
 
 Regla importante: periodo fiscal y mes/fecha de pago son filtros distintos. No deben mezclarse en un solo selector.
 
@@ -95,7 +99,7 @@ Cuando se modifica una regla vigente, la UI debe guiar a cerrar la regla anterio
 
 ## Graficos
 
-El primer grafico analitico es una torta de gastos por categoria para el total filtrado. Puede implementarse dentro de la app o usando Metabase solo para esa card si conviene.
+El primer grafico analitico es una torta de gastos por categoria para el total filtrado. Si hay una card o dashboard equivalente en Metabase, la app debe preferir embeber esa visualizacion interactiva y dejar el grafico propio como fallback.
 
 A la derecha de la torta, mostrar una lista/tablero compacto con:
 
@@ -104,7 +108,7 @@ A la derecha de la torta, mostrar una lista/tablero compacto con:
 - porcentaje del total;
 - cantidad de pagos.
 
-Debajo, cuando hay periodo seleccionado:
+Debajo, a ancho completo y recalculado por los filtros activos:
 
 - importe gastado por mes;
 - cantidad de pagos por mes.

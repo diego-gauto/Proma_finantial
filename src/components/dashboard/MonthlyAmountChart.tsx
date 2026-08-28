@@ -19,7 +19,7 @@ export function MonthlyAmountChart({ series }: { series: MonthlySeriesItem[] }) 
           ))}
         </div>
       ) : (
-        <p className="muted">Elegí un periodo o esperá documentos procesados.</p>
+        <p className="muted">No hay importes procesados para graficar.</p>
       )}
     </section>
   );

@@ -4,9 +4,13 @@ import {
   type DashboardFilters
 } from "@/server/dashboard/dashboard-filters";
 
-const quickPeriods = ["2026", "2026-01", "2026-02", "2026-03"];
-
-export function FiscalPeriodFilter({ filters }: { filters: DashboardFilters }) {
+export function FiscalPeriodFilter({
+  filters,
+  periods
+}: {
+  filters: DashboardFilters;
+  periods: string[];
+}) {
   return (
     <section className="filter-block" aria-label="Filtro por periodo fiscal">
       <h2>Periodo fiscal</h2>
@@ -17,7 +21,7 @@ export function FiscalPeriodFilter({ filters }: { filters: DashboardFilters }) {
         >
           Todos
         </Button>
-        {quickPeriods.map((period) => (
+        {periods.map((period) => (
           <Button
             href={buildDashboardQuery({ ...filters, fiscalPeriod: period })}
             key={period}
