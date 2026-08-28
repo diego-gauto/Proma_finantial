@@ -75,7 +75,11 @@ const documentSelect = `
     category_node_id,
     payment_date::text,
     payment_time::text,
-    fiscal_period,
+    case
+      when fiscal_period_year is null then null
+      when fiscal_period_kind = 'year' or fiscal_period_month is null then fiscal_period_year::text
+      else fiscal_period_year::text || '-' || lpad(fiscal_period_month::text, 2, '0')
+    end as fiscal_period,
     fiscal_period_kind,
     amount::text,
     currency,

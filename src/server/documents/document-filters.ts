@@ -26,7 +26,17 @@ export function buildDocumentWhereClause(
   };
 
   if (filters.fiscalPeriod) {
-    addClause("fiscal_period = ?", filters.fiscalPeriod);
+    const [yearText, monthText] = filters.fiscalPeriod.split("-");
+    const year = Number(yearText);
+    const month = monthText ? Number(monthText) : null;
+
+    if (Number.isInteger(year)) {
+      addClause("fiscal_period_year = ?", year);
+    }
+
+    if (month && Number.isInteger(month)) {
+      addClause("fiscal_period_month = ?", month);
+    }
   }
 
   if (filters.paymentDateFrom) {
@@ -42,7 +52,7 @@ export function buildDocumentWhereClause(
   }
 
   if (filters.categoryIds?.length) {
-    addClause("category_node_id = any(?::uuid[])", filters.categoryIds);
+    addClause("category_node_id = any(?::bigint[])", filters.categoryIds);
   }
 
   const search = filters.search?.trim();

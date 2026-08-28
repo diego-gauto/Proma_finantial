@@ -53,8 +53,19 @@ export async function listPaymentRules(): Promise<PaymentRuleRow[]> {
         category_node_id,
         applies_to_descendants,
         name,
-        cadence,
-        custom_period_months,
+        case interval_months
+          when 1 then 'monthly'
+          when 2 then 'bimonthly'
+          when 3 then 'quarterly'
+          when 4 then 'four_monthly'
+          when 6 then 'semiannual'
+          when 12 then 'annual'
+          else case
+            when custom_period_months is null or cardinality(custom_period_months) = 0 then 'no_pattern'
+            else 'custom'
+          end
+        end as cadence,
+        custom_period_months[1] as custom_period_months,
         anchor_period_month,
         fiscal_period_kind,
         active_from::text,
