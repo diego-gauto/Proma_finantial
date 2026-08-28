@@ -47,15 +47,11 @@ export function buildDocumentWhereClause(
 
   const search = filters.search?.trim();
   if (search) {
-    addClause(
-      "(reason ilike ? or reference ilike ? or issuer ilike ?)",
-      `%${search}%`
-    );
+    values.push(`%${search}%`);
     const placeholder = `$${values.length}`;
-    clauses[clauses.length - 1] = clauses[clauses.length - 1]
-      .replaceAll(placeholder, `$${values.length}`)
-      .replace("?", `$${values.length}`)
-      .replace("?", `$${values.length}`);
+    clauses.push(
+      `(reason ilike ${placeholder} or reference ilike ${placeholder} or issuer ilike ${placeholder})`
+    );
   }
 
   return {

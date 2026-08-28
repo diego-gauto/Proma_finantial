@@ -28,6 +28,15 @@ input {
   font: inherit;
 }
 
+::selection {
+  background: rgb(15 118 110 / 22%);
+}
+
+:focus-visible {
+  outline: 3px solid rgb(15 118 110 / 28%);
+  outline-offset: 2px;
+}
+
 .app-shell {
   min-height: 100vh;
 }
@@ -108,6 +117,10 @@ input {
 }
 
 .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 16px 18px;
   border-bottom: 1px solid var(--border);
 }
@@ -194,6 +207,228 @@ input {
   font-size: 14px;
 }
 
+.dashboard-page {
+  display: grid;
+  gap: 16px;
+}
+
+.alert-panel,
+.notice-panel,
+.filters-panel,
+.metric-panel,
+.chart-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.alert-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-color: rgb(180 35 24 / 32%);
+  background: #fff8f6;
+  padding: 16px 18px;
+}
+
+.alert-panel h2,
+.notice-panel h2,
+.filter-block h2,
+.metric-panel h2,
+.chart-panel h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.alert-panel p,
+.notice-panel p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+}
+
+.notice-panel {
+  padding: 14px 18px;
+}
+
+.action-grid,
+.analytics-grid,
+.status-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.action-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metric-panel {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.45fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.metric-value {
+  margin: 6px 0 0;
+  font-size: 34px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.stack-list {
+  display: grid;
+  gap: 8px;
+}
+
+.stack-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  padding: 0 10px;
+  text-decoration: none;
+}
+
+.stack-list span {
+  color: var(--text-muted);
+}
+
+.filters-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.filter-block {
+  display: grid;
+  gap: 10px;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-levels {
+  display: grid;
+  gap: 8px;
+}
+
+.analytics-grid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+}
+
+.spend-panel {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: center;
+  gap: 22px;
+}
+
+.spend-pie,
+.pie-empty {
+  width: 220px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.spend-pie {
+  box-shadow: inset 0 0 0 28px #ffffff;
+}
+
+.pie-empty {
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.spend-list {
+  display: grid;
+  gap: 10px;
+}
+
+.spend-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.spend-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.spend-row div {
+  display: grid;
+  gap: 2px;
+}
+
+.spend-row div:last-child {
+  text-align: right;
+}
+
+.spend-row span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.monthly-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.chart-panel {
+  padding: 16px;
+}
+
+.bar-chart {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 74px minmax(110px, 1fr) 76px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.bar-row div {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+
+.bar-row i {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.bar-row strong {
+  text-align: right;
+}
+
+.status-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 @media (max-width: 720px) {
   .topbar {
     align-items: flex-start;
@@ -204,5 +439,27 @@ input {
   .main {
     width: min(100% - 24px, 1180px);
     padding-top: 16px;
+  }
+
+  .action-grid,
+  .analytics-grid,
+  .status-grid,
+  .metric-panel,
+  .spend-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-panel {
+    align-items: stretch;
+  }
+
+  .spend-pie,
+  .pie-empty {
+    width: min(220px, 100%);
+    justify-self: center;
+  }
+
+  .bar-row {
+    grid-template-columns: 68px minmax(90px, 1fr) 56px;
   }
 }
