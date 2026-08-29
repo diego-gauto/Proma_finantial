@@ -18,7 +18,7 @@ Si una tarea contradice el PRD o no esta cubierta por el plan, detenerse y pregu
 
 - La app consume la base PostgreSQL que ya alimentan los flujos n8n.
 - La app no procesa documentos, no lee Google Drive y no reemplaza a n8n.
-- Metabase queda como herramienta opcional para graficos/reportes; la app propia es la interfaz principal para operacion, correcciones y reglas.
+- Metabase queda como herramienta opcional para reportes externos o referencia visual; la app propia es la interfaz principal para operacion, correcciones, reglas, graficos y listados.
 - No construir notificaciones, multi-tenencia, roles diferenciados, subida manual de documentos ni dashboards propios complejos salvo pedido explicito.
 
 ## Stack
@@ -30,7 +30,8 @@ Si una tarea contradice el PRD o no esta cubierta por el plan, detenerse y pregu
 | Frontend | Next.js App Router + React estable + TypeScript. SEO no es prioridad. |
 | Backend | No crear backend separado al inicio. Usar Server Components, Server Actions y Route Handlers de Next.js. |
 | Base de datos | La fuente de verdad son las tablas `documents`, `category_nodes`, `payment_rules` y `users`. |
-| Estilos | CSS Modules o CSS propio por componente. Evitar librerias UI pesadas al inicio. |
+| Graficos y tablas | Usar Recharts para graficos y TanStack Table para listados tabulares complejos. Metabase queda fuera del flujo principal por ahora. |
+| Estilos | No usar Bootstrap, Tailwind ni librerias CSS/frameworks visuales. Cada componente visual debe tener su `.module.css`; los estilos compartidos deben vivir en modulos globales por sector o en el global minimo de Next.js para base/tokens/reset. |
 | Configuracion | Variables en `.env`; solo commitear `.env.example`. |
 
 ## Invariantes de negocio
@@ -62,6 +63,7 @@ Si una tarea contradice el PRD o no esta cubierta por el plan, detenerse y pregu
 - Endpoints versionados bajo `/api/v1`.
 - Listados grandes deben tener paginacion.
 - Nombres SQL en `snake_case`; nombres TypeScript en `camelCase`.
+- Los estilos deben quedar junto al componente como `NombreComponente.module.css`, salvo estilos base o compartidos de sector.
 - Mantener cambios chicos y revisables por etapa.
 
 ## Limpieza de scope

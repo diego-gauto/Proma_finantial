@@ -89,8 +89,9 @@ Esta es la pantalla central del producto.
 - A la derecha de la torta debe mostrarse un listado de categorías con montos gastados, porcentaje del total y cantidad de pagos.
 - Debajo, si hay período seleccionado, mostrar un gráfico por meses del período con importe gastado por mes.
 - Debajo o junto al anterior, mostrar cantidad de pagos por mes.
-- Puede usarse **Metabase** solo para embeber la card del gráfico si conviene, pero no debe bloquear la v1.
-- Si más adelante se decide construir gráficos propios en la app, deben reutilizar las mismas queries/vistas SQL que use Metabase, para no duplicar lógica de negocio en dos lugares.
+- Los graficos de la pantalla principal se implementan en la app con **Recharts**.
+- **Metabase** queda fuera del flujo principal por ahora y solo puede usarse como referencia visual o para reportes externos futuros.
+- Los listados complejos de documentos se implementan con **TanStack Table** cuando necesiten orden, filtros, seleccion o paginacion.
 
 ## 5. Fuera de alcance en la v1
 
@@ -105,7 +106,7 @@ Esta es la pantalla central del producto.
 - Backend con acceso directo a la base PostgreSQL ya definida en el documento 01. No se requiere que la app tenga su propia copia de datos ni sincronización — lee/escribe directo sobre las mismas tablas que pueblan los flujos n8n.
 - Autenticación propia (tabla `users`), sesión persistente, sin necesidad de SSO ni proveedores externos en esta versión.
 - Stack no está fijado por este documento — queda a criterio del equipo/agente que construya la app, en función de lo que ya se use en el proyecto.
-- Debe soportar que Metabase se conecte a la misma base en modo solo lectura, sin conflicto con la app.
+- Puede soportar que Metabase se conecte a la misma base en modo solo lectura para reportes futuros, sin conflicto con la app.
 
 ## 7. Fases sugeridas
 
@@ -113,5 +114,5 @@ Esta es la pantalla central del producto.
 2. **Fase 2**: pantalla principal con filtros por período/categoría, faltantes, duplicados y resumen por categorías.
 3. **Fase 3**: listado/detalle de documentos + revisión manual en pantalla dividida.
 4. **Fase 4**: árbol de categorías + reglas de pago por nodo.
-5. **Fase 5**: usuarios, pagos vencidos, próximos pagos e integración/embebido opcional de Metabase.
+5. **Fase 5**: usuarios, pagos vencidos, próximos pagos y reportes opcionales.
 6. **Fase futura**: sistema de envío de alertas y notificaciones por mail/WhatsApp/otro canal. La v1 solo calcula y muestra avisos dentro de la app.

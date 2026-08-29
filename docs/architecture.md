@@ -10,7 +10,7 @@ Construir una app propia con Next.js full-stack en la raiz del repo:
 - `src/components/`: componentes React de UI.
 - `docs/`: documentos de producto, arquitectura y planes.
 - `skills/`: skills versionables propias del proyecto.
-- Metabase sigue disponible para graficos o listados analiticos, pero no es la interfaz principal de gestion.
+- Metabase sigue disponible como referencia visual o para reportes externos futuros, pero no es la interfaz principal de gestion.
 
 Esta opcion aprovecha que el usuario ya conoce Next.js y evita mantener dos aplicaciones mientras el producto sigue siendo interno y de baja exposicion publica.
 
@@ -64,7 +64,9 @@ El esquema real usa ids `bigint` y separa el periodo fiscal en columnas `fiscal_
 | PostgreSQL | Fuente de verdad compartida. |
 | Next.js server | Auth, validacion, reglas de negocio, CRUD, calculo de faltantes/duplicados. |
 | Next.js UI | Operacion diaria: listar, filtrar, corregir, configurar reglas y revisar faltantes. |
-| Metabase | Reportes/graficos no bloqueantes para v1. |
+| Recharts | Graficos interactivos del tablero operativo. |
+| TanStack Table | Tablas de documentos y listados con orden, filtros y paginacion. |
+| Metabase | Reportes no bloqueantes y referencia visual, fuera del flujo principal por ahora. |
 
 ## Primeras pantallas
 
@@ -73,7 +75,7 @@ El esquema real usa ids `bigint` y separa el periodo fiscal en columnas `fiscal_
 - Documentos: listado filtrable + detalle/correccion en pantalla dividida.
 - Categorias: arbol navegable; cada nodo permite configurar reglas de pago.
 - Usuarios: alta simple de usuarios.
-- Reportes: entrada opcional a Metabase si se conserva.
+- Reportes: entrada opcional a Metabase si se conserva como herramienta externa.
 
 ## Disenio de interfaz
 
@@ -83,9 +85,13 @@ Los filtros superiores combinan periodo fiscal y categoria. Las categorias se pr
 
 La primera informacion visible debe ser accionable: documentos que requieren intervencion, posibles faltantes y posibles duplicados. Los graficos aparecen despues como apoyo analitico.
 
+Los graficos del tablero se implementan con Recharts para mantener control total sobre filtros, tooltips, clicks y responsive dentro de React. Los listados de documentos con interaccion compleja se implementan con TanStack Table, preferentemente con paginacion/orden/filtros server-side cuando el dataset crezca.
+
+No se usan Bootstrap, Tailwind ni librerias CSS/frameworks visuales. Cada componente visual debe tener su CSS Module propio (`NombreComponente.module.css`). Los estilos compartidos se organizan en modulos por sector; `src/app/globals.css` queda reservado para base global de Next.js, tokens, reset y layout raiz.
+
 ## Metabase
 
-Metabase queda como opcional para reportes y referencia visual. Los dashboards recuperados del Proyecto 2 fueron pruebas y no deben embeberse en la app productiva; si se usa Metabase, debe montarse sobre la base vigente de documentos y recrear alli las visualizaciones necesarias. Si esa administracion no queda simple y segura, la app debe resolver los graficos con una libreria propia y mantener Metabase fuera del flujo operativo.
+Metabase queda como opcional para reportes y referencia visual. Los dashboards recuperados del Proyecto 2 fueron pruebas y no deben embeberse en la app productiva. Por decision de producto, la pantalla principal usa Recharts y TanStack Table; Metabase puede conservarse separado para exploracion o reportes futuros, montado sobre la base vigente de documentos.
 
 La configuracion administrativa de Metabase se resuelve por variables de entorno locales, nunca con credenciales versionadas:
 
@@ -96,11 +102,10 @@ METABASE_PASSWORD=clave-admin
 METABASE_DATABASE_ID=3
 ```
 
-`METABASE_DATABASE_ID=3` corresponde al registro local detectado como `Finanzas - Proyecto 1`. Antes de crear cards productivas hay que confirmar que esa base siga apuntando a `finanzas_documentos`.
+`METABASE_DATABASE_ID=3` corresponde al registro local detectado como `Finanzas - Proyecto 1`. Antes de crear reportes productivos futuros hay que confirmar que esa base siga apuntando a `finanzas_documentos`.
 
 Mientras `metabase_data/` exista, se conserva para posible recuperacion. No se incluye Metabase en `docker-compose.yml` inicial.
 
 ## Decisiones abiertas
 
-- Confirmar si Metabase se mantiene como stack separado para reportes recreados sobre la base vigente, o si se reemplaza por graficos propios en la app.
 - Definir si la autenticacion sera solo cookie de sesion o JWT con cookie httpOnly. Recomendacion inicial: cookie httpOnly.

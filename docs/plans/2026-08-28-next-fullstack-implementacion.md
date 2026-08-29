@@ -6,7 +6,7 @@
 
 **Architecture:** Una sola app Next.js en la raiz. Server Components cargan datos de PostgreSQL, Server Actions realizan mutations y Route Handlers se reservan para endpoints necesarios. La logica sensible vive en `src/server/`; el acceso a datos en `src/db/`; los componentes visuales en `src/components/`.
 
-**Tech Stack:** pnpm, Node 22, Next.js estable, React estable, TypeScript strict, PostgreSQL, CSS Modules, Vitest. Metabase es opcional y solo para cards/reportes embebidos si se decide recuperarlo.
+**Tech Stack:** pnpm, Node 22, Next.js estable, React estable, TypeScript strict, PostgreSQL, CSS Modules, Recharts, TanStack Table, Vitest. No usar Bootstrap, Tailwind ni librerias CSS/frameworks visuales. Metabase queda fuera del flujo principal por ahora y solo como referencia visual/reportes externos futuros.
 
 ---
 
@@ -289,9 +289,9 @@ Cubrir totales por categoria, porcentajes y total filtrado.
 
 Mostrar torta de gastos por categoria y a la derecha listado con categoria, monto, porcentaje y cantidad de pagos.
 
-**Step 3: Metabase opcional**
+**Step 3: Graficos propios**
 
-No embeber cards recuperadas del Proyecto 2, porque fueron pruebas. Si se decide usar Metabase, recrear los graficos sobre la base vigente de documentos y encapsularlos en un componente intercambiable. Si esa opcion no queda administrable, reemplazar por una libreria de graficos en la app. No bloquear la UI si `METABASE_SITE_URL` esta vacio.
+No embeber cards recuperadas del Proyecto 2, porque fueron pruebas. Implementar los graficos del tablero operativo con Recharts y mantener Metabase fuera del flujo principal por ahora.
 
 **Step 4: Verificar**
 
@@ -501,20 +501,19 @@ pnpm run test
 pnpm run build
 ```
 
-### Task 6.2: Reportes Metabase opcionales
+### Task 6.2: Reportes opcionales
 
 **Files:**
-- Create: `src/app/(app)/reportes/page.tsx`
-- Create: `src/components/reports/MetabaseCard.tsx`
+- Review: `src/app/(app)/reports/page.tsx`
 - Modify: `.env.example`
 
 **Step 1: Confirmar recuperacion**
 
-Revisar si `metabase_data/` contiene dashboards utiles antes de descartarlo.
+Mantener Metabase solo como referencia visual/reportes futuros. No usar dashboards del Proyecto 2 en la app productiva.
 
 **Step 2: Implementar fallback**
 
-Si `METABASE_SITE_URL` esta vacio, mostrar estado de reportes no configurados. Si existe, link o embed segun decision.
+Mostrar estado de reportes no configurados o link externo a Metabase si queda disponible. No embeber cards en la pantalla principal.
 
 **Step 3: Verificar**
 

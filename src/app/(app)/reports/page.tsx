@@ -5,7 +5,7 @@ export default function ReportsPage() {
   return (
     <Card title="Reportes">
       <EmptyState title="Reportes opcionales">
-        Metabase queda disponible como apoyo, sin bloquear la operacion diaria.
+        Los reportes externos quedan fuera del flujo principal por ahora.
       </EmptyState>
     </Card>
   );

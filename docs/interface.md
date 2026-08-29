@@ -99,7 +99,15 @@ Cuando se modifica una regla vigente, la UI debe guiar a cerrar la regla anterio
 
 ## Graficos
 
-El primer grafico analitico es una torta de gastos por categoria para el total filtrado. Las cards recuperadas del Proyecto 2 de Metabase se usan solo como referencia visual, porque pertenecen a pruebas de rutas y no deben embeberse como fuente productiva. Si se conserva Metabase, los graficos deben recrearse sobre la base vigente de documentos; si eso no queda administrable, la app debe usar una libreria de graficos propia.
+El primer grafico analitico es una dona de gastos por categoria para el total filtrado, implementada con Recharts. Las cards recuperadas del Proyecto 2 de Metabase se usan solo como referencia visual, porque pertenecen a pruebas de rutas y no deben embeberse como fuente productiva.
+
+La dona debe acercarse al comportamiento visual de Metabase:
+
+- tooltip con categoria, monto, porcentaje y total;
+- centro dinamico con total o segmento activo;
+- leyenda/listado sincronizado con colores;
+- hover claro y clic opcional para aplicar filtro de categoria;
+- layout responsive sin deformar el grafico.
 
 A la derecha de la torta, mostrar una lista/tablero compacto con:
 
@@ -114,6 +122,8 @@ Debajo, a ancho completo y recalculado por los filtros activos:
 - cantidad de pagos por mes.
 
 Estos graficos deben recalcularse con cada cambio de filtro.
+
+Los listados de documentos deben implementarse con TanStack Table cuando necesiten orden, filtros, seleccion o paginacion. La apariencia sigue siendo propia del proyecto: sin Bootstrap, Tailwind ni frameworks CSS. Cada componente visual usa su `.module.css`; los estilos compartidos deben quedar en modulos de sector o en el global minimo de la app.
 
 ## Estados operativos
 
