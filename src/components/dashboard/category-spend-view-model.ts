@@ -12,10 +12,9 @@ export interface CompactSpendLegendItem {
 }
 
 export function buildCompactSpendLegend(
-  spend: CategorySpend,
-  limit = 6
+  spend: CategorySpend
 ): CompactSpendLegendItem[] {
-  return spend.items.slice(0, limit).map((item, index) => ({
+  return spend.items.map((item, index) => ({
     amountLabel: formatCurrency(item.amount),
     categoryId: item.categoryId,
     categoryName: item.categoryName,

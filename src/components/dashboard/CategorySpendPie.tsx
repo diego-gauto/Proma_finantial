@@ -56,8 +56,14 @@ export function CategorySpendPie({ spend }: { spend: CategorySpend }) {
                   fill={getCategoryColor(index)}
                   key={item.categoryId}
                   opacity={
-                    activeIndex === null || activeIndex === index ? 1 : 0.38
+                    activeIndex === null || activeIndex === index ? 1 : 0.12
                   }
+                  stroke={
+                    activeIndex === index
+                      ? "var(--text)"
+                      : "var(--background)"
+                  }
+                  strokeWidth={activeIndex === index ? 4 : 2}
                 />
               ))}
             </Pie>
@@ -74,7 +80,14 @@ export function CategorySpendPie({ spend }: { spend: CategorySpend }) {
       <ol className={styles.legend} aria-label="Categorias del grafico">
         {legendItems.map((item, index) => (
           <li
-            className={activeIndex === index ? styles.legendActive : undefined}
+            className={[
+              activeIndex !== null && activeIndex !== index
+                ? styles.legendDimmed
+                : "",
+              activeIndex === index ? styles.legendActive : ""
+            ]
+              .filter(Boolean)
+              .join(" ")}
             key={item.categoryId}
             onMouseEnter={() => setActiveIndex(index)}
           >
