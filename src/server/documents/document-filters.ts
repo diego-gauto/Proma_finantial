@@ -60,7 +60,7 @@ export function buildDocumentWhereClause(
     values.push(`%${search}%`);
     const placeholder = `$${values.length}`;
     clauses.push(
-      `(reason ilike ${placeholder} or reference ilike ${placeholder} or issuer ilike ${placeholder})`
+      `(reason ilike ${placeholder} or reference ilike ${placeholder} or issuer ilike ${placeholder} or payee ilike ${placeholder})`
     );
   }
 

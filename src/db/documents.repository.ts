@@ -65,6 +65,21 @@ export interface ListDocumentsOptions {
   offset?: number;
 }
 
+export interface ReviewDocumentInput {
+  id: string;
+  amount: string;
+  categoryNodeId: string;
+  currency: string;
+  fiscalPeriod: string;
+  fiscalPeriodKind: DocumentRow["fiscalPeriodKind"];
+  issuer: string | null;
+  payee: string | null;
+  paymentDate: string;
+  reason: string;
+  reference: string | null;
+  userNote: string | null;
+}
+
 const documentSelect = `
   select
     id,
@@ -148,4 +163,109 @@ export async function listReviewDocuments(
   );
 
   return result.rows.map(toDocument);
+}
+
+export async function getDocumentById(
+  id: string
+): Promise<DocumentRow | null> {
+  const result = await getDbPool().query<DocumentDbRow>(
+    `
+      ${documentSelect}
+      where id = $1
+      limit 1
+    `,
+    [id]
+  );
+
+  return result.rows[0] ? toDocument(result.rows[0]) : null;
+}
+
+export async function updateReviewedDocument(
+  id: string,
+  input: ReviewDocumentInput
+): Promise<DocumentRow> {
+  const fiscalPeriod = parseFiscalPeriod(input.fiscalPeriod);
+  const result = await getDbPool().query<DocumentDbRow>(
+    `
+      update documents
+      set
+        amount = $2,
+        category_node_id = $3,
+        currency = $4,
+        fiscal_period_year = $5,
+        fiscal_period_month = $6,
+        fiscal_period_kind = $7,
+        issuer = $8,
+        payee = $9,
+        payment_date = $10,
+        reason = $11,
+        reference = $12,
+        user_note = $13,
+        processing_status = 'processed',
+        processing_error = null,
+        updated_at = now()
+      where id = $1
+      returning
+        id,
+        drive_file_id,
+        drive_url,
+        file_name,
+        drive_path,
+        category_node_id,
+        payment_date::text,
+        payment_time::text,
+        case
+          when fiscal_period_year is null then null
+          when fiscal_period_kind = 'year' or fiscal_period_month is null then fiscal_period_year::text
+          else fiscal_period_year::text || '-' || lpad(fiscal_period_month::text, 2, '0')
+        end as fiscal_period,
+        fiscal_period_kind,
+        amount::text,
+        currency,
+        reason,
+        reference,
+        issuer,
+        payee,
+        user_note,
+        raw_text,
+        extracted_data,
+        processing_status,
+        processing_error,
+        created_at,
+        updated_at
+    `,
+    [
+      id,
+      input.amount,
+      input.categoryNodeId,
+      input.currency,
+      fiscalPeriod.year,
+      fiscalPeriod.month,
+      input.fiscalPeriodKind,
+      input.issuer,
+      input.payee,
+      input.paymentDate,
+      input.reason,
+      input.reference,
+      input.userNote,
+    ]
+  );
+
+  if (!result.rows[0]) {
+    throw new Error("Documento no encontrado.");
+  }
+
+  return toDocument(result.rows[0]);
+}
+
+function parseFiscalPeriod(fiscalPeriod: string): {
+  month: number | null;
+  year: number;
+} {
+  const [yearText, monthText] = fiscalPeriod.split("-");
+
+  return {
+    month: monthText ? Number(monthText) : null,
+    year: Number(yearText)
+  };
 }

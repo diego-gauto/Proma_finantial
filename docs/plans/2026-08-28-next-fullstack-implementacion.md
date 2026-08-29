@@ -375,6 +375,8 @@ pnpm run build
 
 ## Fase 4 - Revision de documentos
 
+**Estado 2026-08-29:** completada sobre las rutas actuales `/documents` y `/documents/review`. La app mantiene rutas en ingles para no romper la navegacion ya creada, usa TanStack Table para listados de documentos y CSS Modules para los componentes visuales. Metabase no se embebe en esta fase.
+
 ### Task 4.1: Listado de documentos a revisar
 
 **Files:**

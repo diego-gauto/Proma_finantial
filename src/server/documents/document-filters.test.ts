@@ -18,6 +18,7 @@ describe("buildDocumentWhereClause", () => {
     expect(filters.where).toContain("payment_date >= $3");
     expect(filters.where).toContain("payment_date <= $4");
     expect(filters.where).toContain("category_node_id = any($6::bigint[])");
+    expect(filters.where).toContain("payee ilike $7");
     expect(filters.values).toEqual([
       2026,
       1,
