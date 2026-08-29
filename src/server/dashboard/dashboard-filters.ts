@@ -98,6 +98,39 @@ export function getCategoryFilterLevels(
   return levels;
 }
 
+export function getAutoSelectedCategoryId(
+  categories: CategoryNodeRow[],
+  selectedCategoryId: string | null
+): string | null {
+  if (!selectedCategoryId) {
+    return null;
+  }
+
+  let currentCategoryId = selectedCategoryId;
+  const visitedCategoryIds = new Set<string>();
+
+  while (true) {
+    if (visitedCategoryIds.has(currentCategoryId)) {
+      return currentCategoryId;
+    }
+
+    visitedCategoryIds.add(currentCategoryId);
+
+    const activeChildren = sortCategories(
+      categories.filter(
+        (category) =>
+          category.parentId === currentCategoryId && category.active
+      )
+    );
+
+    if (activeChildren.length !== 1) {
+      return currentCategoryId;
+    }
+
+    currentCategoryId = activeChildren[0].id;
+  }
+}
+
 function getFirstValue(value: SearchParamValue): string | null {
   if (Array.isArray(value)) {
     return value[0] || null;

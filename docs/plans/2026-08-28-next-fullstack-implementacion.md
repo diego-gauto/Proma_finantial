@@ -262,11 +262,11 @@ pnpm run build
 
 **Step 1: Tests**
 
-Cubrir serializacion de filtros en URL y seleccion progresiva de subcategorias.
+Cubrir serializacion de filtros en URL, seleccion progresiva de subcategorias y auto-seleccion cuando una rama tiene una sola subcategoria activa.
 
 **Step 2: UI**
 
-Modo oscuro por defecto. Periodo fiscal en un recuadro propio. Categorias raiz en otro recuadro. Al seleccionar una categoria, mostrar sus subcategorias disponibles en un nuevo recuadro separado; repetir recursivamente por cada nivel seleccionado.
+Modo oscuro por defecto. Periodo fiscal en un recuadro propio. Categorias raiz en otro recuadro. Al seleccionar una categoria, mostrar sus subcategorias disponibles en un nuevo recuadro separado; repetir recursivamente por cada nivel seleccionado. Si el nivel siguiente tiene una sola subcategoria activa, usarla automaticamente como categoria efectiva.
 
 **Step 3: Recalculo**
 
@@ -287,13 +287,15 @@ pnpm run build
 - Create: `src/components/dashboard/CategorySpendPie.module.css`
 - Create: `src/components/dashboard/CategorySpendList.tsx`
 - Create: `src/components/dashboard/CategorySpendList.module.css`
+- Create: `src/components/dashboard/CategoryDocumentsList.tsx`
+- Create: `src/components/dashboard/CategoryDocumentsList.module.css`
 - Modify: `package.json`
 - Modify: `pnpm-lock.yaml`
 - Modify: `src/app/(app)/page.tsx`
 
 **Step 1: Tests**
 
-Cubrir totales por categoria, porcentajes y total filtrado. Incluir el comportamiento por nivel: sin seleccion agrupa por raiz; con categoria seleccionada, el total corresponde a esa categoria y la dona separa por hijos directos con acumulado de descendientes.
+Cubrir totales por categoria, porcentajes y total filtrado. Incluir el comportamiento por nivel: sin seleccion agrupa por raiz; con categoria seleccionada, el total corresponde a esa categoria y la dona separa por hijos directos con acumulado de descendientes. Cuando la categoria efectiva no tiene hijos, mostrar documentos de esa categoria al lado de la dona.
 
 **Step 2: Dependencia**
 
@@ -301,7 +303,7 @@ Instalar `recharts` con `pnpm`.
 
 **Step 3: UI**
 
-Mostrar dona de gastos por categoria y a la derecha listado sincronizado con categoria, monto, porcentaje y cantidad de pagos. La dona debe tener tooltip custom, centro dinamico y hover/click alineado con el estilo de referencia de Metabase.
+Mostrar dona de gastos por categoria y a la derecha listado sincronizado con categoria, monto, porcentaje y cantidad de pagos. Si la categoria efectiva es hoja, reemplazar el listado por documentos con periodo fiscal, fecha de pago, monto, referencia/id y entidad. La dona debe tener tooltip custom, centro dinamico y hover/click alineado con el estilo de referencia de Metabase.
 
 **Step 4: Graficos propios**
 
@@ -333,7 +335,7 @@ Cubrir agrupacion por mes para importe gastado y cantidad de pagos.
 
 **Step 2: UI**
 
-Mostrar graficos de linea con Recharts, a ancho completo, para importe gastado por mes y cantidad de pagos por mes. Deben recalcularse para los filtros activos y mostrar meses sin pagos con valor cero cuando exista un periodo anual.
+Mostrar graficos de linea con Recharts, a ancho completo, para importe gastado por mes y cantidad de pagos por mes. Deben recalcularse para los filtros activos y mostrar meses sin pagos con valor cero cuando exista un periodo anual. Si el usuario selecciona un periodo fiscal mensual puntual (`YYYY-MM`), ocultar estos graficos porque el desglose mensual deja de aportar informacion.
 
 **Step 3: Estilos**
 

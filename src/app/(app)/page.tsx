@@ -1,4 +1,5 @@
 import { CategoryCloudFilter } from "@/components/dashboard/CategoryCloudFilter";
+import { CategoryDocumentsList } from "@/components/dashboard/CategoryDocumentsList";
 import { CategorySpendList } from "@/components/dashboard/CategorySpendList";
 import { CategorySpendPie } from "@/components/dashboard/CategorySpendPie";
 import { DuplicateDocumentsCard } from "@/components/dashboard/DuplicateDocumentsCard";
@@ -18,6 +19,7 @@ import { getOverduePayments } from "@/server/compliance/get-overdue-payments";
 import { getUpcomingPayments } from "@/server/compliance/get-upcoming-payments";
 import {
   buildAvailableFiscalPeriods,
+  getAutoSelectedCategoryId,
   parseDashboardFilters
 } from "@/server/dashboard/dashboard-filters";
 import { getCategorySpend } from "@/server/dashboard/get-category-spend";
@@ -35,6 +37,9 @@ interface HomePageProps {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const filters = parseDashboardFilters(await searchParams);
   const data = await getDashboardPageData(filters);
+  const isSingleFiscalPeriod = Boolean(
+    data.filters.fiscalPeriod?.includes("-")
+  );
 
   return (
     <div className={styles.page}>
@@ -48,8 +53,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       ) : null}
 
       <section className={styles.filtersStack}>
-        <FiscalPeriodFilter filters={filters} periods={data.fiscalPeriods} />
-        <CategoryCloudFilter categories={data.categories} filters={filters} />
+        <FiscalPeriodFilter filters={data.filters} periods={data.fiscalPeriods} />
+        <CategoryCloudFilter categories={data.categories} filters={data.filters} />
       </section>
 
       <section className={styles.actionGrid}>
@@ -64,15 +69,21 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </div>
           <div className={`panel-body ${styles.spendPanel}`}>
             <CategorySpendPie spend={data.categorySpend} />
-            <CategorySpendList spend={data.categorySpend} />
+            {data.showLeafDocuments ? (
+              <CategoryDocumentsList documents={data.documents} />
+            ) : (
+              <CategorySpendList spend={data.categorySpend} />
+            )}
           </div>
         </div>
       </section>
 
-      <section className={styles.monthlyGrid}>
-        <MonthlyAmountChart series={data.monthlySeries} />
-        <MonthlyPaymentCountChart series={data.monthlySeries} />
-      </section>
+      {!isSingleFiscalPeriod ? (
+        <section className={styles.monthlyGrid}>
+          <MonthlyAmountChart series={data.monthlySeries} />
+          <MonthlyPaymentCountChart series={data.monthlySeries} />
+        </section>
+      ) : null}
 
       <section className={styles.statusGrid}>
         <OverduePaymentsPanel overdue={data.overdue} />
@@ -87,17 +98,21 @@ type DashboardFilters = ReturnType<typeof parseDashboardFilters>;
 async function getDashboardPageData(filters: DashboardFilters) {
   try {
     const categories = await listCategoryNodes();
-    const categoryIds = filters.categoryId
-      ? getDescendantCategoryIds(categories, filters.categoryId)
+    const effectiveFilters = {
+      ...filters,
+      categoryId: getAutoSelectedCategoryId(categories, filters.categoryId)
+    };
+    const categoryIds = effectiveFilters.categoryId
+      ? getDescendantCategoryIds(categories, effectiveFilters.categoryId)
       : undefined;
     const documents = await listDocuments({
       filters: {
         categoryIds,
-        fiscalPeriod: filters.fiscalPeriod ?? undefined
+        fiscalPeriod: effectiveFilters.fiscalPeriod ?? undefined
       },
       limit: 500
     });
-    const periodSourceDocuments = filters.fiscalPeriod
+    const periodSourceDocuments = effectiveFilters.fiscalPeriod
       ? await listDocuments({
           filters: {
             categoryIds
@@ -107,7 +122,7 @@ async function getDashboardPageData(filters: DashboardFilters) {
       : documents;
     const rules = await listPaymentRules();
     const [fromFiscalPeriod, toFiscalPeriod] = getFiscalPeriodRange(
-      filters.fiscalPeriod
+      effectiveFilters.fiscalPeriod
     );
     const compliance = calculateComplianceStatus({
       categories,
@@ -122,18 +137,22 @@ async function getDashboardPageData(filters: DashboardFilters) {
       alerts: getDashboardAlerts({ documents, compliance }),
       categories,
       categorySpend: getCategorySpend(categories, documents, {
-        selectedCategoryId: filters.categoryId
+        selectedCategoryId: effectiveFilters.categoryId
       }),
       compliance,
       dataNotice: null,
+      documents,
       fiscalPeriods: buildAvailableFiscalPeriods(periodSourceDocuments),
+      filters: effectiveFilters,
       monthlySeries: getMonthlySeries(documents, {
         fiscalYear:
-          filters.fiscalPeriod && !filters.fiscalPeriod.includes("-")
-            ? filters.fiscalPeriod
+          effectiveFilters.fiscalPeriod &&
+          !effectiveFilters.fiscalPeriod.includes("-")
+            ? effectiveFilters.fiscalPeriod
             : null
       }),
       overdue: getOverduePayments(compliance),
+      showLeafDocuments: isLeafCategory(categories, effectiveFilters.categoryId),
       upcoming: getUpcomingPayments(compliance)
     };
   } catch (error) {
@@ -155,12 +174,28 @@ async function getDashboardPageData(filters: DashboardFilters) {
         error instanceof Error
           ? error.message
           : "No se pudieron cargar los datos operativos.",
+      documents: [],
       fiscalPeriods: buildAvailableFiscalPeriods([], new Date("2026-08-28")),
+      filters,
       monthlySeries: [],
       overdue: [],
+      showLeafDocuments: false,
       upcoming: []
     };
   }
+}
+
+function isLeafCategory(
+  categories: Awaited<ReturnType<typeof listCategoryNodes>>,
+  categoryId: string | null
+): boolean {
+  if (!categoryId) {
+    return false;
+  }
+
+  return !categories.some(
+    (category) => category.parentId === categoryId && category.active
+  );
 }
 
 function getFiscalPeriodRange(fiscalPeriod: string | null): [string, string] {

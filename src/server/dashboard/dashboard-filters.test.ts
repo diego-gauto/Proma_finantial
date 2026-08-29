@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAvailableFiscalPeriods,
   buildDashboardQuery,
+  getAutoSelectedCategoryId,
   getCategoryFilterLevels,
   parseDashboardFilters
 } from "./dashboard-filters";
@@ -104,5 +105,51 @@ describe("getCategoryFilterLevels", () => {
         categories: [categories[1]]
       }
     ]);
+  });
+});
+
+describe("getAutoSelectedCategoryId", () => {
+  it("walks through active single-child categories", () => {
+    expect(
+      getAutoSelectedCategoryId(
+        [
+          ...categories,
+          {
+            id: "grandchild",
+            parentId: "child",
+            name: "Grandchild",
+            active: true,
+            sortOrder: 1,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-01T00:00:00.000Z"
+          }
+        ],
+        "root"
+      )
+    ).toBe("grandchild");
+  });
+
+  it("stops when a category has multiple active children", () => {
+    expect(
+      getAutoSelectedCategoryId(
+        [
+          ...categories,
+          {
+            id: "second-child",
+            parentId: "root",
+            name: "Second child",
+            active: true,
+            sortOrder: 2,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-01T00:00:00.000Z"
+          }
+        ],
+        "root"
+      )
+    ).toBe("root");
+  });
+
+  it("does not auto-select when no category is selected", () => {
+    expect(getAutoSelectedCategoryId(categories, null)).toBeNull();
   });
 });

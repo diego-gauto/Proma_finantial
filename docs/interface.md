@@ -53,7 +53,7 @@ Las categorias y subcategorias no se eligen con un select. Se muestran como una 
 
 El selector de periodo fiscal muestra el anio actual y los meses transcurridos hasta el mes corriente, ademas de periodos historicos relevantes si existen datos. El boton `Todos` debe limpiar el filtro y volver al tablero sin query params.
 
-El selector de categorias muestra primero solo categorias raiz (`parent_id is null`) en su propio recuadro. Al elegir una raiz se agrega un nuevo recuadro con sus hijos directos; al elegir un hijo se conserva el camino seleccionado y se agrega otro recuadro con el siguiente nivel si existe. El boton `Todas` debe limpiar la categoria seleccionada sin romper el filtro de periodo fiscal vigente.
+El selector de categorias muestra primero solo categorias raiz (`parent_id is null`) en su propio recuadro. Al elegir una raiz se agrega un nuevo recuadro con sus hijos directos; al elegir un hijo se conserva el camino seleccionado y se agrega otro recuadro con el siguiente nivel si existe. Si una categoria seleccionada tiene una sola subcategoria activa, esa subcategoria se toma automaticamente como seleccion efectiva y los datos se recalculan para ella; esto se repite hasta llegar a una hoja o a un nivel con varias opciones. El boton `Todas` debe limpiar la categoria seleccionada sin romper el filtro de periodo fiscal vigente.
 
 Regla importante: periodo fiscal y mes/fecha de pago son filtros distintos. No deben mezclarse en un solo selector.
 
@@ -111,14 +111,16 @@ La dona debe acercarse al comportamiento visual de Metabase:
 - hover claro y clic opcional para aplicar filtro de categoria;
 - layout responsive sin deformar el grafico.
 
-A la derecha de la torta, mostrar una lista/tablero compacto con:
+A la derecha de la dona, mientras haya subcategorias para desglosar, mostrar una lista/tablero compacto con:
 
 - categoria;
 - monto gastado;
 - porcentaje del total;
 - cantidad de pagos.
 
-Debajo, a ancho completo y recalculado por los filtros activos:
+Cuando la categoria efectiva no tiene hijos activos, reemplazar ese listado por los documentos que componen la categoria, con periodo fiscal, fecha de pago, monto, numero de identificacion/operacion (`reference`, o `id` como respaldo) y entidad del pago (`payee` o `issuer`).
+
+Debajo, a ancho completo y recalculado por los filtros activos, siempre que no haya un periodo fiscal mensual puntual seleccionado:
 
 - importe gastado por mes;
 - cantidad de pagos por mes.
