@@ -87,6 +87,17 @@ La primera informacion visible debe ser accionable: documentos que requieren int
 
 Metabase queda como opcional para reportes y referencia visual. Los dashboards recuperados del Proyecto 2 fueron pruebas y no deben embeberse en la app productiva; si se usa Metabase, debe montarse sobre la base vigente de documentos y recrear alli las visualizaciones necesarias. Si esa administracion no queda simple y segura, la app debe resolver los graficos con una libreria propia y mantener Metabase fuera del flujo operativo.
 
+La configuracion administrativa de Metabase se resuelve por variables de entorno locales, nunca con credenciales versionadas:
+
+```bash
+METABASE_SITE_URL=http://localhost:3000
+METABASE_USERNAME=usuario-admin
+METABASE_PASSWORD=clave-admin
+METABASE_DATABASE_ID=3
+```
+
+`METABASE_DATABASE_ID=3` corresponde al registro local detectado como `Finanzas - Proyecto 1`. Antes de crear cards productivas hay que confirmar que esa base siga apuntando a `finanzas_documentos`.
+
 Mientras `metabase_data/` exista, se conserva para posible recuperacion. No se incluye Metabase en `docker-compose.yml` inicial.
 
 ## Decisiones abiertas
