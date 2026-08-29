@@ -11,6 +11,10 @@ import {
 
 import type { CategorySpend } from "@/server/dashboard/get-category-spend";
 
+import {
+  buildCompactSpendLegend,
+  formatSpendCurrency
+} from "./category-spend-view-model";
 import { getCategoryColor } from "./chart-colors";
 import styles from "./CategorySpendPie.module.css";
 
@@ -24,46 +28,67 @@ export function CategorySpendPie({ spend }: { spend: CategorySpend }) {
   const activeItem =
     activeIndex === null ? null : spend.items[activeIndex] ?? null;
   const centerAmount = activeItem?.amount ?? spend.totalAmount;
+  const legendItems = buildCompactSpendLegend(spend);
 
   return (
-    <div
-      aria-label={`Total gastado ${formatCurrency(spend.totalAmount)}`}
-      className={styles.chart}
-      onMouseLeave={() => setActiveIndex(null)}
-    >
-      <ResponsiveContainer height="100%" width="100%">
-        <PieChart>
-          <Pie
-            cx="50%"
-            cy="50%"
-            data={spend.items}
-            dataKey="amount"
-            innerRadius="62%"
-            nameKey="categoryName"
-            onMouseEnter={(_, index) => setActiveIndex(index)}
-            outerRadius="88%"
-            paddingAngle={1}
-            stroke="var(--surface)"
-            strokeWidth={2}
-          >
-            {spend.items.map((item, index) => (
-              <Cell
-                fill={getCategoryColor(index)}
-                key={item.categoryId}
-                opacity={
-                  activeIndex === null || activeIndex === index ? 1 : 0.35
-                }
-              />
-            ))}
-          </Pie>
-          <Tooltip content={<SpendTooltip totalAmount={spend.totalAmount} />} />
-        </PieChart>
-      </ResponsiveContainer>
+    <div className={styles.shell} onMouseLeave={() => setActiveIndex(null)}>
+      <div
+        aria-label={`Total gastado ${formatCurrency(spend.totalAmount)}`}
+        className={styles.chart}
+      >
+        <ResponsiveContainer height="100%" width="100%">
+          <PieChart>
+            <Pie
+              cx="50%"
+              cy="50%"
+              data={spend.items}
+              dataKey="amount"
+              innerRadius="55%"
+              nameKey="categoryName"
+              onMouseEnter={(_, index) => setActiveIndex(index)}
+              outerRadius="88%"
+              paddingAngle={0}
+              stroke="var(--background)"
+              strokeWidth={2}
+            >
+              {spend.items.map((item, index) => (
+                <Cell
+                  fill={getCategoryColor(index)}
+                  key={item.categoryId}
+                  opacity={
+                    activeIndex === null || activeIndex === index ? 1 : 0.38
+                  }
+                />
+              ))}
+            </Pie>
+            <Tooltip content={<SpendTooltip totalAmount={spend.totalAmount} />} />
+          </PieChart>
+        </ResponsiveContainer>
 
-      <div className={styles.center}>
-        <strong>{formatCurrency(centerAmount)}</strong>
-        <span>{activeItem?.categoryName ?? "Total"}</span>
+        <div className={styles.center}>
+          <strong>{formatCurrency(centerAmount)}</strong>
+          <span>{activeItem?.categoryName ?? "Total"}</span>
+        </div>
       </div>
+
+      <ol className={styles.legend} aria-label="Categorias del grafico">
+        {legendItems.map((item, index) => (
+          <li
+            className={activeIndex === index ? styles.legendActive : undefined}
+            key={item.categoryId}
+            onMouseEnter={() => setActiveIndex(index)}
+          >
+            <span
+              aria-hidden="true"
+              className={styles.swatch}
+              style={{ backgroundColor: item.color }}
+            />
+            <span className={styles.legendName}>{item.categoryName}</span>
+            <strong>{item.amountLabel}</strong>
+            <span>{item.percentageLabel}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -101,9 +126,5 @@ function SpendTooltip({ active, payload, totalAmount }: SpendTooltipProps) {
 }
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    currency: "ARS",
-    maximumFractionDigits: 0,
-    style: "currency"
-  }).format(amount);
+  return formatSpendCurrency(amount);
 }

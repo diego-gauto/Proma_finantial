@@ -1,6 +1,14 @@
+.shell {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(250px, 0.58fr);
+  align-items: center;
+  gap: 26px;
+  width: 100%;
+}
+
 .chart {
   position: relative;
-  width: min(360px, 100%);
+  width: min(460px, 100%);
   aspect-ratio: 1;
   justify-self: center;
 }
@@ -29,7 +37,7 @@
 
 .center strong {
   color: var(--text);
-  font-size: clamp(18px, 2vw, 26px);
+  font-size: clamp(20px, 2.2vw, 28px);
   line-height: 1.05;
 }
 
@@ -40,16 +48,62 @@
   line-height: 1.2;
 }
 
+.legend {
+  display: grid;
+  gap: 4px;
+  max-height: 280px;
+  margin: 0;
+  overflow: auto;
+  padding: 0;
+  list-style: none;
+}
+
+.legend li {
+  display: grid;
+  grid-template-columns: 10px minmax(120px, 1fr) auto auto;
+  align-items: center;
+  gap: 9px;
+  min-height: 32px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.legend li:hover,
+.legendActive {
+  color: var(--text);
+}
+
+.legendName {
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legend strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
 .tooltip {
   display: grid;
-  min-width: 210px;
+  min-width: 260px;
   gap: 4px;
-  border: 1px solid rgb(11 22 51 / 12%);
+  border: 1px solid rgb(255 255 255 / 12%);
   border-radius: 8px;
-  background: rgb(11 22 51 / 92%);
+  background: rgb(76 86 99 / 96%);
   color: #ffffff;
-  padding: 10px 12px;
-  box-shadow: 0 14px 30px rgb(11 22 51 / 18%);
+  padding: 12px 14px;
+  box-shadow: 0 16px 34px rgb(2 6 23 / 34%);
 }
 
 .tooltip span,
@@ -59,4 +113,14 @@
 
 .tooltip strong {
   font-size: 16px;
+}
+
+@media (max-width: 860px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .legend {
+    max-height: none;
+  }
 }

@@ -1,6 +1,5 @@
 import { CategoryCloudFilter } from "@/components/dashboard/CategoryCloudFilter";
 import { CategoryDocumentsList } from "@/components/dashboard/CategoryDocumentsList";
-import { CategorySpendList } from "@/components/dashboard/CategorySpendList";
 import { CategorySpendPie } from "@/components/dashboard/CategorySpendPie";
 import { DuplicateDocumentsCard } from "@/components/dashboard/DuplicateDocumentsCard";
 import { FiscalPeriodFilter } from "@/components/dashboard/FiscalPeriodFilter";
@@ -71,9 +70,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <CategorySpendPie spend={data.categorySpend} />
             {data.showLeafDocuments ? (
               <CategoryDocumentsList documents={data.documents} />
-            ) : (
-              <CategorySpendList spend={data.categorySpend} />
-            )}
+            ) : null}
           </div>
         </div>
       </section>

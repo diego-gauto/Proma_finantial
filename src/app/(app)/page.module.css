@@ -22,9 +22,9 @@
 
 .spendPanel {
   display: grid;
-  grid-template-columns: minmax(260px, 0.38fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   align-items: start;
-  gap: 28px;
+  gap: 18px;
 }
 
 .monthlyGrid {
