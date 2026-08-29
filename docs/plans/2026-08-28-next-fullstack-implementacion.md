@@ -291,7 +291,7 @@ Mostrar torta de gastos por categoria y a la derecha listado con categoria, mont
 
 **Step 3: Metabase opcional**
 
-Si se decide usar Metabase para esta card, encapsularlo en un componente intercambiable. No bloquear la UI si `METABASE_SITE_URL` esta vacio.
+No embeber cards recuperadas del Proyecto 2, porque fueron pruebas. Si se decide usar Metabase, recrear los graficos sobre la base vigente de documentos y encapsularlos en un componente intercambiable. Si esa opcion no queda administrable, reemplazar por una libreria de graficos en la app. No bloquear la UI si `METABASE_SITE_URL` esta vacio.
 
 **Step 4: Verificar**
 

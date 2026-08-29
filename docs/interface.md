@@ -99,7 +99,7 @@ Cuando se modifica una regla vigente, la UI debe guiar a cerrar la regla anterio
 
 ## Graficos
 
-El primer grafico analitico es una torta de gastos por categoria para el total filtrado. Si hay una card o dashboard equivalente en Metabase, la app debe preferir embeber esa visualizacion interactiva y dejar el grafico propio como fallback.
+El primer grafico analitico es una torta de gastos por categoria para el total filtrado. Las cards recuperadas del Proyecto 2 de Metabase se usan solo como referencia visual, porque pertenecen a pruebas de rutas y no deben embeberse como fuente productiva. Si se conserva Metabase, los graficos deben recrearse sobre la base vigente de documentos; si eso no queda administrable, la app debe usar una libreria de graficos propia.
 
 A la derecha de la torta, mostrar una lista/tablero compacto con:
 

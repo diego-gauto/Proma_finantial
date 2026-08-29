@@ -85,11 +85,11 @@ La primera informacion visible debe ser accionable: documentos que requieren int
 
 ## Metabase
 
-Metabase queda como opcional. Puede usarse para la card del grafico de torta si resulta mas rapido o si ya hay dashboards recuperables, pero la app no debe depender de Metabase para mostrar faltantes, duplicados, revision ni reglas.
+Metabase queda como opcional para reportes y referencia visual. Los dashboards recuperados del Proyecto 2 fueron pruebas y no deben embeberse en la app productiva; si se usa Metabase, debe montarse sobre la base vigente de documentos y recrear alli las visualizaciones necesarias. Si esa administracion no queda simple y segura, la app debe resolver los graficos con una libreria propia y mantener Metabase fuera del flujo operativo.
 
 Mientras `metabase_data/` exista, se conserva para posible recuperacion. No se incluye Metabase en `docker-compose.yml` inicial.
 
 ## Decisiones abiertas
 
-- Confirmar si Metabase se mantiene como stack separado. No es necesario para empezar la app.
+- Confirmar si Metabase se mantiene como stack separado para reportes recreados sobre la base vigente, o si se reemplaza por graficos propios en la app.
 - Definir si la autenticacion sera solo cookie de sesion o JWT con cookie httpOnly. Recomendacion inicial: cookie httpOnly.
