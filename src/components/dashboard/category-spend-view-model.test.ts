@@ -38,7 +38,7 @@ describe("buildCompactSpendLegend", () => {
         categoryName: "Obligaciones Fiscales",
         color: "#76d64b",
         paymentCountLabel: "3 pagos",
-        percentageLabel: "60%"
+        percentageLabel: "60.00%"
       },
       {
         amountLabel: "$ 300",
@@ -46,7 +46,7 @@ describe("buildCompactSpendLegend", () => {
         categoryName: "Servicios",
         color: "#f3b45d",
         paymentCountLabel: "2 pagos",
-        percentageLabel: "30%"
+        percentageLabel: "30.00%"
       },
       {
         amountLabel: "$ 100",
@@ -54,7 +54,7 @@ describe("buildCompactSpendLegend", () => {
         categoryName: "Otros",
         color: "#6f8cff",
         paymentCountLabel: "1 pago",
-        percentageLabel: "10%"
+        percentageLabel: "10.00%"
       }
     ]);
   });

@@ -68,6 +68,17 @@ export function buildAvailableFiscalPeriods(
     });
 }
 
+export function getMonthlyFiscalYear(
+  fiscalPeriod: string | null,
+  today = new Date()
+): string | null {
+  if (fiscalPeriod?.includes("-")) {
+    return null;
+  }
+
+  return fiscalPeriod ?? String(today.getFullYear());
+}
+
 export function getCategoryFilterLevels(
   categories: CategoryNodeRow[],
   selectedCategoryId: string | null

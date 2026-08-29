@@ -19,6 +19,7 @@ import { getUpcomingPayments } from "@/server/compliance/get-upcoming-payments";
 import {
   buildAvailableFiscalPeriods,
   getAutoSelectedCategoryId,
+  getMonthlyFiscalYear,
   parseDashboardFilters
 } from "@/server/dashboard/dashboard-filters";
 import { getCategorySpend } from "@/server/dashboard/get-category-spend";
@@ -142,11 +143,7 @@ async function getDashboardPageData(filters: DashboardFilters) {
       fiscalPeriods: buildAvailableFiscalPeriods(periodSourceDocuments),
       filters: effectiveFilters,
       monthlySeries: getMonthlySeries(documents, {
-        fiscalYear:
-          effectiveFilters.fiscalPeriod &&
-          !effectiveFilters.fiscalPeriod.includes("-")
-            ? effectiveFilters.fiscalPeriod
-            : null
+        fiscalYear: getMonthlyFiscalYear(effectiveFilters.fiscalPeriod)
       }),
       overdue: getOverduePayments(compliance),
       showLeafDocuments: isLeafCategory(categories, effectiveFilters.categoryId),

@@ -5,6 +5,7 @@ import {
   buildDashboardQuery,
   getAutoSelectedCategoryId,
   getCategoryFilterLevels,
+  getMonthlyFiscalYear,
   parseDashboardFilters
 } from "./dashboard-filters";
 import type { CategoryNodeRow } from "@/db/types";
@@ -77,6 +78,17 @@ describe("buildAvailableFiscalPeriods", () => {
       "2026-07",
       "2026-08"
     ]);
+  });
+});
+
+describe("getMonthlyFiscalYear", () => {
+  it("uses the current year when no fiscal period is selected", () => {
+    expect(getMonthlyFiscalYear(null, new Date("2026-08-29"))).toBe("2026");
+  });
+
+  it("uses the selected fiscal year and omits monthly period charts", () => {
+    expect(getMonthlyFiscalYear("2026", new Date("2026-08-29"))).toBe("2026");
+    expect(getMonthlyFiscalYear("2026-08", new Date("2026-08-29"))).toBeNull();
   });
 });
 

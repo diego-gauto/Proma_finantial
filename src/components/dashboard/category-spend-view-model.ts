@@ -22,7 +22,7 @@ export function buildCompactSpendLegend(
     paymentCountLabel: `${item.paymentCount} ${
       item.paymentCount === 1 ? "pago" : "pagos"
     }`,
-    percentageLabel: `${item.percentage}%`
+    percentageLabel: `${item.percentage.toFixed(2)}%`
   }));
 }
 

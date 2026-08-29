@@ -138,7 +138,7 @@ function SpendTooltip({ active, payload, totalAmount }: SpendTooltipProps) {
       <span>{item.categoryName}</span>
       <strong>{formatCurrency(item.amount)}</strong>
       <small>
-        {item.percentage}% de {formatCurrency(totalAmount)} ·{" "}
+        {item.percentage.toFixed(2)}% de {formatCurrency(totalAmount)} ·{" "}
         {item.paymentCount} pagos
       </small>
     </div>
