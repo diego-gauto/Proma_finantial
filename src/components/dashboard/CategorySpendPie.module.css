@@ -1,14 +1,14 @@
 .shell {
   display: grid;
-  grid-template-columns: minmax(260px, 0.72fr) minmax(250px, 0.58fr);
+  grid-template-columns: minmax(300px, 0.78fr) minmax(430px, 1fr);
   align-items: center;
-  gap: 26px;
+  gap: 34px;
   width: 100%;
 }
 
 .chart {
   position: relative;
-  width: min(460px, 100%);
+  width: min(430px, 100%);
   aspect-ratio: 1;
   justify-self: center;
 }
@@ -48,26 +48,52 @@
   line-height: 1.2;
 }
 
+.legendWrap {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.legendHeader {
+  display: grid;
+  grid-template-columns: 10px minmax(160px, 1fr) minmax(104px, auto) 54px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 4px;
+  color: rgb(168 179 199 / 72%);
+  font-size: 11px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.legendHeader span:first-child {
+  grid-column: 2;
+}
+
+.legendHeader span:nth-child(2),
+.legendHeader span:nth-child(3) {
+  text-align: right;
+}
+
 .legend {
   display: grid;
-  gap: 2px;
-  max-height: 360px;
+  gap: 1px;
   margin: 0;
-  overflow: auto;
   padding: 0;
   list-style: none;
 }
 
 .legend li {
   display: grid;
-  grid-template-columns: 10px minmax(120px, 1fr) auto auto;
+  grid-template-columns: 10px minmax(160px, 1fr) minmax(104px, auto) 54px;
   align-items: center;
-  gap: 9px;
-  min-height: 32px;
+  gap: 10px;
+  min-height: 29px;
   border-radius: 6px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12px;
   opacity: 1;
+  padding: 0 8px;
   transition:
     background-color 140ms ease,
     color 140ms ease,
@@ -76,7 +102,7 @@
 }
 
 .legendActive {
-  background: rgb(69 218 203 / 12%);
+  background: rgb(69 218 203 / 18%);
   color: var(--text);
   opacity: 1;
   transform: translateX(2px);
@@ -84,7 +110,7 @@
 
 .legendDimmed {
   color: rgb(168 179 199 / 42%);
-  opacity: 0.28;
+  opacity: 0.2;
 }
 
 .legendName {
@@ -99,10 +125,16 @@
 .legend strong {
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .legendDimmed strong {
-  color: rgb(238 244 255 / 48%);
+  color: rgb(238 244 255 / 36%);
+}
+
+.legend li > span:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .swatch {
@@ -113,7 +145,9 @@
 }
 
 .legendActive .swatch {
-  box-shadow: 0 0 0 4px rgb(255 255 255 / 16%);
+  box-shadow:
+    0 0 0 4px rgb(255 255 255 / 18%),
+    0 0 18px currentcolor;
 }
 
 .tooltip {
@@ -140,9 +174,5 @@
 @media (max-width: 860px) {
   .shell {
     grid-template-columns: 1fr;
-  }
-
-  .legend {
-    max-height: none;
   }
 }

@@ -77,31 +77,38 @@ export function CategorySpendPie({ spend }: { spend: CategorySpend }) {
         </div>
       </div>
 
-      <ol className={styles.legend} aria-label="Categorias del grafico">
-        {legendItems.map((item, index) => (
-          <li
-            className={[
-              activeIndex !== null && activeIndex !== index
-                ? styles.legendDimmed
-                : "",
-              activeIndex === index ? styles.legendActive : ""
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            key={item.categoryId}
-            onMouseEnter={() => setActiveIndex(index)}
-          >
-            <span
-              aria-hidden="true"
-              className={styles.swatch}
-              style={{ backgroundColor: item.color }}
-            />
-            <span className={styles.legendName}>{item.categoryName}</span>
-            <strong>{item.amountLabel}</strong>
-            <span>{item.percentageLabel}</span>
-          </li>
-        ))}
-      </ol>
+      <div className={styles.legendWrap}>
+        <div className={styles.legendHeader} aria-hidden="true">
+          <span>Categoria</span>
+          <span>Importe</span>
+          <span>%</span>
+        </div>
+        <ol className={styles.legend} aria-label="Categorias del grafico">
+          {legendItems.map((item, index) => (
+            <li
+              className={[
+                activeIndex !== null && activeIndex !== index
+                  ? styles.legendDimmed
+                  : "",
+                activeIndex === index ? styles.legendActive : ""
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              key={item.categoryId}
+              onMouseEnter={() => setActiveIndex(index)}
+            >
+              <span
+                aria-hidden="true"
+                className={styles.swatch}
+                style={{ backgroundColor: item.color }}
+              />
+              <span className={styles.legendName}>{item.categoryName}</span>
+              <strong>{item.amountLabel}</strong>
+              <span>{item.percentageLabel}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   );
 }
