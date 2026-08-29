@@ -24,6 +24,8 @@ import { getCategorySpend } from "@/server/dashboard/get-category-spend";
 import { getDashboardAlerts } from "@/server/dashboard/get-dashboard-alerts";
 import { getMonthlySeries } from "@/server/dashboard/get-monthly-series";
 
+import styles from "./page.module.css";
+
 export const dynamic = "force-dynamic";
 
 interface HomePageProps {
@@ -35,7 +37,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const data = await getDashboardPageData(filters);
 
   return (
-    <div className="dashboard-page">
+    <div className={styles.page}>
       <ReviewRequiredAlert alerts={data.alerts} />
 
       {data.dataNotice ? (
@@ -45,34 +47,34 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </section>
       ) : null}
 
-      <section className="filters-panel">
+      <section className={styles.filtersStack}>
         <FiscalPeriodFilter filters={filters} periods={data.fiscalPeriods} />
         <CategoryCloudFilter categories={data.categories} filters={filters} />
       </section>
 
-      <section className="action-grid">
+      <section className={styles.actionGrid}>
         <MissingDocumentsCard missing={data.compliance.missing} />
         <DuplicateDocumentsCard duplicates={data.compliance.duplicates} />
       </section>
 
-      <section className="analytics-grid">
+      <section className={styles.analyticsGrid}>
         <div className="panel">
           <div className="panel-header">
             <h2>Gasto por categoria</h2>
           </div>
-          <div className="panel-body spend-panel">
+          <div className={`panel-body ${styles.spendPanel}`}>
             <CategorySpendPie spend={data.categorySpend} />
             <CategorySpendList spend={data.categorySpend} />
           </div>
         </div>
       </section>
 
-      <section className="monthly-grid">
+      <section className={styles.monthlyGrid}>
         <MonthlyAmountChart series={data.monthlySeries} />
         <MonthlyPaymentCountChart series={data.monthlySeries} />
       </section>
 
-      <section className="status-grid">
+      <section className={styles.statusGrid}>
         <OverduePaymentsPanel overdue={data.overdue} />
         <UpcomingPaymentsPanel upcoming={data.upcoming} />
       </section>
@@ -119,7 +121,9 @@ async function getDashboardPageData(filters: DashboardFilters) {
     return {
       alerts: getDashboardAlerts({ documents, compliance }),
       categories,
-      categorySpend: getCategorySpend(categories, documents),
+      categorySpend: getCategorySpend(categories, documents, {
+        selectedCategoryId: filters.categoryId
+      }),
       compliance,
       dataNotice: null,
       fiscalPeriods: buildAvailableFiscalPeriods(periodSourceDocuments),

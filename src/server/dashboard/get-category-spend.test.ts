@@ -21,6 +21,24 @@ const categories: CategoryNodeRow[] = [
     sortOrder: 1,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z"
+  },
+  {
+    id: "fixed-phone",
+    parentId: "phone",
+    name: "Telefono fijo",
+    active: true,
+    sortOrder: 1,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z"
+  },
+  {
+    id: "internet",
+    parentId: "services",
+    name: "Internet",
+    active: true,
+    sortOrder: 2,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z"
   }
 ];
 
@@ -67,6 +85,67 @@ describe("getCategorySpend", () => {
           amount: 1500.5,
           percentage: 100,
           paymentCount: 2
+        }
+      ]
+    });
+  });
+
+  it("breaks selected category spend down by direct children recursively", () => {
+    expect(
+      getCategorySpend(
+        categories,
+        [
+          { ...documentBase, id: "doc-1", categoryNodeId: "fixed-phone", amount: "1000" },
+          { ...documentBase, id: "doc-2", categoryNodeId: "internet", amount: "500" },
+          { ...documentBase, id: "doc-3", categoryNodeId: "services", amount: "250" }
+        ],
+        { selectedCategoryId: "services" }
+      )
+    ).toEqual({
+      totalAmount: 1750,
+      items: [
+        {
+          categoryId: "phone",
+          categoryName: "Telefonia",
+          amount: 1000,
+          percentage: 57.1,
+          paymentCount: 1
+        },
+        {
+          categoryId: "internet",
+          categoryName: "Internet",
+          amount: 500,
+          percentage: 28.6,
+          paymentCount: 1
+        },
+        {
+          categoryId: "services",
+          categoryName: "Servicios",
+          amount: 250,
+          percentage: 14.3,
+          paymentCount: 1
+        }
+      ]
+    });
+
+    expect(
+      getCategorySpend(
+        categories,
+        [
+          { ...documentBase, id: "doc-1", categoryNodeId: "fixed-phone", amount: "1000" },
+          { ...documentBase, id: "doc-2", categoryNodeId: "internet", amount: "500" }
+        ],
+        { selectedCategoryId: "phone" }
+      )
+    ).toEqual({
+      totalAmount: 1000,
+      items: [
+        {
+          categoryId: "fixed-phone",
+          categoryName: "Telefono fijo",
+          amount: 1000,
+          percentage: 100,
+          paymentCount: 1
         }
       ]
     });

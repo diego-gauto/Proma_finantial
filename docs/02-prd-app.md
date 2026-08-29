@@ -85,8 +85,9 @@ Esta es la pantalla central del producto.
 ### 4.6 Gráficos y reportes
 
 - La app debe mostrar gráficos operativos básicos en la pantalla principal.
-- El primer gráfico es una torta con las categorías que componen el total de gastos filtrado.
-- A la derecha de la torta debe mostrarse un listado de categorías con montos gastados, porcentaje del total y cantidad de pagos.
+- El primer gráfico es una dona con las categorías que componen el total de gastos filtrado.
+- Sin categoría seleccionada, la dona agrupa por categorías raíz. Con categoría seleccionada, el total corresponde a esa categoría y sus descendientes, y la dona se desglosa por subcategorías directas; el comportamiento se repite recursivamente al bajar de nivel.
+- A la derecha de la dona debe mostrarse un listado de categorías/subcategorías con montos gastados, porcentaje del total y cantidad de pagos.
 - Debajo, si hay período seleccionado, mostrar un gráfico por meses del período con importe gastado por mes.
 - Debajo o junto al anterior, mostrar cantidad de pagos por mes.
 - Los graficos de la pantalla principal se implementan en la app con **Recharts**.

@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import { Button } from "@/components/ui/Button";
+
 import { loginAction, type LoginState } from "./actions";
 
 const initialState: LoginState = {};
@@ -41,9 +43,9 @@ export default function LoginPage() {
               {state.error}
             </p>
           ) : null}
-          <button className="button button-primary" disabled={pending} type="submit">
+          <Button disabled={pending} type="submit" variant="primary">
             {pending ? "Entrando..." : "Entrar"}
-          </button>
+          </Button>
         </form>
       </section>
     </main>

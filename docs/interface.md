@@ -26,18 +26,20 @@ Orden de prioridad visual:
 
 Al entrar, el usuario ve una alerta persistente si existen documentos con `processing_status` en `review_required` o `error`.
 
-La pantalla se compone asi:
+La pantalla usa modo oscuro por defecto y se compone asi:
 
 1. Alerta de documentos a revisar.
-2. Filtros de periodo fiscal y categorias.
-3. Card de posibles faltantes.
-4. Card de posibles duplicados.
-5. Grafico de torta por categorias del gasto total.
-6. Listado lateral de categorias con monto gastado.
-7. Grafico a ancho completo por mes con importe gastado.
-8. Grafico a ancho completo por mes con cantidad de pagos.
-9. Apartado de pagos vencidos no realizados.
-10. Apartado de proximos pagos esperados.
+2. Filtro de periodo fiscal en un recuadro propio.
+3. Filtro de categorias raiz en un recuadro propio.
+4. Si hay categoria seleccionada, cada nivel de subcategorias se muestra en un nuevo recuadro separado.
+5. Card de posibles faltantes.
+6. Card de posibles duplicados.
+7. Grafico de dona por categorias del gasto total filtrado.
+8. Listado lateral de categorias con monto gastado.
+9. Grafico a ancho completo por mes con importe gastado.
+10. Grafico a ancho completo por mes con cantidad de pagos.
+11. Apartado de pagos vencidos no realizados.
+12. Apartado de proximos pagos esperados.
 
 ## Filtros
 
@@ -51,7 +53,7 @@ Las categorias y subcategorias no se eligen con un select. Se muestran como una 
 
 El selector de periodo fiscal muestra el anio actual y los meses transcurridos hasta el mes corriente, ademas de periodos historicos relevantes si existen datos. El boton `Todos` debe limpiar el filtro y volver al tablero sin query params.
 
-El selector de categorias muestra primero solo categorias raiz (`parent_id is null`). Al elegir una raiz se agrega una segunda fila con sus hijos directos; al elegir un hijo se conserva el camino seleccionado y se agrega el siguiente nivel si existe. El boton `Todas` debe limpiar la categoria seleccionada sin romper el filtro de periodo fiscal vigente.
+El selector de categorias muestra primero solo categorias raiz (`parent_id is null`) en su propio recuadro. Al elegir una raiz se agrega un nuevo recuadro con sus hijos directos; al elegir un hijo se conserva el camino seleccionado y se agrega otro recuadro con el siguiente nivel si existe. El boton `Todas` debe limpiar la categoria seleccionada sin romper el filtro de periodo fiscal vigente.
 
 Regla importante: periodo fiscal y mes/fecha de pago son filtros distintos. No deben mezclarse en un solo selector.
 
@@ -99,7 +101,7 @@ Cuando se modifica una regla vigente, la UI debe guiar a cerrar la regla anterio
 
 ## Graficos
 
-El primer grafico analitico es una dona de gastos por categoria para el total filtrado, implementada con Recharts. Las cards recuperadas del Proyecto 2 de Metabase se usan solo como referencia visual, porque pertenecen a pruebas de rutas y no deben embeberse como fuente productiva.
+El primer grafico analitico es una dona de gastos por categoria para el total filtrado, implementada con Recharts. Sin categoria seleccionada, agrupa por categorias raiz. Con categoria seleccionada, el total pasa a ser el gasto de esa categoria y sus descendientes, y la dona se desglosa por subcategorias directas de distancia 1. Si se selecciona una subcategoria, el mismo comportamiento se repite recursivamente hacia abajo. Las cards recuperadas del Proyecto 2 de Metabase se usan solo como referencia visual, porque pertenecen a pruebas de rutas y no deben embeberse como fuente productiva.
 
 La dona debe acercarse al comportamiento visual de Metabase:
 
@@ -134,3 +136,5 @@ Ademas de faltantes y duplicados, la app debe mostrar:
 - documentos que requieren intervencion.
 
 Estos estados salen de `documents`, `category_nodes` y `payment_rules`; no se crean tablas nuevas en v1.
+
+Los conteos compactos de faltantes y duplicados ya pertenecen a la pantalla principal. Los botones de detalle (`Ver faltantes`, `Ver duplicados`) dependen de las vistas/listados de documentos de la Fase 4 para mostrar la tabla filtrada correspondiente.

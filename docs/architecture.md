@@ -79,7 +79,7 @@ El esquema real usa ids `bigint` y separa el periodo fiscal en columnas `fiscal_
 
 ## Disenio de interfaz
 
-La app debe sentirse como herramienta interna de control: densa, escaneable y rapida. No necesita landing page ni hero. La primera pantalla despues del login es el tablero operativo.
+La app debe sentirse como herramienta interna de control: densa, escaneable y rapida. Usa modo oscuro por defecto para acercarse al lenguaje visual de analitica tipo Metabase sin depender de Metabase. No necesita landing page ni hero. La primera pantalla despues del login es el tablero operativo.
 
 Los filtros superiores combinan periodo fiscal y categoria. Las categorias se presentan como una nube de botones/chips: primero categorias raiz, luego subcategorias segun la seleccion. Cada seleccion actualiza faltantes, duplicados, graficos y listas.
 

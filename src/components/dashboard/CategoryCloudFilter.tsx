@@ -6,6 +6,8 @@ import {
   type DashboardFilters
 } from "@/server/dashboard/dashboard-filters";
 
+import styles from "./CategoryCloudFilter.module.css";
+
 export function CategoryCloudFilter({
   categories,
   filters
@@ -16,19 +18,19 @@ export function CategoryCloudFilter({
   const levels = getCategoryFilterLevels(categories, filters.categoryId);
 
   return (
-    <section className="filter-block" aria-label="Filtro por categoria">
-      <h2>Categorias</h2>
-      <div className="category-levels">
-        <div className="chip-row">
-          <Button
-            href={buildDashboardQuery({ ...filters, categoryId: null })}
-            variant={!filters.categoryId ? "primary" : "secondary"}
-          >
-            Todas
-          </Button>
-        </div>
-        {levels.map((level) => (
-          <div className="chip-row" key={level.parentId ?? "root"}>
+    <div className={styles.levels} aria-label="Filtro por categoria">
+      {levels.map((level, index) => (
+        <section className={styles.panel} key={level.parentId ?? "root"}>
+          <h2>{index === 0 ? "Categorias" : "Subcategorias"}</h2>
+          <div className={styles.chipRow}>
+            {index === 0 ? (
+              <Button
+                href={buildDashboardQuery({ ...filters, categoryId: null })}
+                variant={!filters.categoryId ? "primary" : "secondary"}
+              >
+                Todas
+              </Button>
+            ) : null}
             {level.categories.map((category) => (
               <Button
                 href={buildDashboardQuery({
@@ -44,8 +46,22 @@ export function CategoryCloudFilter({
               </Button>
             ))}
           </div>
-        ))}
-      </div>
-    </section>
+        </section>
+      ))}
+
+      {!levels.length ? (
+        <section className={styles.panel}>
+          <h2>Categorias</h2>
+          <div className={styles.chipRow}>
+            <Button
+              href={buildDashboardQuery({ ...filters, categoryId: null })}
+              variant={!filters.categoryId ? "primary" : "secondary"}
+            >
+              Todas
+            </Button>
+          </div>
+        </section>
+      ) : null}
+    </div>
   );
 }

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+import styles from "./Button.module.css";
+
 type ButtonVariant = "primary" | "secondary";
 
 interface ButtonBaseProps {
@@ -21,7 +23,7 @@ export function Button({
   variant = "secondary",
   ...buttonProps
 }: ButtonProps) {
-  const classes = ["button", `button-${variant}`, className]
+  const classes = [styles.button, styles[variant], className]
     .filter(Boolean)
     .join(" ");
 

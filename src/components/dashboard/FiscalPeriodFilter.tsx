@@ -4,6 +4,8 @@ import {
   type DashboardFilters
 } from "@/server/dashboard/dashboard-filters";
 
+import styles from "./FiscalPeriodFilter.module.css";
+
 export function FiscalPeriodFilter({
   filters,
   periods
@@ -12,9 +14,9 @@ export function FiscalPeriodFilter({
   periods: string[];
 }) {
   return (
-    <section className="filter-block" aria-label="Filtro por periodo fiscal">
+    <section className={styles.panel} aria-label="Filtro por periodo fiscal">
       <h2>Periodo fiscal</h2>
-      <div className="chip-row">
+      <div className={styles.chipRow}>
         <Button
           href={buildDashboardQuery({ ...filters, fiscalPeriod: null })}
           variant={!filters.fiscalPeriod ? "primary" : "secondary"}

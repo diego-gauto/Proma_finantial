@@ -13,13 +13,30 @@ export interface CategorySpend {
   items: CategorySpendItem[];
 }
 
+interface CategorySpendOptions {
+  selectedCategoryId?: string | null;
+}
+
 export function getCategorySpend(
   categories: CategoryNodeRow[],
-  documents: DocumentRow[]
+  documents: DocumentRow[],
+  options: CategorySpendOptions = {}
 ): CategorySpend {
   const categoriesById = new Map(
     categories.map((category) => [category.id, category])
   );
+  const directChildrenByParentId = new Map<string, CategoryNodeRow[]>();
+
+  for (const category of categories) {
+    if (!category.parentId) {
+      continue;
+    }
+
+    const siblings = directChildrenByParentId.get(category.parentId) ?? [];
+    siblings.push(category);
+    directChildrenByParentId.set(category.parentId, siblings);
+  }
+
   const totals = new Map<string, { amount: number; paymentCount: number }>();
 
   for (const document of documents) {
@@ -31,16 +48,24 @@ export function getCategorySpend(
       continue;
     }
 
-    const root = getRootCategory(categoriesById, document.categoryNodeId);
+    const category = categoriesById.get(document.categoryNodeId);
+    const bucket = options.selectedCategoryId
+      ? getDirectChildBucket(
+          categoriesById,
+          directChildrenByParentId,
+          document.categoryNodeId,
+          options.selectedCategoryId
+        )
+      : getRootCategory(categoriesById, document.categoryNodeId);
 
-    if (!root) {
+    if (!category || !bucket) {
       continue;
     }
 
-    const current = totals.get(root.id) ?? { amount: 0, paymentCount: 0 };
+    const current = totals.get(bucket.id) ?? { amount: 0, paymentCount: 0 };
     current.amount += Number(document.amount);
     current.paymentCount += 1;
-    totals.set(root.id, current);
+    totals.set(bucket.id, current);
   }
 
   const totalAmount = [...totals.values()].reduce(
@@ -61,6 +86,38 @@ export function getCategorySpend(
     totalAmount: roundCurrency(totalAmount),
     items
   };
+}
+
+function getDirectChildBucket(
+  categoriesById: Map<string, CategoryNodeRow>,
+  directChildrenByParentId: Map<string, CategoryNodeRow[]>,
+  categoryId: string,
+  selectedCategoryId: string
+): CategoryNodeRow | null {
+  const selectedCategory = categoriesById.get(selectedCategoryId);
+  const documentCategory = categoriesById.get(categoryId);
+
+  if (!selectedCategory || !documentCategory) {
+    return null;
+  }
+
+  if (categoryId === selectedCategoryId) {
+    return selectedCategory;
+  }
+
+  let current: CategoryNodeRow | undefined = documentCategory;
+  let childOfSelected: CategoryNodeRow | null = null;
+
+  while (current) {
+    if (current.parentId === selectedCategoryId) {
+      childOfSelected = current;
+      break;
+    }
+
+    current = current.parentId ? categoriesById.get(current.parentId) : undefined;
+  }
+
+  return childOfSelected;
 }
 
 function getRootCategory(

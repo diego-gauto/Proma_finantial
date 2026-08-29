@@ -43,7 +43,7 @@ export function CategorySpendPie({ spend }: { spend: CategorySpend }) {
             onMouseEnter={(_, index) => setActiveIndex(index)}
             outerRadius="88%"
             paddingAngle={1}
-            stroke="#ffffff"
+            stroke="var(--surface)"
             strokeWidth={2}
           >
             {spend.items.map((item, index) => (

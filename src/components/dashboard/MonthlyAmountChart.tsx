@@ -21,17 +21,22 @@ export function MonthlyAmountChart({ series }: { series: MonthlySeriesItem[] }) 
       {series.length ? (
         <div className={styles.chart}>
           <ResponsiveContainer height="100%" width="100%">
-            <LineChart data={series} margin={{ bottom: 8, left: 6, right: 12, top: 12 }}>
-              <CartesianGrid stroke="rgb(15 23 42 / 10%)" vertical={false} />
+            <LineChart
+              data={series}
+              margin={{ bottom: 8, left: 6, right: 12, top: 12 }}
+            >
+              <CartesianGrid stroke="rgb(168 179 199 / 18%)" vertical={false} />
               <XAxis
                 axisLine={false}
                 dataKey="month"
                 minTickGap={18}
+                tick={{ fill: "var(--text-muted)", fontSize: 12 }}
                 tickLine={false}
                 tickMargin={10}
               />
               <YAxis
                 axisLine={false}
+                tick={{ fill: "var(--text-muted)", fontSize: 12 }}
                 tickFormatter={formatCompactAmount}
                 tickLine={false}
                 tickMargin={8}

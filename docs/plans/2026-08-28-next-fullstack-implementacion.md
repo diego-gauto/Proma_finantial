@@ -252,8 +252,13 @@ pnpm run build
 
 **Files:**
 - Create: `src/components/dashboard/FiscalPeriodFilter.tsx`
+- Create: `src/components/dashboard/FiscalPeriodFilter.module.css`
 - Create: `src/components/dashboard/CategoryCloudFilter.tsx`
+- Create: `src/components/dashboard/CategoryCloudFilter.module.css`
 - Create: `src/server/dashboard/dashboard-filters.ts`
+- Modify: `src/app/(app)/page.tsx`
+- Modify: `src/app/globals.css`
+- Modify: `src/styles/tokens.css`
 
 **Step 1: Tests**
 
@@ -261,7 +266,7 @@ Cubrir serializacion de filtros en URL y seleccion progresiva de subcategorias.
 
 **Step 2: UI**
 
-Periodo fiscal arriba. Categorias como botones/chips. Al seleccionar una categoria, mostrar sus subcategorias disponibles debajo.
+Modo oscuro por defecto. Periodo fiscal en un recuadro propio. Categorias raiz en otro recuadro. Al seleccionar una categoria, mostrar sus subcategorias disponibles en un nuevo recuadro separado; repetir recursivamente por cada nivel seleccionado.
 
 **Step 3: Recalculo**
 
@@ -284,10 +289,11 @@ pnpm run build
 - Create: `src/components/dashboard/CategorySpendList.module.css`
 - Modify: `package.json`
 - Modify: `pnpm-lock.yaml`
+- Modify: `src/app/(app)/page.tsx`
 
 **Step 1: Tests**
 
-Cubrir totales por categoria, porcentajes y total filtrado.
+Cubrir totales por categoria, porcentajes y total filtrado. Incluir el comportamiento por nivel: sin seleccion agrupa por raiz; con categoria seleccionada, el total corresponde a esa categoria y la dona separa por hijos directos con acumulado de descendientes.
 
 **Step 2: Dependencia**
 
@@ -439,7 +445,7 @@ Instalar `@tanstack/react-table` con `pnpm`.
 
 **Step 3: UI**
 
-Tabla con TanStack Table, breadcrumb, motivo, monto, moneda, estado y link a Drive. La tabla debe prepararse para orden, filtros y paginacion server-side cuando el dataset crezca.
+Tabla con TanStack Table, breadcrumb, motivo, monto, moneda, estado y link a Drive. La tabla debe prepararse para orden, filtros y paginacion server-side cuando el dataset crezca. Esta tarea tambien debe resolver los destinos de los botones de la pantalla principal: `Ver faltantes`, `Ver duplicados` y los links a documentos filtrados por categoria/periodo.
 
 **Step 4: Estilos**
 
