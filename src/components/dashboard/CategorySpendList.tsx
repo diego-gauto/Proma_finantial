@@ -1,12 +1,22 @@
 import type { CategorySpend } from "@/server/dashboard/get-category-spend";
 
+import { getCategoryColor } from "./chart-colors";
+import styles from "./CategorySpendList.module.css";
+
 export function CategorySpendList({ spend }: { spend: CategorySpend }) {
   return (
-    <div className="spend-list">
-      {spend.items.map((item) => (
-        <div className="spend-row" key={item.categoryId}>
+    <div className={styles.list}>
+      {spend.items.map((item, index) => (
+        <div className={styles.row} key={item.categoryId}>
           <div>
-            <strong>{item.categoryName}</strong>
+            <strong>
+              <span
+                aria-hidden="true"
+                className={styles.swatch}
+                style={{ backgroundColor: getCategoryColor(index) }}
+              />
+              {item.categoryName}
+            </strong>
             <span>{item.paymentCount} pagos</span>
           </div>
           <div>

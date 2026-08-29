@@ -1,0 +1,62 @@
+.chart {
+  position: relative;
+  width: min(360px, 100%);
+  aspect-ratio: 1;
+  justify-self: center;
+}
+
+.empty {
+  display: grid;
+  width: min(280px, 100%);
+  aspect-ratio: 1;
+  place-items: center;
+  justify-self: center;
+  border: 1px dashed var(--border);
+  border-radius: 50%;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.center {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  display: grid;
+  width: min(52%, 170px);
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.center strong {
+  color: var(--text);
+  font-size: clamp(18px, 2vw, 26px);
+  line-height: 1.05;
+}
+
+.center span {
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.tooltip {
+  display: grid;
+  min-width: 210px;
+  gap: 4px;
+  border: 1px solid rgb(11 22 51 / 12%);
+  border-radius: 8px;
+  background: rgb(11 22 51 / 92%);
+  color: #ffffff;
+  padding: 10px 12px;
+  box-shadow: 0 14px 30px rgb(11 22 51 / 18%);
+}
+
+.tooltip span,
+.tooltip small {
+  color: rgb(255 255 255 / 72%);
+}
+
+.tooltip strong {
+  font-size: 16px;
+}

@@ -51,4 +51,29 @@ describe("getMonthlySeries", () => {
       }
     ]);
   });
+
+  it("fills every month in the selected fiscal year with zero values", () => {
+    expect(
+      getMonthlySeries(
+        [
+          documentBase,
+          { ...documentBase, id: "doc-2", paymentDate: "2026-08-04", amount: "50" }
+        ],
+        { fiscalYear: "2026" }
+      )
+    ).toEqual([
+      { month: "2026-01", amount: 0, paymentCount: 0 },
+      { month: "2026-02", amount: 100, paymentCount: 1 },
+      { month: "2026-03", amount: 0, paymentCount: 0 },
+      { month: "2026-04", amount: 0, paymentCount: 0 },
+      { month: "2026-05", amount: 0, paymentCount: 0 },
+      { month: "2026-06", amount: 0, paymentCount: 0 },
+      { month: "2026-07", amount: 0, paymentCount: 0 },
+      { month: "2026-08", amount: 50, paymentCount: 1 },
+      { month: "2026-09", amount: 0, paymentCount: 0 },
+      { month: "2026-10", amount: 0, paymentCount: 0 },
+      { month: "2026-11", amount: 0, paymentCount: 0 },
+      { month: "2026-12", amount: 0, paymentCount: 0 }
+    ]);
+  });
 });

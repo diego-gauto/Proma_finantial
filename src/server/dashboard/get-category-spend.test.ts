@@ -71,4 +71,62 @@ describe("getCategorySpend", () => {
       ]
     });
   });
+
+  it("sorts root categories by amount and excludes documents without processed amounts", () => {
+    const extendedCategories: CategoryNodeRow[] = [
+      ...categories,
+      {
+        id: "taxes",
+        parentId: null,
+        name: "Impuestos",
+        active: true,
+        sortOrder: 2,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z"
+      }
+    ];
+
+    expect(
+      getCategorySpend(extendedCategories, [
+        documentBase,
+        {
+          ...documentBase,
+          id: "doc-2",
+          amount: "3000",
+          categoryNodeId: "taxes"
+        },
+        {
+          ...documentBase,
+          id: "doc-3",
+          amount: null,
+          categoryNodeId: "taxes"
+        },
+        {
+          ...documentBase,
+          id: "doc-4",
+          amount: "9000",
+          categoryNodeId: "taxes",
+          processingStatus: "error"
+        }
+      ])
+    ).toEqual({
+      totalAmount: 4000.5,
+      items: [
+        {
+          categoryId: "taxes",
+          categoryName: "Impuestos",
+          amount: 3000,
+          percentage: 75,
+          paymentCount: 1
+        },
+        {
+          categoryId: "services",
+          categoryName: "Servicios",
+          amount: 1000.5,
+          percentage: 25,
+          paymentCount: 1
+        }
+      ]
+    });
+  });
 });

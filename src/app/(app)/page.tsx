@@ -123,7 +123,12 @@ async function getDashboardPageData(filters: DashboardFilters) {
       compliance,
       dataNotice: null,
       fiscalPeriods: buildAvailableFiscalPeriods(periodSourceDocuments),
-      monthlySeries: getMonthlySeries(documents),
+      monthlySeries: getMonthlySeries(documents, {
+        fiscalYear:
+          filters.fiscalPeriod && !filters.fiscalPeriod.includes("-")
+            ? filters.fiscalPeriod
+            : null
+      }),
       overdue: getOverduePayments(compliance),
       upcoming: getUpcomingPayments(compliance)
     };

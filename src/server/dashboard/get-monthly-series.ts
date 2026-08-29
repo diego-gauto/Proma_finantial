@@ -6,7 +6,14 @@ export interface MonthlySeriesItem {
   paymentCount: number;
 }
 
-export function getMonthlySeries(documents: DocumentRow[]): MonthlySeriesItem[] {
+interface MonthlySeriesOptions {
+  fiscalYear?: string | null;
+}
+
+export function getMonthlySeries(
+  documents: DocumentRow[],
+  options: MonthlySeriesOptions = {}
+): MonthlySeriesItem[] {
   const byMonth = new Map<string, { amount: number; paymentCount: number }>();
 
   for (const document of documents) {
@@ -23,6 +30,19 @@ export function getMonthlySeries(documents: DocumentRow[]): MonthlySeriesItem[] 
     current.amount += Number(document.amount);
     current.paymentCount += 1;
     byMonth.set(month, current);
+  }
+
+  if (options.fiscalYear) {
+    return Array.from({ length: 12 }, (_, index) => {
+      const month = `${options.fiscalYear}-${String(index + 1).padStart(2, "0")}`;
+      const total = byMonth.get(month);
+
+      return {
+        month,
+        amount: total ? Math.round(total.amount * 100) / 100 : 0,
+        paymentCount: total?.paymentCount ?? 0
+      };
+    });
   }
 
   return [...byMonth.entries()]

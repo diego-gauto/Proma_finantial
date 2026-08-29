@@ -279,21 +279,33 @@ pnpm run build
 **Files:**
 - Create: `src/server/dashboard/get-category-spend.ts`
 - Create: `src/components/dashboard/CategorySpendPie.tsx`
+- Create: `src/components/dashboard/CategorySpendPie.module.css`
 - Create: `src/components/dashboard/CategorySpendList.tsx`
+- Create: `src/components/dashboard/CategorySpendList.module.css`
+- Modify: `package.json`
+- Modify: `pnpm-lock.yaml`
 
 **Step 1: Tests**
 
 Cubrir totales por categoria, porcentajes y total filtrado.
 
-**Step 2: UI**
+**Step 2: Dependencia**
 
-Mostrar torta de gastos por categoria y a la derecha listado con categoria, monto, porcentaje y cantidad de pagos.
+Instalar `recharts` con `pnpm`.
 
-**Step 3: Graficos propios**
+**Step 3: UI**
+
+Mostrar dona de gastos por categoria y a la derecha listado sincronizado con categoria, monto, porcentaje y cantidad de pagos. La dona debe tener tooltip custom, centro dinamico y hover/click alineado con el estilo de referencia de Metabase.
+
+**Step 4: Graficos propios**
 
 No embeber cards recuperadas del Proyecto 2, porque fueron pruebas. Implementar los graficos del tablero operativo con Recharts y mantener Metabase fuera del flujo principal por ahora.
 
-**Step 4: Verificar**
+**Step 5: Estilos**
+
+No usar Bootstrap, Tailwind ni frameworks CSS. Los estilos del grafico y listado viven en CSS Modules por componente.
+
+**Step 6: Verificar**
 
 ```bash
 pnpm run test
@@ -305,7 +317,9 @@ pnpm run build
 **Files:**
 - Create: `src/server/dashboard/get-monthly-series.ts`
 - Create: `src/components/dashboard/MonthlyAmountChart.tsx`
+- Create: `src/components/dashboard/MonthlyAmountChart.module.css`
 - Create: `src/components/dashboard/MonthlyPaymentCountChart.tsx`
+- Create: `src/components/dashboard/MonthlyPaymentCountChart.module.css`
 
 **Step 1: Tests**
 
@@ -313,9 +327,13 @@ Cubrir agrupacion por mes para importe gastado y cantidad de pagos.
 
 **Step 2: UI**
 
-Mostrar grafico de meses del periodo con importe gastado y otro con cantidad de pagos. Si no hay periodo seleccionado, mostrar estado vacio util.
+Mostrar graficos de linea con Recharts, a ancho completo, para importe gastado por mes y cantidad de pagos por mes. Deben recalcularse para los filtros activos y mostrar meses sin pagos con valor cero cuando exista un periodo anual.
 
-**Step 3: Verificar**
+**Step 3: Estilos**
+
+No usar Bootstrap, Tailwind ni frameworks CSS. Los estilos de cada grafico viven en CSS Modules por componente.
+
+**Step 4: Verificar**
 
 ```bash
 pnpm run test
@@ -405,17 +423,29 @@ pnpm run build
 - Create: `src/app/(app)/documentos/page.tsx`
 - Create: `src/app/(app)/documentos/[id]/page.tsx`
 - Create: `src/components/documents/DocumentsTable.tsx`
+- Create: `src/components/documents/DocumentsTable.module.css`
 - Create: `src/components/documents/DocumentFilters.tsx`
+- Create: `src/components/documents/DocumentFilters.module.css`
+- Modify: `package.json`
+- Modify: `pnpm-lock.yaml`
 
 **Step 1: Tests**
 
 Cubrir filtros por fecha de pago, periodo fiscal, categoria, estado y texto libre.
 
-**Step 2: UI**
+**Step 2: Dependencia**
 
-Tabla con breadcrumb, motivo, monto, moneda, estado y link a Drive.
+Instalar `@tanstack/react-table` con `pnpm`.
 
-**Step 3: Verificar**
+**Step 3: UI**
+
+Tabla con TanStack Table, breadcrumb, motivo, monto, moneda, estado y link a Drive. La tabla debe prepararse para orden, filtros y paginacion server-side cuando el dataset crezca.
+
+**Step 4: Estilos**
+
+No usar Bootstrap, Tailwind ni frameworks CSS. La tabla y filtros viven en CSS Modules por componente.
+
+**Step 5: Verificar**
 
 ```bash
 pnpm run test
