@@ -54,16 +54,14 @@ function CategoryCloudFilterSurface({
   const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null);
 
   const levels = getCategoryFilterLevels(categories, displayCategoryId);
-  const selectedCategory = displayCategoryId
-    ? categories.find((category) => category.id === displayCategoryId) ?? null
-    : null;
   const selectedPath = useMemo(
     () => getCategoryPath(categories, displayCategoryId),
     [categories, displayCategoryId]
   );
+  const centerCategory = selectedPath[0] ?? null;
   const selectedPathIds = new Set(selectedPath.map((category) => category.id));
   const rootCategories = levels[0]?.categories ?? [];
-  const selectedRootId = selectedPath[0]?.id ?? null;
+  const selectedRootId = centerCategory?.id ?? null;
   const sideCategories = rootCategories.filter(
     (category) => category.id !== selectedRootId
   );
@@ -75,6 +73,7 @@ function CategoryCloudFilterSurface({
       return;
     }
 
+    const scrollY = window.scrollY;
     setPendingCategoryId(categoryId);
     setIsChangingTree(true);
 
@@ -84,7 +83,12 @@ function CategoryCloudFilterSurface({
     }, 280);
 
     window.setTimeout(() => {
-      router.push(buildDashboardQuery({ ...filters, categoryId }));
+      router.push(buildDashboardQuery({ ...filters, categoryId }), {
+        scroll: false
+      });
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ left: 0, top: scrollY, behavior: "auto" });
+      });
     }, 880);
   };
 
@@ -125,22 +129,22 @@ function CategoryCloudFilterSurface({
             <motion.button
               className={[
                 styles.centerChip,
-                selectedCategory ? styles.centerChipSelected : "",
+                centerCategory ? styles.centerChipSelected : "",
                 isChangingTree ? styles.centerChipSwitching : ""
               ]
                 .filter(Boolean)
                 .join(" ")}
               layout
               layoutId={
-                selectedCategory ? `category-${selectedCategory.id}` : "all"
+                centerCategory ? `category-${centerCategory.id}` : "all"
               }
-              onClick={() => selectedCategory && goToCategory(selectedCategory.id)}
+              onClick={() => centerCategory && goToCategory(centerCategory.id)}
               transition={centerTransition}
               type="button"
             >
-              <span>{selectedCategory?.name ?? "Todas las categorias"}</span>
+              <span>{centerCategory?.name ?? "Todas las categorias"}</span>
               <strong>
-                {selectedCategory ? "Categoria seleccionada" : "Vista completa"}
+                {centerCategory ? "Raiz seleccionada" : "Vista completa"}
               </strong>
             </motion.button>
 
@@ -156,7 +160,7 @@ function CategoryCloudFilterSurface({
                     transition: { duration: 0.24 }
                   }}
                   initial={{ opacity: 0, y: -12 }}
-                  key={selectedCategory?.id ?? "all-tree"}
+                  key={centerCategory?.id ?? "all-tree"}
                   transition={treeTransition}
                   aria-label="Arbol de subcategorias"
                 >
@@ -217,6 +221,27 @@ function TreeLevel({
   selectedCategoryId: string | null;
   selectedPathIds: Set<string>;
 }) {
+  const pathCategory = levelCategories.find((category) =>
+    selectedPathIds.has(category.id)
+  );
+  const orderedCategories = pathCategory
+    ? [
+        ...levelCategories.filter((category) => category.id !== pathCategory.id),
+        pathCategory
+      ]
+    : levelCategories;
+  const leftCount = pathCategory
+    ? Math.ceil((orderedCategories.length - 1) / 2)
+    : 0;
+  const leftCategories = pathCategory
+    ? orderedCategories.slice(0, leftCount)
+    : [];
+  const rightCategories = pathCategory
+    ? orderedCategories.slice(leftCount, -1)
+    : [];
+  const centeredCategories = pathCategory ? [pathCategory] : levelCategories;
+  const connectorCount = pathCategory ? orderedCategories.length : levelCategories.length;
+
   return (
     <motion.div
       animate={{ opacity: 1, y: 0 }}
@@ -229,26 +254,8 @@ function TreeLevel({
       initial={{ opacity: 0, y: -12 }}
       transition={{ ...treeTransition, delay: index * 0.12 }}
     >
-      <svg
-        className={styles.treeConnector}
-        preserveAspectRatio="none"
-        viewBox="0 0 100 34"
-        aria-hidden="true"
-      >
-        <motion.path
-          d="M50 0 C50 14 18 12 18 32 M50 0 C50 14 82 12 82 32"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeWidth="2"
-          initial={{ pathLength: 0, opacity: 0.2 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          exit={{ pathLength: 0, opacity: 0 }}
-          transition={{ ...treeTransition, delay: index * 0.12 + 0.08 }}
-        />
-      </svg>
       <motion.div
-        className={styles.treeChips}
+        className={styles.treeBranch}
         initial="hidden"
         animate="visible"
         exit="hidden"
@@ -262,29 +269,168 @@ function TreeLevel({
           }
         }}
       >
-        {levelCategories.map((category) => {
-          const isSelected = selectedCategoryId === category.id;
-
-          return (
-            <CategoryButton
-              category={category}
-              isActive={selectedPathIds.has(category.id)}
-              isTreeNode
-              isPending={pendingCategoryId === category.id}
-              key={category.id}
-              layoutId={isSelected ? undefined : `category-${category.id}`}
-              onClick={() => onSelect(category.id)}
-            />
-          );
-        })}
+        <StraightTreeConnector
+          childCount={connectorCount}
+          hasCenteredSelection={Boolean(pathCategory)}
+          levelIndex={index}
+        />
+        <div className={styles.treeChips}>
+          <div className={styles.treeSideGroup}>
+            {leftCategories.map((category) => (
+              <TreeCategoryButton
+                category={category}
+                key={category.id}
+                onSelect={onSelect}
+                pendingCategoryId={pendingCategoryId}
+                selectedCategoryId={selectedCategoryId}
+                selectedPathIds={selectedPathIds}
+              />
+            ))}
+          </div>
+          <div className={styles.treeCenterGroup}>
+            {centeredCategories.map((category) => (
+              <TreeCategoryButton
+                category={category}
+                key={category.id}
+                onSelect={onSelect}
+                pendingCategoryId={pendingCategoryId}
+                selectedCategoryId={selectedCategoryId}
+                selectedPathIds={selectedPathIds}
+              />
+            ))}
+          </div>
+          <div className={styles.treeSideGroup}>
+            {rightCategories.map((category) => (
+              <TreeCategoryButton
+                category={category}
+                key={category.id}
+                onSelect={onSelect}
+                pendingCategoryId={pendingCategoryId}
+                selectedCategoryId={selectedCategoryId}
+                selectedPathIds={selectedPathIds}
+              />
+            ))}
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );
 }
 
+function TreeCategoryButton({
+  category,
+  onSelect,
+  pendingCategoryId,
+  selectedCategoryId,
+  selectedPathIds
+}: {
+  category: CategoryNodeRow;
+  onSelect: (categoryId: string) => void;
+  pendingCategoryId: string | null;
+  selectedCategoryId: string | null;
+  selectedPathIds: Set<string>;
+}) {
+  const isSelected = selectedCategoryId === category.id;
+
+  return (
+    <CategoryButton
+      category={category}
+      isActive={selectedPathIds.has(category.id)}
+      isTreeNode
+      isPending={pendingCategoryId === category.id}
+      layoutId={isSelected ? undefined : `category-${category.id}`}
+      onClick={() => onSelect(category.id)}
+    />
+  );
+}
+
+function StraightTreeConnector({
+  childCount,
+  hasCenteredSelection,
+  levelIndex
+}: {
+  childCount: number;
+  hasCenteredSelection: boolean;
+  levelIndex: number;
+}) {
+  if (!childCount) {
+    return null;
+  }
+
+  const childPositions = getConnectorPositions(childCount, hasCenteredSelection);
+  const parentX = 50;
+  const horizontalStart = Math.min(parentX, ...childPositions);
+  const horizontalEnd = Math.max(parentX, ...childPositions);
+  const path = [
+    `M ${parentX} 0 V 18`,
+    horizontalStart === horizontalEnd
+      ? ""
+      : `M ${horizontalStart} 18 H ${horizontalEnd}`,
+    ...childPositions.map((position) => `M ${position} 18 V 42`)
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <svg
+      className={styles.treeConnector}
+      preserveAspectRatio="none"
+      viewBox="0 0 100 44"
+      aria-hidden="true"
+    >
+      <motion.path
+        d={path}
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        initial={{ pathLength: 0, opacity: 0.18 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        exit={{ pathLength: 0, opacity: 0 }}
+        transition={{
+          ...treeTransition,
+          delay: levelIndex * 0.12 + 0.08
+        }}
+      />
+    </svg>
+  );
+}
+
+function getConnectorPositions(
+  childCount: number,
+  hasCenteredSelection: boolean
+): number[] {
+  if (childCount === 1) {
+    return [50];
+  }
+
+  if (!hasCenteredSelection) {
+    return Array.from(
+      { length: childCount },
+      (_, index) => 8 + (index * 84) / (childCount - 1)
+    );
+  }
+
+  const sideCount = childCount - 1;
+  const leftCount = Math.ceil(sideCount / 2);
+  const rightCount = sideCount - leftCount;
+  const leftPositions = Array.from({ length: leftCount }, (_, index) => {
+    const divisor = Math.max(1, leftCount);
+    return 16 + (index * 24) / divisor;
+  });
+  const rightPositions = Array.from({ length: rightCount }, (_, index) => {
+    const divisor = Math.max(1, rightCount);
+    return 60 + (index * 24) / divisor;
+  });
+
+  return [...leftPositions, 50, ...rightPositions];
+}
+
 function CategoryButton({
   category,
   isActive,
+  isParent = false,
   isTreeNode = false,
   isPending,
   layoutId,
@@ -292,6 +438,7 @@ function CategoryButton({
 }: {
   category: CategoryNodeRow;
   isActive: boolean;
+  isParent?: boolean;
   isTreeNode?: boolean;
   isPending: boolean;
   layoutId?: string;
@@ -304,6 +451,7 @@ function CategoryButton({
         styles.categoryChip,
         isTreeNode ? styles.treeCategoryChip : "",
         isActive ? styles.categoryChipSelected : "",
+        isParent ? styles.categoryChipParent : "",
         isPending ? styles.categoryChipPending : ""
       ]
         .filter(Boolean)
