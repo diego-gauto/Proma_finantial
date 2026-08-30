@@ -1,6 +1,7 @@
 .panel {
   display: grid;
-  gap: 12px;
+  gap: 18px;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
@@ -13,8 +14,143 @@
   font-size: 15px;
 }
 
-.chipRow {
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reset,
+.yearChip,
+.centerYear,
+.monthChip {
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    background-color 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reset {
+  min-height: 34px;
+  border-radius: 6px;
+  padding: 0 12px;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 0.8fr);
+  align-items: center;
+  gap: 24px;
+  min-height: 122px;
+}
+
+.sideYears {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.yearChip {
+  min-height: 44px;
+  border-radius: 999px;
+  padding: 0 18px;
+  color: var(--text-muted);
+}
+
+.yearChip:hover,
+.yearChipTravelling {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  transform: translateX(42px) scale(1.06);
+}
+
+.centerYear {
+  display: grid;
+  gap: 4px;
+  min-height: 100px;
+  border-color: var(--accent);
+  border-radius: 18px;
+  background: rgb(25 182 164 / 18%);
+  padding: 16px 22px;
+  text-align: center;
+  box-shadow: 0 18px 44px rgb(25 182 164 / 14%);
+}
+
+.centerYear strong {
+  font-size: 42px;
+  line-height: 1;
+}
+
+.centerYear span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.centerYearTravelling {
+  transform: scale(1.06);
+  box-shadow: 0 24px 68px rgb(69 218 203 / 20%);
+}
+
+.monthRail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.monthChip {
+  min-height: 36px;
+  border-radius: 999px;
+  padding: 0 13px;
+  opacity: 0;
+  animation: monthArrive 460ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.monthChip:hover,
+.monthChipSelected {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #061018;
+  transform: translateY(-2px) scale(1.03);
+}
+
+.monthChipTravelling {
+  opacity: 0.25;
+  transform: translateY(-14px) scale(0.92);
+}
+
+@keyframes monthArrive {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 760px) {
+  .stage {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reset,
+  .yearChip,
+  .centerYear,
+  .monthChip {
+    animation: none;
+    opacity: 1;
+    transition: none;
+  }
 }

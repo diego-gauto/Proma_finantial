@@ -10,6 +10,12 @@ export interface CategoryFilterLevel {
   categories: CategoryNodeRow[];
 }
 
+export interface FiscalPeriodStage {
+  selectedYear: string;
+  sideYears: string[];
+  visibleMonths: string[];
+}
+
 type SearchParamValue = string | string[] | undefined;
 
 export function parseDashboardFilters(
@@ -77,6 +83,26 @@ export function getMonthlyFiscalYear(
   }
 
   return fiscalPeriod ?? String(today.getFullYear());
+}
+
+export function getFiscalPeriodStage(
+  periods: string[],
+  fiscalPeriod: string | null,
+  today = new Date()
+): FiscalPeriodStage {
+  const currentYear = String(today.getFullYear());
+  const selectedYear = fiscalPeriod?.slice(0, 4) ?? currentYear;
+  const years = periods
+    .filter((period) => /^\d{4}$/.test(period))
+    .filter((period, index, items) => items.indexOf(period) === index);
+
+  return {
+    selectedYear,
+    sideYears: years.filter((year) => year !== selectedYear),
+    visibleMonths: periods.filter((period) =>
+      period.startsWith(`${selectedYear}-`)
+    )
+  };
 }
 
 export function getCategoryFilterLevels(

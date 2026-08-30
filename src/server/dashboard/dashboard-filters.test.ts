@@ -5,6 +5,7 @@ import {
   buildDashboardQuery,
   getAutoSelectedCategoryId,
   getCategoryFilterLevels,
+  getFiscalPeriodStage,
   getMonthlyFiscalYear,
   parseDashboardFilters
 } from "./dashboard-filters";
@@ -89,6 +90,39 @@ describe("getMonthlyFiscalYear", () => {
   it("uses the selected fiscal year and omits monthly period charts", () => {
     expect(getMonthlyFiscalYear("2026", new Date("2026-08-29"))).toBe("2026");
     expect(getMonthlyFiscalYear("2026-08", new Date("2026-08-29"))).toBeNull();
+  });
+});
+
+describe("getFiscalPeriodStage", () => {
+  it("centers the selected year and exposes only that year months", () => {
+    expect(
+      getFiscalPeriodStage(
+        [
+          "2026",
+          "2026-01",
+          "2026-02",
+          "2025",
+          "2025-01",
+          "2025-02"
+        ],
+        "2025-02",
+        new Date("2026-08-30")
+      )
+    ).toEqual({
+      sideYears: ["2026"],
+      selectedYear: "2025",
+      visibleMonths: ["2025-01", "2025-02"]
+    });
+  });
+
+  it("defaults the center year to the current year", () => {
+    expect(
+      getFiscalPeriodStage(["2026", "2026-01"], null, new Date("2026-08-30"))
+    ).toEqual({
+      sideYears: [],
+      selectedYear: "2026",
+      visibleMonths: ["2026-01"]
+    });
   });
 });
 
