@@ -8,6 +8,10 @@ const serverEnvSchema = z.object({
       (value) => value.startsWith("postgresql://") || value.startsWith("postgres://"),
       "DATABASE_URL must be a PostgreSQL connection string"
     ),
+  METABASE_SITE_URL: z.preprocess(
+    (value) => (value === "" || value === undefined ? null : value),
+    z.string().url().nullable()
+  ),
   SESSION_SECRET: z.string().min(32)
 });
 

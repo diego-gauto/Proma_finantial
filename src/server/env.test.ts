@@ -6,6 +6,7 @@ describe("readServerEnv", () => {
   it("accepts a PostgreSQL database URL and strong session secret", () => {
     const env = readServerEnv({
       DATABASE_URL: "postgresql://app:secret@localhost:55432/financial_dashboard",
+      METABASE_SITE_URL: "http://localhost:3000",
       SESSION_SECRET: "a-session-secret-with-at-least-32-chars"
     });
 
@@ -13,6 +14,17 @@ describe("readServerEnv", () => {
       "postgresql://app:secret@localhost:55432/financial_dashboard"
     );
     expect(env.SESSION_SECRET).toBe("a-session-secret-with-at-least-32-chars");
+    expect(env.METABASE_SITE_URL).toBe("http://localhost:3000");
+  });
+
+  it("accepts empty optional Metabase settings", () => {
+    const env = readServerEnv({
+      DATABASE_URL: "postgresql://app:secret@localhost:55432/financial_dashboard",
+      METABASE_SITE_URL: "",
+      SESSION_SECRET: "a-session-secret-with-at-least-32-chars"
+    });
+
+    expect(env.METABASE_SITE_URL).toBeNull();
   });
 
   it("rejects an invalid database URL", () => {

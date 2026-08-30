@@ -520,6 +520,8 @@ pnpm run build
 
 ## Fase 6 - Usuarios y reportes opcionales
 
+**Estado 2026-08-29:** completada sobre las rutas actuales `/users` y `/reports`. Incluye alta de usuarios con hash de password, listado publico sin exponer hashes y pantalla de reportes opcionales con link externo a Metabase solo si `METABASE_SITE_URL` esta configurado.
+
 ### Task 6.1: Alta de usuarios
 
 **Files:**
