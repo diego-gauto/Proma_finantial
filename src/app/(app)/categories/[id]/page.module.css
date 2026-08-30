@@ -1,0 +1,64 @@
+.page {
+  display: grid;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.titleBlock {
+  display: grid;
+  gap: 6px;
+}
+
+.titleBlock h1 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.titleBlock p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  padding: 14px;
+}
+
+.metric span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.metric strong {
+  font-size: 24px;
+}
+
+.rulesGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .summaryGrid,
+  .rulesGrid {
+    grid-template-columns: 1fr;
+  }
+}

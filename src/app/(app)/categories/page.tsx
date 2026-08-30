@@ -1,12 +1,42 @@
+import { CategoryTree } from "@/components/categories/CategoryTree";
 import { Card } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { listCategoryNodes } from "@/db/categories.repository";
+import { listDocuments } from "@/db/documents.repository";
+import { buildCategoryTree } from "@/server/categories/category-tree";
+import { getCategorySummaries } from "@/server/categories/category-summary";
 
-export default function CategoriesPage() {
+import styles from "./page.module.css";
+
+export const dynamic = "force-dynamic";
+
+export default async function CategoriesPage() {
+  const [categories, documents] = await Promise.all([
+    listCategoryNodes(),
+    listDocuments({ limit: 1000 })
+  ]);
+  const activeCategories = categories.filter((category) => category.active);
+  const summaries = getCategorySummaries(categories, documents);
+
   return (
-    <Card title="Categorias">
-      <EmptyState title="Arbol pendiente">
-        La Fase 2 prepara el arbol y la Fase 4 agrega edicion y reglas por nodo.
-      </EmptyState>
-    </Card>
+    <div className={styles.page}>
+      <section className={styles.summaryGrid}>
+        <div className={styles.metric}>
+          <span>Categorias totales</span>
+          <strong>{categories.length}</strong>
+        </div>
+        <div className={styles.metric}>
+          <span>Categorias activas</span>
+          <strong>{activeCategories.length}</strong>
+        </div>
+        <div className={styles.metric}>
+          <span>Documentos vinculados</span>
+          <strong>{documents.filter((document) => document.categoryNodeId).length}</strong>
+        </div>
+      </section>
+
+      <Card title="Arbol de categorias">
+        <CategoryTree nodes={buildCategoryTree(categories)} summaries={summaries} />
+      </Card>
+    </div>
   );
 }

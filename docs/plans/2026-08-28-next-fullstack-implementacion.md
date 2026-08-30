@@ -464,6 +464,8 @@ pnpm run build
 
 ## Fase 5 - Categorias y reglas por nodo
 
+**Estado 2026-08-29:** completada sobre las rutas actuales `/categories`, `/categories/[id]` y `/rules`. Incluye arbol navegable, detalle por nodo con documentos descendientes, historial de reglas, alta de nuevas reglas y cierre historico de reglas vigentes sin editar destructivamente el pasado.
+
 ### Task 5.1: Arbol visual de categorias
 
 **Files:**

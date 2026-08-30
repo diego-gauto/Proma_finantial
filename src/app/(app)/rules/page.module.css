@@ -1,0 +1,37 @@
+.page {
+  display: grid;
+  gap: 16px;
+}
+
+.rules {
+  display: grid;
+  gap: 10px;
+}
+
+.rule {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.rule:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.rule a {
+  color: var(--text);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}

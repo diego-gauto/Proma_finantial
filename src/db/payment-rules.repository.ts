@@ -1,5 +1,6 @@
 import { getDbPool } from "@/db/client";
 import type { PaymentRuleRow } from "@/db/types";
+import type { PaymentRuleInput } from "@/server/payment-rules/payment-rule-form";
 
 interface PaymentRuleDbRow {
   id: string;
@@ -84,4 +85,116 @@ export async function listPaymentRules(): Promise<PaymentRuleRow[]> {
   );
 
   return result.rows.map(toPaymentRule);
+}
+
+export async function createPaymentRule(
+  input: PaymentRuleInput
+): Promise<PaymentRuleRow> {
+  const result = await getDbPool().query<PaymentRuleDbRow>(
+    `
+      insert into payment_rules (
+        category_node_id,
+        applies_to_descendants,
+        name,
+        interval_months,
+        custom_period_months,
+        anchor_period_month,
+        fiscal_period_kind,
+        payment_month,
+        payment_day,
+        payment_year_offset,
+        payment_month_offset,
+        active_from,
+        active_to,
+        grace_days,
+        reminder_days_before,
+        active,
+        notes
+      )
+      values (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        $12,
+        $13,
+        $14,
+        $15,
+        true,
+        $16
+      )
+      returning
+        id,
+        category_node_id,
+        applies_to_descendants,
+        name,
+        case interval_months
+          when 1 then 'monthly'
+          when 2 then 'bimonthly'
+          when 3 then 'quarterly'
+          when 4 then 'four_monthly'
+          when 6 then 'semiannual'
+          when 12 then 'annual'
+          else case
+            when custom_period_months is null or cardinality(custom_period_months) = 0 then 'no_pattern'
+            else 'custom'
+          end
+        end as cadence,
+        custom_period_months[1] as custom_period_months,
+        anchor_period_month,
+        fiscal_period_kind,
+        active_from::text,
+        active_to::text,
+        payment_month,
+        payment_day,
+        payment_year_offset,
+        payment_month_offset,
+        grace_days,
+        reminder_days_before,
+        active,
+        notes
+    `,
+    [
+      input.categoryNodeId,
+      input.appliesToDescendants,
+      input.name,
+      input.intervalMonths,
+      input.customPeriodMonths ? [input.customPeriodMonths] : null,
+      input.intervalMonths ? 1 : null,
+      input.fiscalPeriodKind,
+      input.paymentMonth,
+      input.paymentDay,
+      input.paymentYearOffset,
+      input.paymentMonthOffset,
+      input.activeFrom,
+      input.activeTo,
+      input.graceDays,
+      input.reminderDaysBefore,
+      input.notes
+    ]
+  );
+
+  return toPaymentRule(result.rows[0]);
+}
+
+export async function closePaymentRule(
+  ruleId: string,
+  activeTo: string
+): Promise<void> {
+  await getDbPool().query(
+    `
+      update payment_rules
+      set active_to = $2,
+          active = false
+      where id = $1
+    `,
+    [ruleId, activeTo]
+  );
 }
