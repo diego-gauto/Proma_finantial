@@ -62,7 +62,7 @@
 
 .sideYears {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
   align-content: center;
   min-height: 112px;
@@ -141,17 +141,19 @@
 
 .monthRail {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   gap: 8px;
-  width: min(100%, 520px);
+  width: min(100%, 760px);
 }
 
 .monthChip {
+  min-width: 78px;
   min-height: 36px;
   border-radius: 999px;
   padding: 0 13px;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .monthChip:hover,
@@ -171,9 +173,14 @@
   .sideYears,
   .sideYears:first-child,
   .sideYears:last-child {
+    flex-wrap: wrap;
     justify-content: center;
     min-height: auto;
     padding-top: 0;
+  }
+
+  .monthRail {
+    flex-wrap: wrap;
   }
 
   .centerStack {

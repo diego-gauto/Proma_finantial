@@ -51,21 +51,21 @@
 
 .stage {
   display: grid;
-  grid-template-columns: minmax(150px, 1fr) minmax(520px, 640px) minmax(150px, 1fr);
+  grid-template-columns: minmax(250px, 1fr) minmax(520px, 600px) minmax(250px, 1fr);
   align-items: start;
   gap: 20px;
   min-height: 310px;
 }
 
 .sideRail {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 132px));
+  gap: 8px;
   align-content: center;
   align-items: center;
   min-height: 190px;
   padding-top: 34px;
-  opacity: 0.72;
+  opacity: 0.68;
 }
 
 .sideRail:first-child {
@@ -74,6 +74,14 @@
 
 .sideRail:last-child {
   justify-content: flex-start;
+}
+
+.sideRail .categoryChip {
+  width: 100%;
+  max-width: none;
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 14px;
 }
 
 .centerStack {
@@ -206,55 +214,37 @@
   z-index: 1;
   display: grid;
   width: min(100%, 640px);
-  gap: 10px;
+  min-height: 128px;
+}
+
+.treeConnectors {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  color: rgb(85 240 221 / 86%);
+  filter: drop-shadow(0 0 12px rgb(85 240 221 / 32%));
+  overflow: visible;
+  pointer-events: none;
+}
+
+.treeLevels {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 100%;
+  gap: 56px;
+  padding-top: 56px;
 }
 
 .treeLevel {
-  display: grid;
-  justify-items: center;
-  gap: 0;
-}
-
-.treeBranch {
-  display: grid;
-  justify-items: center;
-  width: 100%;
-  gap: 8px;
-}
-
-.treeConnector {
-  width: min(100%, 420px);
-  height: 44px;
-  color: rgb(85 240 221 / 86%);
-  filter: drop-shadow(0 0 12px rgb(85 240 221 / 32%));
-}
-
-.treeChips {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
   align-items: start;
   gap: 8px;
   width: 100%;
-}
-
-.treeSideGroup,
-.treeCenterGroup {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-}
-
-.treeSideGroup:first-child {
-  justify-content: flex-end;
-}
-
-.treeSideGroup:last-child {
-  justify-content: flex-start;
-}
-
-.treeCenterGroup {
-  justify-content: center;
-  min-width: 112px;
 }
 
 .empty {
@@ -270,6 +260,8 @@
   .sideRail,
   .sideRail:first-child,
   .sideRail:last-child {
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     min-height: auto;
     padding-top: 0;
@@ -279,16 +271,8 @@
     order: -1;
   }
 
-  .treeChips {
-    grid-template-columns: 1fr;
-  }
-
-  .treeSideGroup,
-  .treeSideGroup:first-child,
-  .treeSideGroup:last-child,
-  .treeCenterGroup {
+  .treeLevel {
     flex-wrap: wrap;
-    justify-content: center;
   }
 }
 
