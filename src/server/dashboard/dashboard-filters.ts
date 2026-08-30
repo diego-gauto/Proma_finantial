@@ -105,6 +105,10 @@ export function getFiscalPeriodStage(
   };
 }
 
+export function shouldRevealFiscalMonths(fiscalPeriod: string | null): boolean {
+  return Boolean(fiscalPeriod);
+}
+
 export function getCategoryFilterLevels(
   categories: CategoryNodeRow[],
   selectedCategoryId: string | null

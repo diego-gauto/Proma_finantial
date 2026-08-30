@@ -7,6 +7,7 @@ import {
   getCategoryFilterLevels,
   getFiscalPeriodStage,
   getMonthlyFiscalYear,
+  shouldRevealFiscalMonths,
   parseDashboardFilters
 } from "./dashboard-filters";
 import type { CategoryNodeRow } from "@/db/types";
@@ -123,6 +124,14 @@ describe("getFiscalPeriodStage", () => {
       selectedYear: "2026",
       visibleMonths: ["2026-01"]
     });
+  });
+});
+
+describe("shouldRevealFiscalMonths", () => {
+  it("keeps months hidden until a fiscal year or month is selected", () => {
+    expect(shouldRevealFiscalMonths(null)).toBe(false);
+    expect(shouldRevealFiscalMonths("2026")).toBe(true);
+    expect(shouldRevealFiscalMonths("2026-08")).toBe(true);
   });
 });
 

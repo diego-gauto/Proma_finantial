@@ -6,7 +6,7 @@
 
 **Architecture:** Una sola app Next.js en la raiz. Server Components cargan datos de PostgreSQL, Server Actions realizan mutations y Route Handlers se reservan para endpoints necesarios. La logica sensible vive en `src/server/`; el acceso a datos en `src/db/`; los componentes visuales en `src/components/`.
 
-**Tech Stack:** pnpm, Node 22, Next.js estable, React estable, TypeScript strict, PostgreSQL, CSS Modules, Recharts, TanStack Table, Vitest. No usar Bootstrap, Tailwind ni librerias CSS/frameworks visuales. Metabase queda fuera del flujo principal por ahora y solo como referencia visual/reportes externos futuros.
+**Tech Stack:** pnpm, Node 22, Next.js estable, React estable, TypeScript strict, PostgreSQL, CSS Modules, Recharts, TanStack Table, Framer Motion, Vitest. No usar Bootstrap, Tailwind ni librerias CSS/frameworks visuales. Metabase queda fuera del flujo principal por ahora y solo como referencia visual/reportes externos futuros.
 
 ---
 
@@ -267,6 +267,10 @@ Cubrir serializacion de filtros en URL, seleccion progresiva de subcategorias y 
 **Step 2: UI**
 
 Modo oscuro por defecto. Periodo fiscal en un recuadro propio. Categorias raiz en otro recuadro. Al seleccionar una categoria, mostrar sus subcategorias disponibles en un nuevo recuadro separado; repetir recursivamente por cada nivel seleccionado. Si el nivel siguiente tiene una sola subcategoria activa, usarla automaticamente como categoria efectiva.
+
+**Ajuste visual 2026-08-30**
+
+La pantalla principal usa Framer Motion para los filtros principales. La categoria seleccionada debe viajar visualmente desde los laterales al centro, crecer y quedar iluminada; las categorias no seleccionadas quedan reacomodadas a los costados con menor presencia visual. El arbol de subcategorias se dibuja con conectores SVG animados despues de que el nodo central llega a destino, y al cambiar a otra categoria se desmonta primero el arbol anterior antes de entrar la nueva seleccion. En periodo fiscal, el anio operativo queda centrado y los meses se muestran solo cuando el usuario abre o selecciona ese anio; otros anios quedan a los costados y viajan al centro al seleccionarlos.
 
 **Step 3: Recalculo**
 
