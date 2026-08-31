@@ -3,9 +3,11 @@
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
+  type CSSProperties,
   type RefObject,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState
@@ -150,6 +152,7 @@ function CategoryCloudFilterSurface({
               ref={centerNodeRef}
               transition={centerTransition}
               type="button"
+              data-category-center="true"
             >
               <span>{centerCategory?.name ?? "Todas las categorias"}</span>
               <strong>
@@ -218,7 +221,10 @@ function MeasuredCategoryTree({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const nodeRefs = useRef(new Map<string, HTMLButtonElement>());
+  const levelRefs = useRef(new Map<number, HTMLDivElement>());
   const [connectorGroups, setConnectorGroups] = useState<ConnectorGroup[]>([]);
+  const [levelOffsets, setLevelOffsets] = useState<number[]>([]);
+  const [treeSize, setTreeSize] = useState({ height: 1, width: 1 });
 
   const setNodeRef = useCallback(
     (categoryId: string) => (element: HTMLButtonElement | null) => {
@@ -231,16 +237,82 @@ function MeasuredCategoryTree({
     },
     []
   );
+  const setLevelRef = useCallback(
+    (levelIndex: number) => (element: HTMLDivElement | null) => {
+      if (element) {
+        levelRefs.current.set(levelIndex, element);
+        return;
+      }
+
+      levelRefs.current.delete(levelIndex);
+    },
+    []
+  );
 
   const measureConnectors = useCallback(() => {
     const container = containerRef.current;
-    const centerNode = centerNodeRef.current;
 
-    if (!container || !centerNode) {
+    if (!container) {
+      return;
+    }
+
+    const centerNode =
+      centerNodeRef.current ??
+      container.parentElement?.querySelector<HTMLButtonElement>(
+        "[data-category-center='true']"
+      );
+
+    if (!centerNode) {
       return;
     }
 
     const containerRect = container.getBoundingClientRect();
+    const nextTreeSize = {
+      height: Math.max(1, Math.ceil(containerRect.height)),
+      width: Math.max(1, Math.ceil(containerRect.width))
+    };
+
+    if (
+      nextTreeSize.height !== treeSize.height ||
+      nextTreeSize.width !== treeSize.width
+    ) {
+      setTreeSize(nextTreeSize);
+    }
+
+    const nextOffsets = levels.map((level, levelIndex) => {
+      const levelElement = levelRefs.current.get(levelIndex);
+
+      if (!levelElement) {
+        return 0;
+      }
+
+      const parentElement =
+        levelIndex === 0
+          ? centerNode
+          : nodeRefs.current.get(selectedPath[levelIndex]?.id ?? "");
+
+      if (!parentElement) {
+        return 0;
+      }
+
+      const parentRect = parentElement.getBoundingClientRect();
+      const levelRect = levelElement.getBoundingClientRect();
+      const previousOffset = levelOffsets[levelIndex] ?? 0;
+      const naturalLeft = levelRect.left - containerRect.left - previousOffset;
+      const parentX = parentRect.left + parentRect.width / 2 - containerRect.left;
+      const desiredLeft = clamp(
+        parentX - levelRect.width / 2,
+        0,
+        Math.max(0, containerRect.width - levelRect.width)
+      );
+
+      return Math.round(desiredLeft - naturalLeft);
+    });
+
+    if (!sameNumbers(nextOffsets, levelOffsets)) {
+      setLevelOffsets(nextOffsets);
+    }
+
     const nextGroups = levels.flatMap((level, levelIndex) => {
       const parentElement =
         levelIndex === 0
@@ -254,7 +326,7 @@ function MeasuredCategoryTree({
       const parentRect = parentElement.getBoundingClientRect();
       const parentPoint = {
         x: parentRect.left + parentRect.width / 2 - containerRect.left,
-        y: parentRect.bottom - containerRect.top
+        y: Math.max(0, parentRect.bottom - containerRect.top)
       };
       const children = level.categories.flatMap((category) => {
         const element = nodeRefs.current.get(category.id);
@@ -289,7 +361,7 @@ function MeasuredCategoryTree({
     });
 
     setConnectorGroups(nextGroups);
-  }, [centerNodeRef, levels, selectedPath]);
+  }, [centerNodeRef, levels, levelOffsets, selectedPath, treeSize]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(measureConnectors);
@@ -300,6 +372,10 @@ function MeasuredCategoryTree({
     }
 
     for (const element of nodeRefs.current.values()) {
+      resizeObserver.observe(element);
+    }
+
+    for (const element of levelRefs.current.values()) {
       resizeObserver.observe(element);
     }
 
@@ -316,6 +392,17 @@ function MeasuredCategoryTree({
     };
   }, [centerNodeRef, measureConnectors]);
 
+  useLayoutEffect(() => {
+    const firstFrame = window.requestAnimationFrame(() => {
+      measureConnectors();
+      window.requestAnimationFrame(measureConnectors);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+    };
+  }, [measureConnectors]);
+
   return (
     <motion.div
       animate={{ opacity: 1, y: 0 }}
@@ -331,7 +418,13 @@ function MeasuredCategoryTree({
       transition={treeTransition}
       aria-label="Arbol de subcategorias"
     >
-      <svg className={styles.treeConnectors} aria-hidden="true">
+      <svg
+        className={styles.treeConnectors}
+        height={treeSize.height}
+        viewBox={`0 0 ${treeSize.width} ${treeSize.height}`}
+        width={treeSize.width}
+        aria-hidden="true"
+      >
         {connectorGroups.map((group) => (
           <ConnectorGroupPath group={group} key={group.id} />
         ))}
@@ -339,30 +432,40 @@ function MeasuredCategoryTree({
 
       <div className={styles.treeLevels}>
         {levels.map((level, index) => (
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
+          <div
             className={styles.treeLevel}
-            exit={{
-              opacity: 0,
-              y: -8,
-              transition: { delay: Math.max(0, 0.08 - index * 0.02) }
-            }}
-            initial={{ opacity: 0, y: -12 }}
             key={level.parentId ?? `level-${index}`}
-            transition={{ ...treeTransition, delay: index * 0.12 }}
+            ref={setLevelRef(index)}
+            style={
+              {
+                "--tree-level-offset": `${levelOffsets[index] ?? 0}px`
+              } as CSSProperties
+            }
           >
-            {level.categories.map((category) => (
-              <TreeCategoryButton
-                category={category}
-                key={category.id}
-                onSelect={onSelect}
-                pendingCategoryId={pendingCategoryId}
-                selectedCategoryId={selectedCategoryId}
-                selectedPathIds={selectedPathIds}
-                setNodeRef={setNodeRef(category.id)}
-              />
-            ))}
-          </motion.div>
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className={styles.treeLevelItems}
+              exit={{
+                opacity: 0,
+                y: -8,
+                transition: { delay: Math.max(0, 0.08 - index * 0.02) }
+              }}
+              initial={{ opacity: 0, y: -12 }}
+              transition={{ ...treeTransition, delay: index * 0.12 }}
+            >
+              {level.categories.map((category) => (
+                <TreeCategoryButton
+                  category={category}
+                  key={category.id}
+                  onSelect={onSelect}
+                  pendingCategoryId={pendingCategoryId}
+                  selectedCategoryId={selectedCategoryId}
+                  selectedPathIds={selectedPathIds}
+                  setNodeRef={setNodeRef(category.id)}
+                />
+              ))}
+            </motion.div>
+          </div>
         ))}
       </div>
     </motion.div>
@@ -549,4 +652,15 @@ function getCategoryPath(
   }
 
   return path;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function sameNumbers(first: number[], second: number[]): boolean {
+  return (
+    first.length === second.length &&
+    first.every((value, index) => Math.abs(value - (second[index] ?? 0)) < 1)
+  );
 }

@@ -60,6 +60,19 @@
   min-height: 174px;
 }
 
+.stageCentered {
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: center;
+}
+
+.stageCentered .sideYears {
+  display: none;
+}
+
+.stageCentered .centerStack {
+  width: 100%;
+}
+
 .sideYears {
   display: flex;
   flex-wrap: nowrap;

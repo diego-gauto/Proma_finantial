@@ -58,6 +58,7 @@ function FiscalPeriodFilterSurface({
   const sideYears = stage.sideYears;
   const leftYears = sideYears.filter((_, index) => index % 2 === 0);
   const rightYears = sideYears.filter((_, index) => index % 2 === 1);
+  const hasSideYears = sideYears.length > 0;
 
   const goToPeriod = (fiscalPeriod: string | null) => {
     setPendingPeriod(fiscalPeriod);
@@ -104,7 +105,14 @@ function FiscalPeriodFilterSurface({
       </div>
 
       <LayoutGroup id="fiscal-period-stage">
-        <div className={styles.stage}>
+        <div
+          className={[
+            styles.stage,
+            !hasSideYears ? styles.stageCentered : ""
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           <motion.div className={styles.sideYears} layout>
             {leftYears.map((year) => (
               <YearButton

@@ -241,10 +241,18 @@
 .treeLevel {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: start;
   gap: 8px;
-  width: 100%;
+  width: max-content;
+  transform: translateX(var(--tree-level-offset, 0));
+}
+
+.treeLevelItems {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: start;
+  gap: 8px;
 }
 
 .empty {
