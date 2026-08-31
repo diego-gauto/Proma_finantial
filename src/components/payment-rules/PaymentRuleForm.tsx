@@ -37,6 +37,15 @@ export function PaymentRuleForm({ action, category }: PaymentRuleFormProps) {
           </select>
         </div>
         <div className={styles.field}>
+          <label htmlFor="customPeriodMonths">Meses custom</label>
+          <input
+            id="customPeriodMonths"
+            inputMode="numeric"
+            name="customPeriodMonths"
+            placeholder="1,4,10"
+          />
+        </div>
+        <div className={styles.field}>
           <label htmlFor="fiscalPeriodKind">Periodo fiscal esperado</label>
           <select defaultValue="month" id="fiscalPeriodKind" name="fiscalPeriodKind">
             <option value="month">Mensual</option>

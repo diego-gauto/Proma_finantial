@@ -7,7 +7,7 @@ export interface PaymentRuleInput {
   activeTo: string | null;
   appliesToDescendants: boolean;
   categoryNodeId: string;
-  customPeriodMonths: number | null;
+  customPeriodMonths: number[] | null;
   fiscalPeriodKind: FiscalPeriodKind;
   graceDays: number;
   intervalMonths: number | null;
@@ -42,6 +42,7 @@ export function parsePaymentRuleForm(
   raw: Record<string, FormDataEntryValue | string | undefined>
 ): PaymentRuleInput {
   const parsed = schema.parse(raw);
+  const intervalMonths = parseOptionalNumber(parsed.intervalMonths);
   const paymentDay = parseOptionalNumber(parsed.paymentDay);
   const paymentMonth = parseOptionalNumber(parsed.paymentMonth);
 
@@ -58,10 +59,12 @@ export function parsePaymentRuleForm(
     activeTo: normalizeText(parsed.activeTo),
     appliesToDescendants: parsed.appliesToDescendants === "on",
     categoryNodeId: parsed.categoryNodeId,
-    customPeriodMonths: parseOptionalNumber(parsed.customPeriodMonths),
+    customPeriodMonths: intervalMonths
+      ? null
+      : parseOptionalNumberList(parsed.customPeriodMonths),
     fiscalPeriodKind: parsed.fiscalPeriodKind,
     graceDays: parseNumber(parsed.graceDays, 0),
-    intervalMonths: parseOptionalNumber(parsed.intervalMonths),
+    intervalMonths,
     name: parsed.name,
     notes: normalizeText(parsed.notes),
     paymentDay,
@@ -90,4 +93,26 @@ function parseOptionalNumber(value: string | undefined): number | null {
 
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseOptionalNumberList(value: string | undefined): number[] | null {
+  const normalized = normalizeText(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  const numbers = normalized
+    .split(",")
+    .map((item) => Number(item.trim()));
+
+  if (
+    numbers.some(
+      (month) => !Number.isInteger(month) || month < 1 || month > 12
+    )
+  ) {
+    throw new Error("Meses custom invalidos.");
+  }
+
+  return numbers.length ? numbers : null;
 }

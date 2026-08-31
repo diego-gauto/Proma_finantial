@@ -256,4 +256,31 @@ describe("calculateComplianceStatus", () => {
       }
     ]);
   });
+
+  it("does not duplicate annual expected periods when the selected range is monthly", () => {
+    const annualRule: ComplianceRule = {
+      ...rule,
+      cadence: "annual",
+      fiscalPeriodKind: "year",
+      paymentMonth: 3,
+      paymentDay: 31,
+      paymentMonthOffset: 0
+    };
+
+    const status = calculateComplianceStatus({
+      categories,
+      rules: [annualRule],
+      documents: [],
+      fromFiscalPeriod: "2026-01",
+      toFiscalPeriod: "2026-12",
+      today: "2026-04-10"
+    });
+
+    expect(status.expected.map((period) => period.fiscalPeriod)).toEqual([
+      "2026"
+    ]);
+    expect(status.missing.map((period) => period.fiscalPeriod)).toEqual([
+      "2026"
+    ]);
+  });
 });

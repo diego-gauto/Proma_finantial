@@ -51,6 +51,7 @@ export function calculateComplianceStatus({
   today
 }: CalculateComplianceStatusOptions): ComplianceStatus {
   const expected: ExpectedPeriod[] = [];
+  const expectedByKey = new Map<string, ExpectedPeriod>();
 
   for (const category of categories) {
     for (let cursor = fromFiscalPeriod; cursor <= toFiscalPeriod; cursor = incrementFiscalPeriod(cursor)) {
@@ -60,13 +61,20 @@ export function calculateComplianceStatus({
         continue;
       }
 
-      expected.push(
-        ...generateExpectedPeriods(rule, {
+      const generatedPeriods = generateExpectedPeriods(rule, {
           categoryNodeId: category.id,
           fromFiscalPeriod: cursor,
           toFiscalPeriod: cursor
         })
-      );
+
+      for (const period of generatedPeriods) {
+        const key = expectedKey(period);
+
+        if (!expectedByKey.has(key)) {
+          expectedByKey.set(key, period);
+          expected.push(period);
+        }
+      }
     }
   }
 

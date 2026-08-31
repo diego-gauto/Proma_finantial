@@ -4,6 +4,7 @@ import {
   fiscalPeriodToMonthIndex,
   getCadenceMonths,
   getDueDate,
+  matchesRuleCadence,
   monthIndexToFiscalPeriod
 } from "./period-utils";
 
@@ -38,7 +39,12 @@ export function generateExpectedPeriods(
     const month = (monthIndex % 12) + 1;
     const matchesCadence =
       rule.fiscalPeriodKind === "year" ||
-      ((month - anchorMonth) % cadenceMonths === 0);
+      matchesRuleCadence(
+        rule.cadence,
+        rule.customPeriodMonths,
+        month,
+        anchorMonth
+      );
 
     if (!matchesCadence) {
       continue;

@@ -63,4 +63,25 @@ describe("generateExpectedPeriods", () => {
     ]);
     expect(periods[0]?.dueDate).toBe("2025-03-31");
   });
+
+  it("generates only the configured fiscal months for custom rules", () => {
+    const periods = generateExpectedPeriods(
+      {
+        ...monthlyRule,
+        cadence: "custom",
+        customPeriodMonths: [2, 5, 11]
+      },
+      {
+        categoryNodeId: "cat-1",
+        fromFiscalPeriod: "2026-01",
+        toFiscalPeriod: "2026-12"
+      }
+    );
+
+    expect(periods.map((period) => period.fiscalPeriod)).toEqual([
+      "2026-02",
+      "2026-05",
+      "2026-11"
+    ]);
+  });
 });

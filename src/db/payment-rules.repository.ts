@@ -8,7 +8,7 @@ interface PaymentRuleDbRow {
   applies_to_descendants: boolean;
   name: string;
   cadence: PaymentRuleRow["cadence"];
-  custom_period_months: number | null;
+  custom_period_months: number[] | null;
   anchor_period_month: number | null;
   fiscal_period_kind: PaymentRuleRow["fiscalPeriodKind"];
   payment_month: number | null;
@@ -66,7 +66,7 @@ export async function listPaymentRules(): Promise<PaymentRuleRow[]> {
             else 'custom'
           end
         end as cadence,
-        custom_period_months[1] as custom_period_months,
+        custom_period_months,
         anchor_period_month,
         fiscal_period_kind,
         active_from::text,
@@ -147,7 +147,7 @@ export async function createPaymentRule(
             else 'custom'
           end
         end as cadence,
-        custom_period_months[1] as custom_period_months,
+        custom_period_months,
         anchor_period_month,
         fiscal_period_kind,
         active_from::text,
@@ -166,7 +166,7 @@ export async function createPaymentRule(
       input.appliesToDescendants,
       input.name,
       input.intervalMonths,
-      input.customPeriodMonths ? [input.customPeriodMonths] : null,
+      input.customPeriodMonths,
       input.intervalMonths ? 1 : null,
       input.fiscalPeriodKind,
       input.paymentMonth,

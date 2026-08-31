@@ -593,6 +593,8 @@ pnpm run build
 
 > Use local skill: `payment-compliance`.
 
+**Estado 2026-08-31:** completada. Se auditaron los casos obligatorios de `payment-compliance`; se corrigio `custom_period_months` para tratarlo como lista real de meses fiscales, se agrego validacion de meses custom entre 1 y 12, se expuso el campo en el formulario/historial de reglas y se evito duplicar periodos anuales esperados cuando el rango filtrado llega expresado por meses. La suite cubre reglas mensuales, gracia, herencia, override, historico, duplicados, documentos no procesados, pagos vencidos/proximos, custom months y deduplicacion anual.
+
 **Files:**
 - Review: `src/server/compliance/**`
 - Review: `src/db/**`

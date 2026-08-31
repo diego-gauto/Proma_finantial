@@ -11,7 +11,7 @@ export interface ComplianceRule {
   appliesToDescendants: boolean;
   name: string;
   cadence: PaymentRuleCadence;
-  customPeriodMonths: number | null;
+  customPeriodMonths: number[] | null;
   anchorPeriodMonth: number | null;
   fiscalPeriodKind: FiscalPeriodKind;
   paymentMonth: number | null;

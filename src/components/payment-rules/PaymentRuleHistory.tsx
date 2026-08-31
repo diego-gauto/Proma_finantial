@@ -41,6 +41,9 @@ export function PaymentRuleHistory({
               <span>Hasta {rule.activeTo ?? "abierta"}</span>
               <span>{rule.graceDays} dias tolerancia</span>
               <span>{rule.reminderDaysBefore} dias aviso</span>
+              {rule.customPeriodMonths?.length ? (
+                <span>Meses {rule.customPeriodMonths.join(", ")}</span>
+              ) : null}
               {rule.appliesToDescendants ? <span>Hereda a hijos</span> : null}
             </div>
             {rule.notes ? <p className="muted">{rule.notes}</p> : null}

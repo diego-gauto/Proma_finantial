@@ -13,15 +13,30 @@ const cadenceMonths: Record<PaymentRuleCadence, number | null> = {
 
 export function getCadenceMonths(
   cadence: PaymentRuleCadence,
-  customPeriodMonths: number | null
+  customPeriodMonths: number[] | null
 ): number | null {
   if (cadence === "custom") {
-    return customPeriodMonths && customPeriodMonths > 0
-      ? customPeriodMonths
-      : null;
+    return customPeriodMonths?.length ? 1 : null;
   }
 
   return cadenceMonths[cadence];
+}
+
+export function matchesRuleCadence(
+  cadence: PaymentRuleCadence,
+  customPeriodMonths: number[] | null,
+  fiscalMonth: number,
+  anchorMonth: number
+): boolean {
+  if (cadence === "custom") {
+    return customPeriodMonths?.includes(fiscalMonth) ?? false;
+  }
+
+  const cadenceMonths = getCadenceMonths(cadence, customPeriodMonths);
+
+  return Boolean(
+    cadenceMonths && (fiscalMonth - anchorMonth) % cadenceMonths === 0
+  );
 }
 
 export function fiscalPeriodToMonthIndex(

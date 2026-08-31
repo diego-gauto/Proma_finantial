@@ -55,4 +55,59 @@ describe("parsePaymentRuleForm", () => {
       })
     ).toThrow("Dia de pago invalido.");
   });
+
+  it("parses comma-separated custom fiscal months", () => {
+    expect(
+      parsePaymentRuleForm({
+        activeFrom: "2026-01-01",
+        categoryNodeId: "12",
+        customPeriodMonths: "1, 4, 10",
+        fiscalPeriodKind: "month",
+        graceDays: "0",
+        intervalMonths: "",
+        name: "Regla custom",
+        paymentDay: "10",
+        paymentMonthOffset: "1",
+        paymentYearOffset: "0",
+        reminderDaysBefore: "0"
+      }).customPeriodMonths
+    ).toEqual([1, 4, 10]);
+  });
+
+  it("ignores custom fiscal months when a fixed interval is selected", () => {
+    const parsed = parsePaymentRuleForm({
+      activeFrom: "2026-01-01",
+      categoryNodeId: "12",
+      customPeriodMonths: "1, 4, 10",
+      fiscalPeriodKind: "month",
+      graceDays: "0",
+      intervalMonths: "1",
+      name: "Regla mensual",
+      paymentDay: "10",
+      paymentMonthOffset: "1",
+      paymentYearOffset: "0",
+      reminderDaysBefore: "0"
+    });
+
+    expect(parsed.intervalMonths).toBe(1);
+    expect(parsed.customPeriodMonths).toBeNull();
+  });
+
+  it("rejects custom fiscal months outside the calendar range", () => {
+    expect(() =>
+      parsePaymentRuleForm({
+        activeFrom: "2026-01-01",
+        categoryNodeId: "12",
+        customPeriodMonths: "1, 13",
+        fiscalPeriodKind: "month",
+        graceDays: "0",
+        intervalMonths: "",
+        name: "Regla custom",
+        paymentDay: "10",
+        paymentMonthOffset: "1",
+        paymentYearOffset: "0",
+        reminderDaysBefore: "0"
+      })
+    ).toThrow("Meses custom invalidos.");
+  });
 });
