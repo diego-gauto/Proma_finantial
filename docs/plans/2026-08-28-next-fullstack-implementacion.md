@@ -573,6 +573,8 @@ pnpm run build
 
 ### Task 7.1: Estados vacios, errores y responsive
 
+**Estado 2026-08-31:** completada. Se agregaron estados de ruta internos para carga, error recuperable y no encontrado; se corrigio el estilo de labels en filtros de documentos; la tabla TanStack de documentos pasa a formato apilado en mobile con labels por celda y sin desborde horizontal. Las animaciones del dashboard quedan fuera de este cierre por decision explicita y se retoman despues.
+
 **Files:**
 - Review: `src/app/**`
 - Review: `src/components/**`

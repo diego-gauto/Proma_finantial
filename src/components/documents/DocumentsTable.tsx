@@ -113,7 +113,10 @@ export function DocumentsTable({
           {table.getRowModel().rows.map((row) => (
             <tr key={row.id}>
               {row.getVisibleCells().map((cell) => (
-                <td key={cell.id}>
+                <td
+                  data-label={getColumnHeaderLabel(cell.column.columnDef.header)}
+                  key={cell.id}
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
@@ -123,4 +126,10 @@ export function DocumentsTable({
       </table>
     </div>
   );
+}
+
+function getColumnHeaderLabel(
+  header: LegacyColumnDef<DocumentTableRow>["header"]
+): string {
+  return typeof header === "string" ? header : "";
 }

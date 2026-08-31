@@ -86,4 +86,58 @@
   border: 1px dashed var(--border);
   border-radius: 8px;
   color: var(--text-muted);
+  padding: 18px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .table {
+    min-width: 0;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table tr {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+  }
+
+  .table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table td {
+    display: grid;
+    grid-template-columns: minmax(104px, 0.42fr) minmax(0, 1fr);
+    gap: 10px;
+    border-bottom: 0;
+    padding: 8px 12px;
+  }
+
+  .table td::before {
+    color: var(--text-muted);
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .mainCell {
+    min-width: 0;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
 }

@@ -61,4 +61,12 @@
   .rulesGrid {
     grid-template-columns: 1fr;
   }
+
+  .header {
+    display: grid;
+  }
+
+  .titleBlock {
+    min-width: 0;
+  }
 }

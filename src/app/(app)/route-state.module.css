@@ -1,0 +1,90 @@
+.statePage {
+  display: grid;
+  min-height: min(560px, calc(100vh - 160px));
+  place-items: center;
+}
+
+.statePanel {
+  display: grid;
+  width: min(560px, 100%);
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+.statePanel h1,
+.statePanel h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.statePanel p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skeletonStack {
+  display: grid;
+  gap: 12px;
+}
+
+.skeletonLine,
+.skeletonPanel {
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted),
+    rgb(255 255 255 / 8%),
+    var(--surface-muted)
+  );
+  background-size: 220% 100%;
+  animation: pulse 1400ms ease-in-out infinite;
+}
+
+.skeletonLine {
+  width: min(340px, 70%);
+  height: 18px;
+}
+
+.skeletonPanel {
+  height: 110px;
+}
+
+@keyframes pulse {
+  from {
+    background-position: 120% 0;
+  }
+
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .statePage {
+    min-height: calc(100vh - 120px);
+  }
+
+  .statePanel {
+    padding: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonLine,
+  .skeletonPanel {
+    animation: none;
+  }
+}
