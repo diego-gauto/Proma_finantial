@@ -67,7 +67,22 @@ const compliance: ComplianceStatus = {
       categoryNodeId: "cat-1",
       fiscalPeriod: "2026-01",
       fiscalPeriodKind: "month",
-      documentIds: ["doc-1", "doc-2"]
+      documents: [
+        {
+          amount: null,
+          currency: null,
+          fileName: null,
+          id: "doc-1",
+          paymentDate: null
+        },
+        {
+          amount: null,
+          currency: null,
+          fileName: null,
+          id: "doc-2",
+          paymentDate: null
+        }
+      ]
     }
   ]
 };

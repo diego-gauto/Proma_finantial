@@ -205,9 +205,15 @@ input {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  min-height: 74px;
   border-color: rgb(180 35 24 / 32%);
   background: rgb(255 122 105 / 10%);
   padding: 16px 18px;
+}
+
+.alert-panel-placeholder {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .alert-panel h2,
@@ -229,9 +235,9 @@ input {
 
 .metric-panel {
   display: grid;
-  grid-template-columns: minmax(120px, 0.45fr) minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  gap: 14px;
   padding: 16px;
 }
 

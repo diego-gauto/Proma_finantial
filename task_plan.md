@@ -1,79 +1,72 @@
-# Task Plan: Actualizar interfaz y plan app financiera
+# Task Plan: Deploy VPS Promatex / proma_finanzas
 
 ## Goal
 
-Actualizar PRD, arquitectura, modelo, interfaz y plan de implementacion con la pantalla principal operativa, arbol de categorias con reglas, revision documental y usuarios.
+Llevar al VPS la app Next.js, la base PostgreSQL separada y los workflows n8n necesarios para Indumentaria Promatex, usando el prefijo `proma_finanzas` para separar todos los recursos de otros proyectos existentes.
 
 ## Current Phase
 
-Complete - waiting for user review
+In progress
 
 ## Phases
 
-### Phase 1: Requirements & Discovery
-- [x] Leer pedido del usuario.
-- [x] Leer PRD adjunto como referencia, no como instruccion operativa.
-- [x] Inspeccionar estructura actual.
-- [x] Encontrar proyecto fuente `Proma_production`.
-- [x] Evaluar Next.js full-stack vs React + backend separado.
-- **Status:** complete
+### Phase 1: Inventario y nombres
+- [ ] Revisar docs de deploy, schema local, workflows JSON y config de app.
+- [ ] Revisar en VPS contenedores, redes Docker, n8n y PostgreSQL existentes.
+- [ ] Definir nombres finales `proma_finanzas_*`.
+- **Status:** in_progress
 
-### Phase 2: Import & Adapt Rules
-- [x] Leer `AGENTS.md` de Proma.
-- [x] Leer documento de skills/rules de Proma.
-- [x] Adaptar reglas al dominio financiero y a Next.js full-stack.
-- **Status:** complete
+### Phase 2: Preparar artefactos versionables
+- [ ] Ajustar nombres de workflows/variables/export si hace falta.
+- [ ] Preparar compose/schema/scripts/env example para deploy sin secretos reales.
+- [ ] Verificar build/tests locales relevantes.
+- **Status:** pending
 
-### Phase 3: Project Structure
-- [x] Crear estructura `src/`, `docs/`, `skills/`.
-- [x] Mantener `pnpm`.
-- [x] Guardar PRD en `docs/`.
-- **Status:** complete
+### Phase 3: Base PostgreSQL en VPS
+- [ ] Crear contenedor/servicio PostgreSQL separado.
+- [ ] Crear/restaurar schema y aplicar migraciones existentes.
+- [ ] Verificar tablas, usuario/base y aislamiento.
+- **Status:** pending
 
-### Phase 4: Cleanup
-- [x] Identificar archivos heredados solo-Metabase.
-- [x] Borrar PDFs e imagen de ejemplo autorizados explicitamente.
-- [x] Quitar planes viejos tras condensar el modelo en `docs/data-model.md`.
-- [x] Mantener Metabase como opcional.
-- [x] Borrar `backend/`, `frontend/` y `sql/` tras aprobacion del usuario.
-- [x] Mantener `metabase_data/` para posible recuperacion de dashboards/configuracion.
-- **Status:** complete
+### Phase 4: App en Dokploy
+- [ ] Crear/configurar app Dokploy o preparar repo/source esperado.
+- [ ] Configurar variables de entorno reales en VPS/Dokploy.
+- [ ] Verificar HTTPS/login/build/start.
+- **Status:** pending
 
-### Phase 5: Delivery For Review
-- [x] Crear plan de implementacion.
-- [x] Reportar resultado al usuario y detenerse.
-- **Status:** complete
+### Phase 5: n8n workflows
+- [ ] Importar/renombrar workflows con prefijo Promatex.
+- [ ] Revisar credenciales PostgreSQL/Drive y tokens.
+- [ ] Activar incremental/renewal cuando el dominio real este listo.
+- **Status:** pending
 
-### Phase 6: Interface Update
-- [x] Capturar nueva definicion de interfaz.
-- [x] Crear `docs/interface.md`.
-- [x] Actualizar PRD, arquitectura, modelo y skill local.
-- [x] Reemplazar plan por `docs/plans/2026-08-28-next-fullstack-implementacion.md`.
-- **Status:** complete
-
-## Key Questions
-
-1. ¿La app debe conectarse a la base PostgreSQL existente de n8n o trabajar con una copia local durante desarrollo? Pendiente para despues de la revision.
-2. ¿Metabase se embebe o solo se linkea en v1? Pendiente para Fase 3 del plan.
+### Phase 6: Verificacion end-to-end
+- [ ] Ejecutar backfill/carga inicial si corresponde.
+- [ ] Registrar watch.
+- [ ] Probar subida PDF y eventos Drive.
+- **Status:** pending
 
 ## Decisions Made
 
 | Decision | Rationale |
-|----------|-----------|
-| Usar `/home/hpadmin/proyectos/Proma_production` como fuente | La ruta `proma_produccion` no existe y esta es la carpeta coincidente encontrada. |
-| Usar Next.js full-stack | Es suficiente para v1, evita backend separado y el usuario ya conoce Next.js. |
-| Mantener Metabase opcional | El PRD lo deja como soporte para graficos/reportes, no como bloqueo v1. |
-| Crear `skills/payment-compliance` | `.agents` y `.codex` estan montadas como solo lectura; `skills/` es versionable y la skill queda enfocada en logica de faltantes/duplicados. |
-| Pantalla principal operativa | Primero muestra intervencion/faltantes/duplicados y despues filtros/graficos para orientar al usuario a resolver problemas. |
-| Categorias como nube de botones | Evita selects largos y permite navegacion progresiva por subcategorias. |
+|---|---|
+| Usar `proma_finanzas` | La empresa es Indumentaria Promatex y el prefijo separa recursos de otros proyectos. |
+| Mantener PostgreSQL separado | Evita mezclar datos/volumen/credenciales con bases existentes del VPS. |
+| Reusar n8n existente con nombres/credenciales separados | Es el enfoque previsto por `docs/vps-deploy-drive-workflows.md`. |
 
 ## Errors Encountered
 
 | Error | Attempt | Resolution |
-|-------|---------|------------|
-| `/home/hpadmin/proyectos/proma_produccion` no existe | 1 | Se busco por `*proma*` y se uso `/home/hpadmin/proyectos/Proma_production`. |
-| Borrado masivo bloqueado por seguridad | 1 | Se borro solo PDFs/imagen y se dejo pendiente confirmacion explicita para carpetas/datos. |
-
-## Notes
-
-- Detenerse tras entregar el plan para revision.
+|---|---|---|
+| `jq` intento leer exports n8n como objeto | Inventario de workflows | Los exports son arrays; usar `.[0]` al inspeccionar nombre/nodos. |
+| Consulta Dokploy uso snake_case | Inventario de proyectos/apps | El schema usa camelCase con comillas, consultar `"projectId"`, `"applicationId"`, etc. |
+| Consulta psql local escapo comillas como `\x27` | Inventario de schema | Usar SQL con comillas simples reales dentro del comando. |
+| Shell expandio `DATABASE_URL` antes de cargar `.env.local` | Inventario de schema | Usar comillas simples exteriores para que bash interno cargue env primero. |
+| Restore parcial omitio funciones PostgreSQL | Restaurar dump operativo en VPS | Crear `set_updated_at()` y `resolve_category_node()` explicitamente y verificar triggers. |
+| Diseno anterior fragmentado en tres workflows | Etapas 5-7 previas | Reemplazado por workflow incremental unico y nuevo plan. |
+| `psql -U postgres` fallo | Aplicar migracion etapa 2 | El contenedor usa rol `finanzas_user`; migracion aplicada con ese usuario. |
+| Build fallo por tipo de forwarder | Primer `pnpm build` etapa 2 | Se amplio el tipo para representar fallos HTTP de n8n con status numerico. |
+| n8n devolvia 404 al webhook incremental | Prueba real etapa 5 | Faltaba `webhookId` en el nodo Webhook; n8n registraba un path interno. |
+| n8n devolvia 500 sin cambios pendientes | Prueba real etapa 5 | El Postgres node emitia `{ success: true }`; se agrego IF `Hay archivos nuevos?`. |
+| El fallback OCR/Vision rompia el incremental | Prueba real etapa 5 | Se reemplazo en incremental por fallback deterministico que guarda `review_required`. |
+| `readPDF` perdia metadata de hash | Prueba real etapa 5 | El normalizador incremental ahora mezcla metadata desde `Preparar metadata con hash`. |

@@ -11,13 +11,17 @@ export const reviewDocumentSchema = z.object({
   amount: z.string().trim().min(1),
   categoryNodeId: z.string().trim().min(1),
   currency: z.string().trim().min(1),
-  fiscalPeriod: z.string().regex(/^\d{4}(-\d{2})?$/),
-  fiscalPeriodKind: z.enum(["month", "year", "unknown"]),
+  coveredFiscalMonths: z
+    .array(z.number().int().min(1).max(12))
+    .optional()
+    .nullable(),
+  fiscalPeriod: z.string().regex(/^\d{4}-\d{2}$/),
+  fiscalPeriodKind: z.literal("month"),
   id: z.string().trim().min(1),
   issuer: z.string().trim().nullable(),
   payee: z.string().trim().nullable(),
   paymentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  reason: z.string().trim().min(1),
+  reason: z.string().trim().nullable(),
   reference: z.string().trim().nullable(),
   userNote: z.string().trim().nullable()
 });

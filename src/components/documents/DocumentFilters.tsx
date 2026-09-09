@@ -23,7 +23,7 @@ export function DocumentFilters({
           <input
             defaultValue={filters.search ?? ""}
             name="search"
-            placeholder="Motivo, entidad o referencia"
+            placeholder="Documento o referencia"
           />
         </label>
         <label className={styles.field}>

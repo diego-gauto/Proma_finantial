@@ -1,30 +1,33 @@
-import { Button } from "@/components/ui/Button";
-import type { ComplianceStatus } from "@/server/compliance/compliance-types";
+import { ComplianceIssueTable } from "@/components/dashboard/ComplianceIssueTable";
+import type { CategoryNodeRow } from "@/db/types";
+import type {
+  ComplianceStatus,
+  ExpectedPeriod
+} from "@/server/compliance/compliance-types";
+import { buildDuplicateIssueRows } from "@/server/dashboard/compliance-issue-view-model";
 
 export function DuplicateDocumentsCard({
-  duplicates
+  categories,
+  duplicates,
+  expected
 }: {
+  categories: CategoryNodeRow[];
   duplicates: ComplianceStatus["duplicates"];
+  expected: ExpectedPeriod[];
 }) {
+  const rows = buildDuplicateIssueRows(duplicates, expected, categories);
+
   return (
     <section className="metric-panel">
       <div>
         <h2>Posibles duplicados</h2>
         <p className="metric-value">{duplicates.length}</p>
       </div>
-      <div className="stack-list">
-        {duplicates.slice(0, 4).map((duplicate) => (
-          <a
-            href={`/documents?categoryId=${duplicate.categoryNodeId}&fiscalPeriod=${duplicate.fiscalPeriod}`}
-            key={`${duplicate.categoryNodeId}-${duplicate.fiscalPeriod}`}
-          >
-            <span>{duplicate.fiscalPeriod}</span>
-            <strong>{duplicate.documentIds.length} comprobantes</strong>
-          </a>
-        ))}
-        {!duplicates.length ? <p className="muted">Sin duplicados detectados.</p> : null}
-      </div>
-      <Button href="/documents?status=duplicates">Ver duplicados</Button>
+      <ComplianceIssueTable
+        emptyText="Sin duplicados detectados."
+        key={rows.map((row) => row.id).join("|")}
+        rows={rows}
+      />
     </section>
   );
 }

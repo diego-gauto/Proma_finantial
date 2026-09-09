@@ -50,6 +50,7 @@ describe("route protection", () => {
     expect(shouldAllowRequest("/auth/login", false)).toBe(true);
     expect(shouldAllowRequest("/_next/static/chunk.js", false)).toBe(true);
     expect(shouldAllowRequest("/favicon.ico", false)).toBe(true);
+    expect(shouldAllowRequest("/api/v1/drive/webhook", false)).toBe(true);
   });
 
   it("requires a session for internal paths", () => {

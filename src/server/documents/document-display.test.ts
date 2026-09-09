@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { CategoryNodeRow, DocumentRow } from "@/db/types";
 
-import { buildDocumentTableRows, getDocumentEntity } from "./document-display";
+import {
+  buildDocumentTableRows,
+  getDocumentReviewIssues
+} from "./document-display";
 
 const categoryBase: Omit<CategoryNodeRow, "id" | "name" | "parentId"> = {
   active: true,
@@ -49,16 +52,32 @@ describe("document-display", () => {
 
     expect(rows[0]).toMatchObject({
       amountLabel: "$ 1.234,50",
-      categoryLabel: "Servicios / Luz",
+      documentTitle: "factura.pdf",
+      categoryPath: ["Servicios", "Luz"],
       detailHref: "/documents/doc-1",
-      entity: "Edenor",
-      reviewHref: null
+      reviewHref: null,
+      unresolvedFields: []
     });
   });
 
-  it("uses payee as entity when issuer is missing", () => {
-    expect(getDocumentEntity({ ...documentBase, issuer: null })).toBe(
-      "Promatex"
-    );
+  it("uses a non-primary fallback title when the file name is missing", () => {
+    const rows = buildDocumentTableRows([], [
+      { ...documentBase, fileName: null, reference: "OP-1" }
+    ]);
+
+    expect(rows[0]?.documentTitle).toBe("OP-1");
+  });
+
+  it("shows the fields that still need manual inference", () => {
+    expect(
+      getDocumentReviewIssues({
+        ...documentBase,
+        amount: null,
+        categoryNodeId: null,
+        fiscalPeriod: "2026",
+        fiscalPeriodKind: "year",
+        paymentDate: null
+      })
+    ).toEqual(["Categoria", "Periodo fiscal", "Fecha de pago", "Monto"]);
   });
 });

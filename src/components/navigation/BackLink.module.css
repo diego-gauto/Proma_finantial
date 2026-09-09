@@ -1,0 +1,49 @@
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--text-muted);
+  padding: 0 10px 0 2px;
+  text-decoration: none;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.backLink:hover,
+.backLink:focus-visible {
+  border-color: var(--border);
+  background: rgb(255 255 255 / 5%);
+  color: var(--text);
+  outline: 0;
+  transform: translateX(-2px);
+}
+
+.icon {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: currentColor;
+}
+
+.icon::before {
+  position: absolute;
+  top: 7px;
+  left: 8px;
+  width: 8px;
+  height: 8px;
+  border-bottom: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  content: "";
+  transform: rotate(45deg);
+}

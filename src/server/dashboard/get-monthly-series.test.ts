@@ -52,6 +52,25 @@ describe("getMonthlySeries", () => {
     ]);
   });
 
+  it("keeps a multi-period document as one payment in its payment month", () => {
+    expect(
+      getMonthlySeries([
+        {
+          ...documentBase,
+          coveredFiscalMonths: [4, 5],
+          fiscalPeriod: "2026-05",
+          paymentDate: "2026-05-20"
+        }
+      ])
+    ).toEqual([
+      {
+        month: "2026-05",
+        amount: 100,
+        paymentCount: 1
+      }
+    ]);
+  });
+
   it("fills every month in the selected fiscal year with zero values", () => {
     expect(
       getMonthlySeries(

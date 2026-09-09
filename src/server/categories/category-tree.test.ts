@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildCategoryTree,
   getCategoryBreadcrumbs,
-  getDescendantCategoryIds
+  getDescendantCategoryIds,
+  getLeafCategoryIds
 } from "./category-tree";
 
 const categories = [
@@ -71,5 +72,21 @@ describe("getDescendantCategoryIds", () => {
       "phone",
       "account-032"
     ]);
+  });
+});
+
+describe("getLeafCategoryIds", () => {
+  it("returns active leaves instead of grouping parents", () => {
+    expect(getLeafCategoryIds(categories)).toEqual(["account-032", "taxes"]);
+  });
+
+  it("returns the leaves below a selected category", () => {
+    expect(getLeafCategoryIds(categories, "services")).toEqual([
+      "account-032"
+    ]);
+  });
+
+  it("returns the selected category when it has no active children", () => {
+    expect(getLeafCategoryIds(categories, "taxes")).toEqual(["taxes"]);
   });
 });

@@ -12,6 +12,26 @@ const serverEnvSchema = z.object({
     (value) => (value === "" || value === undefined ? null : value),
     z.string().url().nullable()
   ),
+  GOOGLE_DRIVE_WEBHOOK_CHANNEL_ID: z.preprocess(
+    (value) => (value === "" || value === undefined ? null : value),
+    z.string().nullable()
+  ),
+  GOOGLE_DRIVE_WEBHOOK_TOKEN: z.preprocess(
+    (value) => (value === "" || value === undefined ? null : value),
+    z.string().nullable()
+  ),
+  GOOGLE_DRIVE_WEBHOOK_URL: z.preprocess(
+    (value) => (value === "" || value === undefined ? null : value),
+    z.string().url().nullable()
+  ),
+  N8N_DRIVE_INCREMENTAL_WEBHOOK_URL: z.preprocess(
+    (value) => (value === "" || value === undefined ? null : value),
+    z.string().url().nullable()
+  ),
+  N8N_DRIVE_INCREMENTAL_WEBHOOK_TOKEN: z.preprocess(
+    (value) => (value === "" || value === undefined ? null : value),
+    z.string().nullable()
+  ),
   SESSION_SECRET: z.string().min(32)
 });
 

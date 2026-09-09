@@ -1,7 +1,7 @@
 .panel {
   position: relative;
   display: grid;
-  gap: 20px;
+  gap: 18px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -49,50 +49,6 @@
   opacity: 0.36;
 }
 
-.stage {
-  display: grid;
-  grid-template-columns: minmax(250px, 1fr) minmax(520px, 600px) minmax(250px, 1fr);
-  align-items: start;
-  gap: 20px;
-  min-height: 310px;
-}
-
-.sideRail {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 132px));
-  gap: 8px;
-  align-content: center;
-  align-items: center;
-  min-height: 190px;
-  padding-top: 34px;
-  opacity: 0.68;
-}
-
-.sideRail:first-child {
-  justify-content: flex-end;
-}
-
-.sideRail:last-child {
-  justify-content: flex-start;
-}
-
-.sideRail .categoryChip {
-  width: 100%;
-  max-width: none;
-  min-height: 34px;
-  padding: 0 10px;
-  font-size: 14px;
-}
-
-.centerStack {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  gap: 18px;
-  min-width: 0;
-}
-
-.centerChip,
 .categoryChip {
   position: relative;
   z-index: 1;
@@ -110,12 +66,20 @@
     opacity 180ms ease;
 }
 
+.categoryWall {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .categoryChip {
-  min-height: 38px;
-  max-width: min(100%, 245px);
-  border-radius: 999px;
-  padding: 0 14px;
+  min-height: 34px;
+  max-width: min(100%, 172px);
+  border-radius: 4px;
+  padding: 0 12px;
   color: var(--text-muted);
+  font-size: 14px;
   overflow-wrap: anywhere;
 }
 
@@ -131,6 +95,13 @@
   background: rgb(15 34 51 / 88%);
   color: var(--text);
   box-shadow: 0 12px 30px rgb(2 8 20 / 18%);
+}
+
+.rootTreeChip {
+  min-height: 32px;
+  max-width: min(100%, 190px);
+  padding: 0 12px;
+  font-size: 13px;
 }
 
 .categoryChipSelected {
@@ -151,70 +122,19 @@
     0 18px 48px rgb(25 182 164 / 24%);
 }
 
-.centerChip {
+.treeShell {
   display: grid;
-  place-items: center;
-  gap: 6px;
-  width: min(100%, 330px);
-  min-height: 116px;
-  border-color: rgb(85 240 221 / 74%);
-  border-radius: 24px;
-  background:
-    linear-gradient(135deg, rgb(25 182 164 / 26%), rgb(31 111 235 / 16%)),
-    var(--surface-muted);
-  padding: 20px 24px;
-  text-align: center;
-  box-shadow:
-    0 0 0 1px rgb(85 240 221 / 14%),
-    0 24px 68px rgb(25 182 164 / 20%);
-}
-
-.centerChip::after {
-  position: absolute;
-  inset: -10px;
-  z-index: -1;
-  border-radius: 30px;
-  background: rgb(85 240 221 / 9%);
-  content: "";
-  opacity: 0;
-  filter: blur(18px);
-  transition: opacity 220ms ease;
-}
-
-.centerChipSelected::after,
-.centerChipSwitching::after {
-  opacity: 1;
-}
-
-.centerChip span {
-  max-width: 100%;
-  color: var(--text);
-  font-size: clamp(20px, 3vw, 30px);
-  font-weight: 850;
-  line-height: 1.04;
-  overflow-wrap: anywhere;
-}
-
-.centerChip strong {
-  color: var(--accent-strong);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.centerChipSwitching {
-  border-color: rgb(124 89 255 / 84%);
-  background:
-    linear-gradient(135deg, rgb(124 89 255 / 24%), rgb(25 182 164 / 16%)),
-    var(--surface-muted);
+  justify-items: center;
+  border-top: 1px solid rgb(255 255 255 / 7%);
+  padding-top: 16px;
 }
 
 .tree {
   position: relative;
   z-index: 1;
-  display: grid;
   width: min(100%, 640px);
-  min-height: 128px;
+  height: var(--tree-layout-height, 132px);
+  min-height: var(--tree-layout-height, 132px);
 }
 
 .treeConnectors {
@@ -230,29 +150,23 @@
 }
 
 .treeLevels {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  display: grid;
   width: 100%;
-  gap: 56px;
-  padding-top: 56px;
+  height: 100%;
 }
 
 .treeLevel {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-  align-items: start;
-  gap: 8px;
-  width: max-content;
-  transform: translateX(var(--tree-level-offset, 0));
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.treeLevelItems {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: start;
-  gap: 8px;
+.treeNodeSlot {
+  position: absolute;
+  width: max-content;
 }
 
 .empty {
@@ -261,31 +175,12 @@
 }
 
 @media (max-width: 920px) {
-  .stage {
-    grid-template-columns: 1fr;
-  }
-
-  .sideRail,
-  .sideRail:first-child,
-  .sideRail:last-child {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    min-height: auto;
-    padding-top: 0;
-  }
-
-  .centerStack {
-    order: -1;
-  }
-
-  .treeLevel {
-    flex-wrap: wrap;
+  .tree {
+    width: 100%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .centerChip,
   .categoryChip,
   .reset {
     transition: none;

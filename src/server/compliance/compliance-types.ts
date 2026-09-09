@@ -30,8 +30,13 @@ export interface ComplianceDocument {
   id: string;
   categoryNodeId: string | null;
   fiscalPeriod: string | null;
+  coveredFiscalMonths?: number[] | null;
   fiscalPeriodKind: FiscalPeriodKind;
   processingStatus: ProcessingStatus;
+  amount?: string | null;
+  currency?: string | null;
+  fileName?: string | null;
+  paymentDate?: string | null;
 }
 
 export interface ExpectedPeriod {
@@ -46,12 +51,19 @@ export interface ComplianceStatus {
   expected: ExpectedPeriod[];
   missing: ExpectedPeriod[];
   overdue: ExpectedPeriod[];
+  unpaid: ExpectedPeriod[];
   upcoming: ExpectedPeriod[];
   duplicates: Array<{
     categoryNodeId: string;
     fiscalPeriod: string;
     fiscalPeriodKind: FiscalPeriodKind;
-    documentIds: string[];
+    documents: Array<{
+      id: string;
+      amount: string | null;
+      currency: string | null;
+      fileName: string | null;
+      paymentDate: string | null;
+    }>;
   }>;
 }
 

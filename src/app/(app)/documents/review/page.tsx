@@ -1,4 +1,5 @@
 import { ReviewQueue } from "@/components/documents/ReviewQueue";
+import { BackLink } from "@/components/navigation/BackLink";
 import { Card } from "@/components/ui/Card";
 import { listCategoryNodes } from "@/db/categories.repository";
 import { listReviewDocuments } from "@/db/documents.repository";
@@ -13,8 +14,11 @@ export default async function ReviewDocumentsPage() {
   ]);
 
   return (
-    <Card title="Documentos a revisar">
-      <ReviewQueue rows={buildDocumentTableRows(categories, documents)} />
-    </Card>
+    <>
+      <BackLink href="/" />
+      <Card title="Documentos a revisar">
+        <ReviewQueue rows={buildDocumentTableRows(categories, documents)} />
+      </Card>
+    </>
   );
 }

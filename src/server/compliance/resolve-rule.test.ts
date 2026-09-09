@@ -83,4 +83,24 @@ describe("resolveApplicableRule", () => {
         ?.id
     ).toBe("new");
   });
+
+  it("uses an explicit no-control rule to block inherited rules", () => {
+    const noControlRule = {
+      ...baseRule,
+      id: "leaf-no-control",
+      categoryNodeId: "leaf",
+      cadence: "no_pattern" as const,
+      intervalMonths: null,
+      customPeriodMonths: null
+    };
+
+    expect(
+      resolveApplicableRule(
+        categories,
+        [baseRule, noControlRule],
+        "leaf",
+        "2026-02"
+      )?.id
+    ).toBe("leaf-no-control");
+  });
 });

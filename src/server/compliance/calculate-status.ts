@@ -15,23 +15,26 @@ interface CalculateComplianceStatusOptions {
   documents: ComplianceDocument[];
   fromFiscalPeriod: string;
   toFiscalPeriod: string;
+  targetCategoryIds?: string[];
   today: string;
 }
 
-function documentKey(document: ComplianceDocument): string | null {
+function documentKeys(document: ComplianceDocument): string[] {
   if (
     !document.categoryNodeId ||
     !document.fiscalPeriod ||
     document.processingStatus !== "processed"
   ) {
-    return null;
+    return [];
   }
 
-  return [
-    document.categoryNodeId,
-    document.fiscalPeriod,
-    document.fiscalPeriodKind
-  ].join(":");
+  return getCoveredFiscalPeriods(document).map((fiscalPeriod) =>
+    [
+      document.categoryNodeId,
+      fiscalPeriod,
+      document.fiscalPeriodKind
+    ].join(":")
+  );
 }
 
 function expectedKey(period: ExpectedPeriod): string {
@@ -48,24 +51,40 @@ export function calculateComplianceStatus({
   documents,
   fromFiscalPeriod,
   toFiscalPeriod,
+  targetCategoryIds,
   today
 }: CalculateComplianceStatusOptions): ComplianceStatus {
   const expected: ExpectedPeriod[] = [];
   const expectedByKey = new Map<string, ExpectedPeriod>();
+  const targetCategoryIdSet = targetCategoryIds
+    ? new Set(targetCategoryIds)
+    : null;
+  const categoriesToGenerate = targetCategoryIdSet
+    ? categories.filter((category) => targetCategoryIdSet.has(category.id))
+    : categories;
 
-  for (const category of categories) {
-    for (let cursor = fromFiscalPeriod; cursor <= toFiscalPeriod; cursor = incrementFiscalPeriod(cursor)) {
-      const rule = resolveApplicableRule(categories, rules, category.id, cursor);
+  for (const category of categoriesToGenerate) {
+    for (
+      let cursor = fromFiscalPeriod;
+      cursor <= toFiscalPeriod;
+      cursor = incrementFiscalPeriod(cursor)
+    ) {
+      const rule = resolveApplicableRule(
+        categories,
+        rules,
+        category.id,
+        cursor
+      );
 
       if (!rule) {
         continue;
       }
 
       const generatedPeriods = generateExpectedPeriods(rule, {
-          categoryNodeId: category.id,
-          fromFiscalPeriod: cursor,
-          toFiscalPeriod: cursor
-        })
+        categoryNodeId: category.id,
+        fromFiscalPeriod: cursor,
+        toFiscalPeriod: cursor
+      });
 
       for (const period of generatedPeriods) {
         const key = expectedKey(period);
@@ -78,32 +97,38 @@ export function calculateComplianceStatus({
     }
   }
 
-  const processedByKey = new Map<string, string[]>();
+  const processedByKey = new Map<
+    string,
+    ComplianceStatus["duplicates"][number]["documents"]
+  >();
 
   for (const document of documents) {
-    const key = documentKey(document);
+    const keys = documentKeys(document);
 
-    if (!key) {
-      continue;
+    for (const key of keys) {
+      processedByKey.set(key, [
+        ...(processedByKey.get(key) ?? []),
+        {
+          id: document.id,
+          amount: document.amount ?? null,
+          currency: document.currency ?? null,
+          fileName: document.fileName ?? null,
+          paymentDate: document.paymentDate ?? null
+        }
+      ]);
     }
-
-    processedByKey.set(key, [...(processedByKey.get(key) ?? []), document.id]);
   }
 
-  const missing = expected.filter((period) => {
-    if (processedByKey.has(expectedKey(period))) {
-      return false;
-    }
+  const unpaid = expected.filter(
+    (period) => !processedByKey.has(expectedKey(period))
+  );
 
+  const missing = unpaid.filter((period) => {
     const graceLimit = addDays(period.dueDate, period.rule.graceDays);
     return compareDateText(graceLimit, today) < 0;
   });
 
-  const upcoming = expected.filter((period) => {
-    if (processedByKey.has(expectedKey(period))) {
-      return false;
-    }
-
+  const upcoming = unpaid.filter((period) => {
     const reminderStart = addDays(period.dueDate, -period.rule.reminderDaysBefore);
     return (
       compareDateText(reminderStart, today) <= 0 &&
@@ -112,15 +137,15 @@ export function calculateComplianceStatus({
   });
 
   const duplicates = [...processedByKey.entries()]
-    .filter(([, ids]) => ids.length > 1)
-    .map(([key, documentIds]) => {
+    .filter(([, duplicateDocuments]) => duplicateDocuments.length > 1)
+    .map(([key, duplicateDocuments]) => {
       const [categoryNodeId, fiscalPeriod, fiscalPeriodKind] = key.split(":");
 
       return {
         categoryNodeId,
         fiscalPeriod,
         fiscalPeriodKind: fiscalPeriodKind as ExpectedPeriod["fiscalPeriodKind"],
-        documentIds
+        documents: duplicateDocuments
       };
     });
 
@@ -128,6 +153,7 @@ export function calculateComplianceStatus({
     expected,
     missing,
     overdue: missing,
+    unpaid,
     upcoming,
     duplicates
   };
@@ -146,4 +172,23 @@ function incrementFiscalPeriod(fiscalPeriod: string): string {
   const nextYear = month === 12 ? year + 1 : year;
 
   return `${nextYear}-${String(nextMonth).padStart(2, "0")}`;
+}
+
+function getCoveredFiscalPeriods(document: ComplianceDocument): string[] {
+  if (
+    document.fiscalPeriodKind !== "month" ||
+    !document.fiscalPeriod?.includes("-")
+  ) {
+    return document.fiscalPeriod ? [document.fiscalPeriod] : [];
+  }
+
+  const year = document.fiscalPeriod.slice(0, 4);
+  const months = document.coveredFiscalMonths?.length
+    ? document.coveredFiscalMonths
+    : [Number(document.fiscalPeriod.slice(5, 7))];
+
+  return [...new Set(months)]
+    .filter((month) => Number.isInteger(month) && month >= 1 && month <= 12)
+    .sort((a, b) => a - b)
+    .map((month) => `${year}-${String(month).padStart(2, "0")}`);
 }

@@ -35,7 +35,10 @@ export function buildDocumentWhereClause(
     }
 
     if (month && Number.isInteger(month)) {
-      addClause("fiscal_period_month = ?", month);
+      addClause(
+        "? = any(case when cardinality(covered_fiscal_months) > 0 then covered_fiscal_months else array[fiscal_period_month] end)",
+        month
+      );
     }
   }
 
@@ -60,7 +63,7 @@ export function buildDocumentWhereClause(
     values.push(`%${search}%`);
     const placeholder = `$${values.length}`;
     clauses.push(
-      `(reason ilike ${placeholder} or reference ilike ${placeholder} or issuer ilike ${placeholder} or payee ilike ${placeholder})`
+      `(file_name ilike ${placeholder} or reference ilike ${placeholder} or reason ilike ${placeholder} or issuer ilike ${placeholder} or payee ilike ${placeholder})`
     );
   }
 

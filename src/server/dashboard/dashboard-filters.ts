@@ -18,17 +18,31 @@ export interface FiscalPeriodStage {
 
 type SearchParamValue = string | string[] | undefined;
 
+const demoFiscalYears = [2024, 2025];
+
 export function parseDashboardFilters(
-  searchParams: Record<string, SearchParamValue>
+  searchParams: Record<string, SearchParamValue>,
+  today = new Date()
 ): DashboardFilters {
   return {
-    fiscalPeriod: getFirstValue(searchParams.fiscalPeriod),
+    fiscalPeriod:
+      getFirstValue(searchParams.fiscalPeriod) ?? String(today.getFullYear()),
     categoryId: getFirstValue(searchParams.categoryId)
   };
 }
 
-export function buildDashboardQuery(filters: DashboardFilters): string {
+export function buildDashboardQuery(
+  filters: DashboardFilters,
+  pathname = "/",
+  extraParams: Record<string, string | null | undefined> = {}
+): string {
   const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(extraParams)) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
 
   if (filters.fiscalPeriod) {
     params.set("fiscalPeriod", filters.fiscalPeriod);
@@ -39,7 +53,11 @@ export function buildDashboardQuery(filters: DashboardFilters): string {
   }
 
   const query = params.toString();
-  return query ? `?${query}` : "/";
+  if (pathname === "/") {
+    return query ? `?${query}` : "/";
+  }
+
+  return query ? `${pathname}?${query}` : pathname;
 }
 
 export function buildAvailableFiscalPeriods(
@@ -48,7 +66,7 @@ export function buildAvailableFiscalPeriods(
 ): string[] {
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
-  const years = new Set<number>([currentYear]);
+  const years = new Set<number>([...demoFiscalYears, currentYear]);
 
   for (const document of documents) {
     if (!document.fiscalPeriod) {
@@ -62,7 +80,7 @@ export function buildAvailableFiscalPeriods(
   }
 
   return [...years]
-    .sort((a, b) => b - a)
+    .sort((a, b) => a - b)
     .flatMap((year) => {
       const monthCount = year === currentYear ? currentMonth : 12;
       const months = Array.from({ length: monthCount }, (_, index) => {
@@ -105,8 +123,8 @@ export function getFiscalPeriodStage(
   };
 }
 
-export function shouldRevealFiscalMonths(fiscalPeriod: string | null): boolean {
-  return Boolean(fiscalPeriod);
+export function shouldRevealFiscalMonths(): boolean {
+  return true;
 }
 
 export function getCategoryFilterLevels(

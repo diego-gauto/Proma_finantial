@@ -26,7 +26,18 @@ export interface DocumentRow {
   paymentDate: string | null;
   paymentTime: string | null;
   fiscalPeriod: string | null;
+  coveredFiscalMonths?: number[] | null;
   fiscalPeriodKind: FiscalPeriodKind;
+  contentHash?: string | null;
+  contentHashAlgorithm?: string | null;
+  driveMd5Checksum?: string | null;
+  driveParentId?: string | null;
+  active?: boolean;
+  removedAt?: string | null;
+  removedReason?: string | null;
+  duplicateOfDocumentId?: string | null;
+  reviewReason?: string | null;
+  lastSeenAt?: string | null;
   amount: string | null;
   currency: string | null;
   reason: string | null;

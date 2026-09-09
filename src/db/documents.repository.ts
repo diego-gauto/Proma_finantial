@@ -15,7 +15,18 @@ interface DocumentDbRow {
   payment_date: string | null;
   payment_time: string | null;
   fiscal_period: string | null;
+  covered_fiscal_months: number[] | null;
   fiscal_period_kind: DocumentRow["fiscalPeriodKind"];
+  content_hash: string | null;
+  content_hash_algorithm: string | null;
+  drive_md5_checksum: string | null;
+  drive_parent_id: string | null;
+  active: boolean;
+  removed_at: Date | null;
+  removed_reason: string | null;
+  duplicate_of_document_id: string | null;
+  review_reason: string | null;
+  last_seen_at: Date | null;
   amount: string | null;
   currency: string | null;
   reason: string | null;
@@ -42,7 +53,18 @@ function toDocument(row: DocumentDbRow): DocumentRow {
     paymentDate: row.payment_date,
     paymentTime: row.payment_time,
     fiscalPeriod: row.fiscal_period,
+    coveredFiscalMonths: row.covered_fiscal_months,
     fiscalPeriodKind: row.fiscal_period_kind,
+    contentHash: row.content_hash,
+    contentHashAlgorithm: row.content_hash_algorithm,
+    driveMd5Checksum: row.drive_md5_checksum,
+    driveParentId: row.drive_parent_id,
+    active: row.active,
+    removedAt: row.removed_at?.toISOString() ?? null,
+    removedReason: row.removed_reason,
+    duplicateOfDocumentId: row.duplicate_of_document_id,
+    reviewReason: row.review_reason,
+    lastSeenAt: row.last_seen_at?.toISOString() ?? null,
     amount: row.amount,
     currency: row.currency,
     reason: row.reason,
@@ -70,12 +92,13 @@ export interface ReviewDocumentInput {
   amount: string;
   categoryNodeId: string;
   currency: string;
+  coveredFiscalMonths?: number[] | null;
   fiscalPeriod: string;
   fiscalPeriodKind: DocumentRow["fiscalPeriodKind"];
   issuer: string | null;
   payee: string | null;
   paymentDate: string;
-  reason: string;
+  reason: string | null;
   reference: string | null;
   userNote: string | null;
 }
@@ -95,7 +118,18 @@ const documentSelect = `
       when fiscal_period_kind = 'year' or fiscal_period_month is null then fiscal_period_year::text
       else fiscal_period_year::text || '-' || lpad(fiscal_period_month::text, 2, '0')
     end as fiscal_period,
+    covered_fiscal_months,
     fiscal_period_kind,
+    content_hash,
+    content_hash_algorithm,
+    drive_md5_checksum,
+    drive_parent_id,
+    active,
+    removed_at,
+    removed_reason,
+    duplicate_of_document_id,
+    review_reason,
+    last_seen_at,
     amount::text,
     currency,
     reason,
@@ -154,6 +188,7 @@ export async function listReviewDocuments(
     `
       ${documentSelect}
       where ${where}
+        and active = true
         and processing_status in ('review_required', 'error')
       order by updated_at desc
       limit $${values.length + 1}
@@ -185,6 +220,12 @@ export async function updateReviewedDocument(
   input: ReviewDocumentInput
 ): Promise<DocumentRow> {
   const fiscalPeriod = parseFiscalPeriod(input.fiscalPeriod);
+  const coveredFiscalMonths =
+    input.coveredFiscalMonths?.length
+      ? input.coveredFiscalMonths
+      : fiscalPeriod.month
+        ? [fiscalPeriod.month]
+        : null;
   const result = await getDbPool().query<DocumentDbRow>(
     `
       update documents
@@ -195,12 +236,13 @@ export async function updateReviewedDocument(
         fiscal_period_year = $5,
         fiscal_period_month = $6,
         fiscal_period_kind = $7,
-        issuer = $8,
-        payee = $9,
-        payment_date = $10,
-        reason = $11,
-        reference = $12,
-        user_note = $13,
+        covered_fiscal_months = $8,
+        issuer = $9,
+        payee = $10,
+        payment_date = $11,
+        reason = $12,
+        reference = $13,
+        user_note = $14,
         processing_status = 'processed',
         processing_error = null,
         updated_at = now()
@@ -219,7 +261,18 @@ export async function updateReviewedDocument(
           when fiscal_period_kind = 'year' or fiscal_period_month is null then fiscal_period_year::text
           else fiscal_period_year::text || '-' || lpad(fiscal_period_month::text, 2, '0')
         end as fiscal_period,
+        covered_fiscal_months,
         fiscal_period_kind,
+        content_hash,
+        content_hash_algorithm,
+        drive_md5_checksum,
+        drive_parent_id,
+        active,
+        removed_at,
+        removed_reason,
+        duplicate_of_document_id,
+        review_reason,
+        last_seen_at,
         amount::text,
         currency,
         reason,
@@ -242,6 +295,7 @@ export async function updateReviewedDocument(
       fiscalPeriod.year,
       fiscalPeriod.month,
       input.fiscalPeriodKind,
+      coveredFiscalMonths,
       input.issuer,
       input.payee,
       input.paymentDate,

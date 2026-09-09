@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { DocumentPreviewPane } from "@/components/documents/DocumentPreviewPane";
 import { DocumentReviewForm } from "@/components/documents/DocumentReviewForm";
+import { BackLink } from "@/components/navigation/BackLink";
 import { Card } from "@/components/ui/Card";
 import { listCategoryNodes } from "@/db/categories.repository";
 import { getDocumentById } from "@/db/documents.repository";
@@ -30,17 +31,21 @@ export default async function ReviewDocumentPage({
   }
 
   return (
-    <div className={styles.split}>
-      <Card title="Vista del documento">
-        <DocumentPreviewPane document={document} />
-      </Card>
-      <Card title="Correccion operativa">
-        <DocumentReviewForm
-          action={reviewDocumentAction}
-          categories={categories}
-          document={document}
-        />
-      </Card>
+    <div className={styles.page}>
+      <BackLink href="/documents/review" />
+      <div className={styles.split}>
+        <Card title="Vista del documento">
+          <DocumentPreviewPane document={document} />
+        </Card>
+        <Card title="Correccion operativa">
+          <DocumentReviewForm
+            action={reviewDocumentAction}
+            cancelHref="/documents/review"
+            categories={categories}
+            document={document}
+          />
+        </Card>
+      </div>
     </div>
   );
 }

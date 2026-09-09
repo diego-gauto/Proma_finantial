@@ -5,7 +5,12 @@ export function ReviewRequiredAlert({ alerts }: { alerts: DashboardAlerts }) {
   const total = alerts.reviewRequiredCount + alerts.errorCount;
 
   if (!total) {
-    return null;
+    return (
+      <section
+        aria-hidden="true"
+        className="alert-panel alert-panel-placeholder"
+      />
+    );
   }
 
   return (
@@ -17,7 +22,7 @@ export function ReviewRequiredAlert({ alerts }: { alerts: DashboardAlerts }) {
           error de procesamiento.
         </p>
       </div>
-      <Button href="/documents?processingStatus=review_required" variant="primary">
+      <Button href="/documents/review" variant="primary">
         Revisar
       </Button>
     </section>

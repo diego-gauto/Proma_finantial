@@ -2,11 +2,11 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Construir la app interna de control de pagos con Next.js full-stack, enfocada en revision operativa, reglas por categoria, faltantes, duplicados, vencidos, proximos pagos y analitica basica.
+**Goal:** Construir la app interna de control de pagos con Next.js full-stack, enfocada en revision operativa, reglas dentro del arbol de categorias, faltantes, duplicados, vencidos, proximos pagos y analitica basica.
 
 **Architecture:** Una sola app Next.js en la raiz. Server Components cargan datos de PostgreSQL, Server Actions realizan mutations y Route Handlers se reservan para endpoints necesarios. La logica sensible vive en `src/server/`; el acceso a datos en `src/db/`; los componentes visuales en `src/components/`.
 
-**Tech Stack:** pnpm, Node 22, Next.js estable, React estable, TypeScript strict, PostgreSQL, CSS Modules, Recharts, TanStack Table, Framer Motion, Vitest. No usar Bootstrap, Tailwind ni librerias CSS/frameworks visuales. Metabase queda fuera del flujo principal por ahora y solo como referencia visual/reportes externos futuros.
+**Tech Stack:** pnpm, Node 22, Next.js estable, React estable, TypeScript strict, PostgreSQL, CSS Modules, Recharts, TanStack Table, Framer Motion, Vitest. No usar Bootstrap, Tailwind ni librerias CSS/frameworks visuales. Metabase queda fuera de la navegacion v1 y solo como referencia visual/reportes externos futuros.
 
 ---
 
@@ -160,7 +160,7 @@ pnpm run build
 
 **Step 1: Crear navegacion**
 
-Rutas: Inicio, Documentos, Categorias, Reglas, Usuarios, Reportes opcional.
+Rutas visibles: Inicio, Categorias, Usuarios. Los documentos se consultan desde Inicio al llegar a una categoria hoja; `/documents` puede redirigir a `/`. Las reglas se administran desde Categorias; `/rules` puede redirigir a `/categories`. Reportes queda oculto en v1.
 
 **Step 2: Crear patrones UI base**
 

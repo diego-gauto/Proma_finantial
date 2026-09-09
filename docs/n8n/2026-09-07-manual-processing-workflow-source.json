@@ -1,0 +1,814 @@
+[
+  {
+    "id": "proyecto1FinDocs2026",
+    "name": "Proyecto 1 - Procesamiento comprobantes 2026 (final local)",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "manual-trigger",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          -1100,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "root",
+                "name": "ROOT_FOLDER_ID",
+                "value": "1e7vaYaveNP85KyH0wpV6d_MELr60OREg",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "config",
+        "name": "Config",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -900,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const rootFolderId = $json.ROOT_FOLDER_ID;\nif (!rootFolderId || rootFolderId === 'REEMPLAZAR_CON_ID_CARPETA_DRIVE') {\n  throw new Error('ROOT_FOLDER_ID no configurado');\n}\nreturn [{\n  json: {\n    ...$json,\n    rootFolderId,\n    folderQueue: [rootFolderId],\n    folderMeta: {\n      [rootFolderId]: { id: rootFolderId, name: null, root_category: null, path: [] },\n    },\n    files: [],\n    skippedFolders: [],\n    stage1_sync_only: true,\n  },\n}];"
+        },
+        "id": "init-queue",
+        "name": "Inicializar recorrido",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -700,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const state = { ...$json };\nstate.folderQueue = Array.isArray(state.folderQueue) ? [...state.folderQueue] : [];\nstate.folderMeta = state.folderMeta || {};\nstate.files = Array.isArray(state.files) ? [...state.files] : [];\nstate.skippedFolders = Array.isArray(state.skippedFolders) ? [...state.skippedFolders] : [];\n\nconst currentFolderId = state.folderQueue.shift();\nif (!currentFolderId) return [];\nconst currentFolderMeta = state.folderMeta[currentFolderId] || {\n  id: currentFolderId,\n  name: null,\n  root_category: null,\n  path: [],\n};\n\nreturn [{ json: { ...state, currentFolderId, currentFolderMeta } }];"
+        },
+        "id": "prepare-current-folder",
+        "name": "Preparar carpeta actual",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -260,
+          140
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://www.googleapis.com/drive/v3/files",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleDriveOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ '\"' + $json.currentFolderId + '\" in parents and trashed = false' }}"
+              },
+              {
+                "name": "fields",
+                "value": "files(id,name,mimeType,modifiedTime,parents,webViewLink,md5Checksum,size)"
+              },
+              {
+                "name": "pageSize",
+                "value": "1000"
+              },
+              {
+                "name": "supportsAllDrives",
+                "value": "true"
+              },
+              {
+                "name": "includeItemsFromAllDrives",
+                "value": "true"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "list-folder",
+        "name": "Listar carpeta actual",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -40,
+          140
+        ],
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "VzZlfgxu2EeOdQLH",
+            "name": "Google Drive account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const state = { ...$('Preparar carpeta actual').item.json };\nconst currentFolderId = state.currentFolderId;\nconst currentMeta = state.currentFolderMeta || state.folderMeta?.[currentFolderId] || { path: [], category_path: [] };\nconst children = $json.files || [];\nconst PROCESS_YEAR = '2026';\n\nfunction normalizeName(value) {\n  return String(value || '').trim();\n}\n\nfunction explicitYears(value) {\n  const text = String(value || '');\n  const years = new Set();\n  for (const match of text.matchAll(/(?:^|[^0-9])((?:19|20)\\d{2})(?:[^0-9]|$)/g)) years.add(match[1]);\n  for (const match of text.matchAll(/(?:^|[^0-9])(0?[1-9]|1[0-2])[-_. ]([0-9]{2})(?:[^0-9]|$)/g)) {\n    years.add(String(2000 + Number(match[2])));\n  }\n  return [...years];\n}\n\nfunction isYearSegment(value) {\n  return /^(?:19|20)\\d{2}$/.test(normalizeName(value));\n}\n\nfunction hasNonProcessYear(value) {\n  return explicitYears(value).some((year) => year !== PROCESS_YEAR);\n}\n\nstate.folderQueue = Array.isArray(state.folderQueue) ? [...state.folderQueue] : [];\nstate.folderMeta = state.folderMeta || {};\nstate.files = Array.isArray(state.files) ? [...state.files] : [];\nstate.skippedFolders = Array.isArray(state.skippedFolders) ? [...state.skippedFolders] : [];\nstate.skippedFiles = Array.isArray(state.skippedFiles) ? [...state.skippedFiles] : [];\n\nfor (const child of children) {\n  const name = normalizeName(child.name);\n  const path = [...(currentMeta.path || []), child.name];\n\n  if (child.mimeType === 'application/vnd.google-apps.folder') {\n    if (isYearSegment(name) && name !== PROCESS_YEAR) {\n      state.skippedFolders.push({ id: child.id, name: child.name, path: path.join('/'), reason: 'folder_year_not_2026' });\n      continue;\n    }\n\n    if (!isYearSegment(name) && hasNonProcessYear(name)) {\n      state.skippedFolders.push({ id: child.id, name: child.name, path: path.join('/'), reason: 'folder_name_indicates_non_2026_year' });\n      continue;\n    }\n\n    const categoryPath = isYearSegment(name)\n      ? [...(currentMeta.category_path || [])]\n      : [...(currentMeta.category_path || []), child.name];\n\n    state.folderMeta[child.id] = {\n      id: child.id,\n      name: child.name,\n      parent_id: currentFolderId,\n      path,\n      category_path: categoryPath,\n    };\n    state.folderQueue.push(child.id);\n    continue;\n  }\n\n  if (hasNonProcessYear(name)) {\n    state.skippedFiles.push({\n      id: child.id,\n      name: child.name,\n      path: path.join('/'),\n      reason: 'file_name_indicates_non_2026_year',\n    });\n    continue;\n  }\n\n  const categoryPath = [...(currentMeta.category_path || [])];\n  state.files.push({\n    ...child,\n    drive_file_id: child.id,\n    discovered_parent_id: currentFolderId,\n    drive_path: path.join('/'),\n    category_path: categoryPath,\n    processing_year: Number(PROCESS_YEAR),\n  });\n}\n\ndelete state.currentFolderId;\ndelete state.currentFolderMeta;\nreturn [{ json: state }];"
+        },
+        "id": "collect",
+        "name": "Acumular archivos",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -260,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "q",
+                "leftValue": "={{ $json.folderQueue.length }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "more-folders",
+        "name": "Quedan carpetas?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -40,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const files = Array.isArray($json.files) ? $json.files : [];\nreturn files.map((file) => ({\n  json: {\n    ...file,\n    ROOT_FOLDER_ID: $json.ROOT_FOLDER_ID,\n    rootFolderId: $json.rootFolderId,\n    skippedFolders: $json.skippedFolders || [],\n    stage1_sync_only: true,\n  },\n}));"
+        },
+        "id": "emit-files",
+        "name": "Emitir archivos",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          180,
+          140
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH input_file AS (\n  SELECT $1::text AS drive_file_id\n)\nSELECT\n  i.drive_file_id,\n  to_jsonb(d) AS existing_document,\n  (d.id IS NOT NULL) AS document_exists,\n  d.extracted_data->>'file_modified_at' AS existing_file_modified_at,\n  d.processing_status AS existing_processing_status\nFROM input_file i\nLEFT JOIN documents d ON d.drive_file_id = i.drive_file_id\nLIMIT 1;",
+          "options": {
+            "queryReplacement": "={{ [$json.id] }}"
+          }
+        },
+        "id": "lookup",
+        "name": "Buscar por Drive ID",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          400,
+          140
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "PgFinanzasP1Cred",
+            "name": "Postgres Finanzas Proyecto 1"
+          }
+        },
+        "disabled": false,
+        "notes": "Devuelve siempre una fila: existing_document queda null para archivos nuevos, evitando que el flujo se corte antes de descargar."
+      },
+      {
+        "parameters": {
+          "jsCode": "const files = $('Emitir archivos').all().map((item) => item.json);\nreturn items.map((item, index) => {\n  const file = files[index] || item.json;\n  const lookup = item.json || {};\n  const existingDocument = lookup.existing_document || null;\n  const documentExists = lookup.document_exists === true || lookup.document_exists === 'true';\n  const existingStatus = lookup.existing_processing_status || existingDocument?.processing_status || null;\n  const existingModifiedAt = lookup.existing_file_modified_at || existingDocument?.extracted_data?.file_modified_at || null;\n  const currentModifiedAt = file.modifiedTime || null;\n  const modifiedChanged = !!currentModifiedAt && !!existingModifiedAt\n    ? new Date(currentModifiedAt).getTime() !== new Date(existingModifiedAt).getTime()\n    : !documentExists;\n  const extractedData = existingDocument?.extracted_data || {};\n  const waitingForOcr = extractedData.source_kind === 'pdf_scanned'\n    || extractedData.source_kind === 'image'\n    || (Array.isArray(extractedData.review_reasons) && (\n      extractedData.review_reasons.includes('pdf_without_extractable_text_or_scanned')\n      || extractedData.review_reasons.includes('image_requires_ocr_or_vision')\n    ));\n  const missingCriticalField = !existingDocument?.raw_text\n    || !existingDocument?.amount\n    || !existingDocument?.payment_date\n    || !existingDocument?.reason\n    || !existingDocument?.reference\n    || !existingDocument?.issuer;\n  const needsExtraction = documentExists\n    && !waitingForOcr\n    && (['review_required', 'error'].includes(existingStatus) || missingCriticalField);\n  const shouldDownload = !documentExists || modifiedChanged || needsExtraction;\n\n  return {\n    json: {\n      ...file,\n      lookup,\n      document_exists: documentExists,\n      existing_processing_status: existingStatus,\n      waitingForOcr,\n      needsExtraction,\n      should_download: shouldDownload,\n      processing_decision: shouldDownload ? (needsExtraction ? 'retry_extraction' : (documentExists ? 'modified' : 'new')) : 'unchanged_seen',\n    },\n  };\n});"
+        },
+        "id": "decide-processing",
+        "name": "Decidir procesamiento",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          620,
+          140
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "should-download",
+                "leftValue": "={{ $json.should_download }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "should-download",
+        "name": "Debe descargar?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          820,
+          140
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE documents\nSET\n  drive_url = $2,\n  file_name = $3,\n  drive_path = $4,\n  extracted_data = documents.extracted_data\n    || jsonb_strip_nulls(jsonb_build_object(\n      'last_seen_at', now(),\n      'file_modified_at', $5::text,\n      'mime_type', $6::text,\n      'processing_decision', 'unchanged_seen'\n    ))\nWHERE drive_file_id = $1\nRETURNING id, drive_file_id, processing_status, updated_at;",
+          "options": {
+            "queryReplacement": "={{ [\n  $json.id,\n  $json.webViewLink || null,\n  $json.name,\n  $json.drive_path,\n  $json.modifiedTime || null,\n  $json.mimeType || null\n] }}"
+          }
+        },
+        "id": "touch-seen",
+        "name": "Actualizar visto",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          1040,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "PgFinanzasP1Cred",
+            "name": "Postgres Finanzas Proyecto 1"
+          }
+        },
+        "notes": "Etapa 1: archivo ya conocido y sin cambios; solo refresca presencia/metadata."
+      },
+      {
+        "parameters": {
+          "operation": "download",
+          "fileId": {
+            "__rl": true,
+            "value": "={{ $json.id }}",
+            "mode": "id"
+          },
+          "options": {}
+        },
+        "id": "download",
+        "name": "Descargar archivo",
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          1040,
+          80
+        ],
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "VzZlfgxu2EeOdQLH",
+            "name": "Google Drive account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "action": "hash",
+          "binaryData": true,
+          "binaryPropertyName": "data",
+          "type": "SHA256",
+          "dataPropertyName": "sha256",
+          "encoding": "hex"
+        },
+        "id": "hash",
+        "name": "Calcular SHA256",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 2,
+        "position": [
+          2660,
+          360
+        ],
+        "notes": "Etapa 1: hash SHA-256 del binario usando nodo Crypto nativo, porque Code node no permite require(crypto)."
+      },
+      {
+        "parameters": {
+          "jsCode": "return items.map((item, index) => {\n  const source = $('Decidir procesamiento').all()[index]?.json || $('Decidir procesamiento').item.json;\n  const sha256 = item.json.sha256 || item.json.data || null;\n  const driveMd5Checksum = source.md5Checksum || source.drive_md5_checksum || null;\n  return {\n    json: {\n      ...source,\n      sha256,\n      content_hash: sha256,\n      content_hash_algorithm: sha256 ? 'sha256' : null,\n      drive_md5_checksum: driveMd5Checksum,\n    },\n    binary: item.binary,\n  };\n});"
+        },
+        "id": "prepare-hash-metadata",
+        "name": "Preparar metadata con hash",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2880,
+          360
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return items.map((item) => {\n  const mimeType = item.json.mimeType || '';\n  const source_kind = mimeType.startsWith('image/') ? 'image' : null;\n  return {\n    json: {\n      ...item.json,\n      source_kind,\n      raw_text: null,\n      extracted_data: {\n        stage: 'stage1_metadata_only',\n        drive_path: item.json.drive_path || null,\n        md5Checksum: item.json.md5Checksum || null,\n        size: item.json.size || null,\n      },\n      field_sources: {\n        root_category: 'drive_first_folder_under_root',\n        file_name: 'google_drive',\n        drive_file_id: 'google_drive',\n        sha256: 'downloaded_binary',\n      },\n      field_confidence: {},\n      needs_review: false,\n      review_reasons: [],\n      processing_status: 'pending',\n    },\n    binary: item.binary,\n  };\n});"
+        },
+        "id": "prepare",
+        "name": "Preparar extracción",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1500,
+          80
+        ],
+        "notes": "Reemplazado por etapa 2: Es PDF? -> ReadPDF/reglas u OCR requerido.",
+        "disabled": true
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH input AS (\n  SELECT\n    $1::text AS drive_file_id,\n    $2::text AS drive_url,\n    $3::text AS file_name,\n    $4::jsonb AS category_path_json,\n    $5::text AS drive_path,\n    $6::smallint AS fiscal_period_year,\n    $7::smallint AS fiscal_period_month,\n    $8::text AS fiscal_period_kind,\n    $9::date AS payment_date,\n    $10::time AS payment_time,\n    $11::numeric AS amount,\n    $12::text AS currency,\n    $13::text AS reason,\n    $14::text AS reference,\n    $15::text AS issuer,\n    $16::text AS payee,\n    $17::text AS user_note,\n    $18::text AS raw_text,\n    $19::jsonb AS extracted_data,\n    $20::text AS processing_status,\n    $21::text AS processing_error,\n    $22::integer[] AS covered_fiscal_months,\n    $23::text AS content_hash,\n    $24::text AS content_hash_algorithm,\n    $25::text AS drive_md5_checksum\n),\ncategory AS (\n  SELECT resolve_category_node(\n    ARRAY(SELECT jsonb_array_elements_text(category_path_json))\n  ) AS category_node_id\n  FROM input\n)\nINSERT INTO documents (\n  drive_file_id, drive_url, file_name, drive_path, category_node_id,\n  payment_date, payment_time, fiscal_period_year, fiscal_period_month, fiscal_period_kind, covered_fiscal_months,\n  amount, currency, reason, reference, issuer, payee, user_note, raw_text,\n  extracted_data, processing_status, processing_error, content_hash, content_hash_algorithm, drive_md5_checksum\n)\nSELECT\n  i.drive_file_id, i.drive_url, i.file_name, i.drive_path, c.category_node_id,\n  i.payment_date, i.payment_time, i.fiscal_period_year, i.fiscal_period_month, i.fiscal_period_kind, i.covered_fiscal_months,\n  i.amount, i.currency, i.reason, i.reference, i.issuer, i.payee, i.user_note, i.raw_text,\n  i.extracted_data, i.processing_status, i.processing_error, i.content_hash, i.content_hash_algorithm, i.drive_md5_checksum\nFROM input i\nCROSS JOIN category c\nON CONFLICT (drive_file_id) DO UPDATE SET\n  drive_url = EXCLUDED.drive_url,\n  file_name = EXCLUDED.file_name,\n  drive_path = EXCLUDED.drive_path,\n  category_node_id = EXCLUDED.category_node_id,\n  payment_date = EXCLUDED.payment_date,\n  payment_time = EXCLUDED.payment_time,\n  fiscal_period_year = EXCLUDED.fiscal_period_year,\n  fiscal_period_month = EXCLUDED.fiscal_period_month,\n  fiscal_period_kind = EXCLUDED.fiscal_period_kind,\n  covered_fiscal_months = EXCLUDED.covered_fiscal_months,\n  amount = EXCLUDED.amount,\n  currency = EXCLUDED.currency,\n  reason = EXCLUDED.reason,\n  reference = EXCLUDED.reference,\n  issuer = COALESCE(EXCLUDED.issuer, documents.issuer),\n  payee = EXCLUDED.payee,\n  user_note = EXCLUDED.user_note,\n  raw_text = EXCLUDED.raw_text,\n  extracted_data = EXCLUDED.extracted_data,\n  processing_status = EXCLUDED.processing_status,\n  processing_error = EXCLUDED.processing_error,\n  content_hash = EXCLUDED.content_hash,\n  content_hash_algorithm = EXCLUDED.content_hash_algorithm,\n  drive_md5_checksum = EXCLUDED.drive_md5_checksum\nRETURNING id, drive_file_id, processing_status, category_node_id;",
+          "options": {
+            "queryReplacement": "={{ [\n  $json.id || $json.drive_file_id,\n  $json.webViewLink || null,\n  $json.name,\n  JSON.stringify($json.category_path || []),\n  $json.drive_path,\n  $json.fiscal_period_year || $json.processing_year || 2026,\n  $json.fiscal_period_month || null,\n  $json.fiscal_period_kind || 'year',\n  $json.payment_date || null,\n  $json.payment_time || null,\n  $json.amount || null,\n  $json.currency || null,\n  $json.reason || null,\n  $json.reference || null,\n  $json.issuer || null,\n  $json.payee || null,\n  $json.user_note || null,\n  $json.raw_text || null,\n  JSON.stringify($json.extracted_data || {}),\n  $json.processing_status || 'review_required',\n  $json.processing_error || null,\n  $json.covered_fiscal_months || null,\n  $json.content_hash || null,\n  $json.content_hash_algorithm || null,\n  $json.drive_md5_checksum || $json.md5Checksum || null\n] }}"
+          }
+        },
+        "id": "upsert",
+        "name": "Guardar documento",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          3540,
+          260
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "PgFinanzasP1Cred",
+            "name": "Postgres Finanzas Proyecto 1"
+          }
+        },
+        "notes": "Etapa 1: guarda metadata, hash y estado pending. OCR/IA queda para la etapa 2."
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "REEMPLAZAR_CON_ENDPOINT_MODELO_COMPATIBLE",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer REEMPLAZAR_CREDENCIAL"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({instruction: `Extrae UN SOLO pago total del comprobante. No descompongas movimientos internos. Devuelve JSON estricto con: payment_date, payment_time, amount, currency, payment_reason, normalized_reason, issuer, payee, payee_cuit, payment_reference, period, extra_data, field_sources, field_confidence, needs_review, review_reasons. payment_reason responde qué se está pagando. Usa root_category solo como contexto auxiliar. No inventes datos. Si el importe total no es inequívoco usa null y needs_review=true.`, root_category: $json.root_category || null, file_name: $json.name, raw_text: $json.raw_text || null }) }}",
+          "options": {}
+        },
+        "id": "extract-ai",
+        "name": "Extraer datos IA",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1500,
+          300
+        ],
+        "notes": "Deshabilitado en etapa 1: la sincronizacion guarda solo metadata y hash, sin OCR/IA.",
+        "disabled": true
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "is-pdf-mime",
+                "leftValue": "={{ $json.mimeType }}",
+                "rightValue": "application/pdf",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "is-pdf",
+        "name": "Es PDF?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2440,
+          260
+        ]
+      },
+      {
+        "parameters": {
+          "binaryPropertyName": "data",
+          "encrypted": false
+        },
+        "id": "extract-pdf-text",
+        "name": "Extraer texto PDF",
+        "type": "n8n-nodes-base.readPDF",
+        "typeVersion": 1,
+        "position": [
+          2660,
+          160
+        ],
+        "continueOnFail": true,
+        "notes": "Extrae texto de PDFs digitales sin usar IA. Si no hay texto suficiente, el siguiente nodo lo marca para OCR/revision."
+      },
+      {
+        "parameters": {
+          "jsCode": "function normalizeWhitespace(value) {\n  return String(value || '').replace(/\\s+/g, ' ').trim();\n}\n\nfunction parseDate(text) {\n  const match = text.match(/\\b(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{2,4})\\b/);\n  if (!match) return null;\n  const day = Number(match[1]);\n  const month = Number(match[2]);\n  let year = Number(match[3]);\n  if (year < 100) year += 2000;\n  if (month < 1 || month > 12 || day < 1 || day > 31) return null;\n  return String(year).padStart(4, '0') + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');\n}\n\nfunction parseAmount(text) {\n  function toNumber(raw) {\n    if (!raw) return null;\n    const normalized = raw.includes(',')\n      ? raw.replace(/\\./g, '').replace(',', '.')\n      : raw.replace(/,/g, '');\n    const amount = Number(normalized);\n    return Number.isFinite(amount) ? amount : null;\n  }\n\n  function formatAmount(amount) {\n    return Number.isFinite(amount) ? amount.toFixed(2) : null;\n  }\n\n  function debitTokenToAmount(raw) {\n    let token = String(raw || '').trim();\n    const gluedCodeMatch = token.match(/^\\d{5}(\\d{1,3}(?:\\.\\d{3})*,\\d{2})$/);\n    if (gluedCodeMatch) token = gluedCodeMatch[1];\n    return toNumber(token);\n  }\n\n  const debitMovementAmounts = [];\n  if (/Detalle\\s+de\\s+movimientos/i.test(text) && /D[eé]bito\\s+Cr[eé]dito/i.test(text)) {\n    const debitPattern = /\\b(\\d{5,6}\\d{1,3}(?:\\.\\d{3})*,\\d{2}|[0-9]{1,3}(?:\\.[0-9]{3})*,[0-9]{2})\\s+0,00/gi;\n    for (const match of text.matchAll(debitPattern)) {\n      const amount = debitTokenToAmount(match[1]);\n      if (amount && amount > 0) debitMovementAmounts.push(amount);\n    }\n    if (debitMovementAmounts.length) {\n      return formatAmount(debitMovementAmounts.reduce((sum, amount) => sum + amount, 0));\n    }\n  }\n\n  const candidates = [];\n  const amountToken = '([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})|[0-9]+(?:[.,][0-9]{2}))';\n  const patterns = [\n    new RegExp('Vencimiento\\\\s+Importe[\\\\s\\\\S]{0,120}?\\\\b\\\\d{1,2}[\\\\/.-]\\\\d{1,2}[\\\\/.-]\\\\d{2,4}\\\\s+' + amountToken, 'gi'),\n    new RegExp('Vencimiento\\\\s+Importe\\\\s+Cuota\\\\s+Cod\\\\.Seg\\\\.[\\\\s\\\\S]{0,80}?\\\\s+' + amountToken + '\\\\s+\\\\d{6,}', 'gi'),\n    /(?:total|importe|monto|abonado|pagado|pago)\\s*[:$]?\\s*(?:ars|\\$)?\\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})|[0-9]+(?:[.,][0-9]{2}))/gi,\n    /(?:ars|\\$)\\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})|[0-9]+(?:[.,][0-9]{2}))/gi\n  ];\n  for (const pattern of patterns) {\n    for (const match of text.matchAll(pattern)) candidates.push(match[1]);\n  }\n  if (!candidates.length) return null;\n  const raw = candidates[candidates.length - 1];\n  return formatAmount(toNumber(raw));\n}\n\nfunction normalizeCoveredFiscalMonths(months) {\n  const normalized = [...new Set((months || [])\n    .map((month) => Number(month))\n    .filter((month) => Number.isInteger(month) && month >= 1 && month <= 12))]\n    .sort((left, right) => left - right);\n  return normalized.length ? normalized : null;\n}\n\nfunction parseFiscalPeriodRangeFromName(fileName, fallbackYear = 2026) {\n  const text = String(fileName || '');\n  const match = text.match(/\\b(0?[1-9]|1[0-2])\\s*[-_]\\s*(0?[1-9]|1[0-2])\\s*[-_ ]+\\s*(20\\d{2}|\\d{2})\\b/);\n  if (!match) return null;\n  let year = Number(match[3]);\n  if (year < 100) year += 2000;\n  if (!Number.isInteger(year)) year = fallbackYear;\n  const firstMonth = Number(match[1]);\n  const lastMonth = Number(match[2]);\n  const fromMonth = Math.min(firstMonth, lastMonth);\n  const toMonth = Math.max(firstMonth, lastMonth);\n  const covered = [];\n  for (let month = fromMonth; month <= toMonth; month += 1) {\n    covered.push(month);\n  }\n  return {\n    fiscal_period_year: year,\n    fiscal_period_month: toMonth,\n    fiscal_period_kind: 'month',\n    covered_fiscal_months: normalizeCoveredFiscalMonths(covered),\n    source: 'file_name_range',\n    confidence: 0.75\n  };\n}\n\nfunction parseFiscalPeriod(fileName, text, fallbackYear = 2026) {\n  const fromNameRange = parseFiscalPeriodRangeFromName(fileName, fallbackYear);\n  if (fromNameRange) return fromNameRange;\n  const fromFiscal = text.match(/Per[ií]odo\\s+Fiscal:\\s*(0?[0-9]|1[0-2])[\\/.-](20\\d{2}|\\d{2})/i);\n  const fromText = text.match(/(?:periodo|per[ií]odo|mes)\\s*[:\\-]?\\s*(0?[1-9]|1[0-2])[\\/.-](20\\d{2}|\\d{2})/i);\n  const fromName = String(fileName || '').match(/\\b(0?[1-9]|1[0-2])[-_ ]?(20\\d{2}|\\d{2})\\b/);\n  const match = fromFiscal || fromText || fromName;\n  if (!match) {\n    return { fiscal_period_year: fallbackYear, fiscal_period_month: null, fiscal_period_kind: 'year', covered_fiscal_months: null, source: 'processing_year_fallback', confidence: 0.2 };\n  }\n  const numericMonth = Number(match[1]);\n  let year = Number(match[2]);\n  if (year < 100) year += 2000;\n  if (match === fromFiscal && numericMonth === 0) {\n    return { fiscal_period_year: year, fiscal_period_month: null, fiscal_period_kind: 'year', covered_fiscal_months: null, source: 'fiscal_period_label', confidence: 0.85 };\n  }\n  return { fiscal_period_year: year, fiscal_period_month: numericMonth, fiscal_period_kind: 'month', covered_fiscal_months: normalizeCoveredFiscalMonths([numericMonth]), source: match === fromName ? 'file_name' : 'pdf_text', confidence: match === fromName ? 0.7 : 0.85 };\n}\n\nfunction cleanExtractedLabel(value) {\n  return normalizeWhitespace(value).replace(/[.;,]+$/, '').trim() || null;\n}\n\nfunction parseServiceReason(text) {\n  const patterns = [\n    /Servicio:\\s*([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+Cod\\.?\\s+de\\s+Ente:|\\s+Identificaci[oó]n:|\\s+Cuenta\\s+de\\s+D[eé]bito:|\\s+Anotaci[oó]n\\s+Personal:|\\s+Vencimiento\\b|$)/i,\n    /Servicio\\s+([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+Datos\\s+del\\s+pagador|\\s+Datos\\s+particulares|\\s+Identificaci[oó]n\\b|\\s+Estado\\b|$)/i,\n  ];\n  for (const pattern of patterns) {\n    const match = text.match(pattern);\n    if (match) return cleanExtractedLabel(match[1]);\n  }\n  return null;\n}\n\nfunction parseTransferReason(text) {\n  const motivoMatch = text.match(/Motivo\\s+Tipo\\s+de\\s+transferencia\\s+([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+Datos\\s+del\\s+destinatario|\\s+Razon\\s+Social\\b|$)/i);\n  if (motivoMatch) return cleanExtractedLabel(motivoMatch[1]);\n  const descMatch = text.match(/Descripci[oó]n:\\s*([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+CUIL\\/CUIT|\\s+Fecha\\s+de\\s+Generaci[oó]n|\\s+Concepto:|$)/i);\n  if (descMatch) return cleanExtractedLabel(descMatch[1]);\n  return null;\n}\n\nfunction parseVepReason(text) {\n  const match = text.match(/Pago\\s+de:\\s*([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+Concepto:|\\s+Subconcepto:|\\s+Per[ií]odo\\s+Fiscal:|\\s+N[uú]mero\\s+de\\s+VEP:|$)/i);\n  const rawReason = match ? cleanExtractedLabel(match[1]) : null;\n  if (!rawReason) return null;\n  const suffixMatch = rawReason.match(/^(.*?)\\s+-\\s+(SOLO\\s+PAGO)$/i);\n  if (!suffixMatch) return { reason: rawReason, note: null, raw_reason: rawReason };\n  return {\n    reason: cleanExtractedLabel(suffixMatch[1]),\n    note: normalizeWhitespace(suffixMatch[2]).toUpperCase(),\n    raw_reason: rawReason\n  };\n}\n\nfunction parseVepNumber(text) {\n  const match = text.match(/N[uú]mero\\s+de\\s+VEP:\\s*(\\d{6,})/i);\n  return match ? cleanExtractedLabel(match[1]) : null;\n}\n\nfunction parseIssuerBank(text) {\n  const candidates = [\n    { name: 'Banco Credicoop Coop. Ltdo.', pattern: /Banco\\s+Credicoop(?:\\s+Coop\\.?\\s+Ltda?\\.?|\\s+Cooperativo\\s+Ltda?\\.?)?/i },\n    { name: 'Banco Galicia', pattern: /(?:Banco\\s+)?Galicia/i },\n    { name: 'Banco de la Nacion Argentina', pattern: /Banco\\s+(?:de\\s+la\\s+)?Naci[oó]n|\\bBNA\\b/i },\n    { name: 'Banco Provincia', pattern: /Banco\\s+Provincia/i },\n    { name: 'Banco Santander', pattern: /(?:Banco\\s+)?Santander/i },\n    { name: 'BBVA', pattern: /\\bBBVA\\b|Franc[eé]s/i },\n    { name: 'Banco Macro', pattern: /Banco\\s+Macro|\\bMacro\\b/i },\n    { name: 'ICBC', pattern: /\\bICBC\\b/i },\n    { name: 'Mercado Pago', pattern: /Mercado\\s+Pago/i },\n    { name: 'Uala', pattern: /\\bUal[aá]\\b/i },\n  ];\n\n  for (const candidate of candidates) {\n    if (candidate.pattern.test(text)) return candidate.name;\n  }\n  return null;\n}\n\nfunction parsePersonalAnnotation(text) {\n  const match = text.match(/Anotaci[oó]n\\s+Personal:\\s*([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+Vencimiento\\b|\\s+Importe\\b|$)/i);\n  return match ? cleanExtractedLabel(match[1]) : null;\n}\n\nfunction parsePaymentReference(text) {\n  const patterns = [\n    /Fecha\\s+Nro\\s+Transacci[oó]n\\s+\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{2,4}\\s*-?\\s*\\d{1,2}:\\d{2}(?::\\d{2})?\\s+(\\d{6,})/i,\n    /Nro\\s+Transacci[oó]n(?:\\s+\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{2,4})?(?:\\s*-?\\s*\\d{1,2}:\\d{2}(?::\\d{2})?)?\\s+(\\d{6,})/i,\n    /Nro\\s+de\\s+Operaci[oó]n\\s+(\\d{6,})/i,\n    /Identificador\\s+de\\s+la\\s+operaci[oó]n:?\\s*([A-Z0-9-]+)/i,\n  ];\n  for (const pattern of patterns) {\n    const match = text.match(pattern);\n    if (match) return cleanExtractedLabel(match[1]);\n  }\n  return null;\n}\n\nconst VEHICLE_PATENT_CATEGORY_BY_PLATE = {\n  AC743LH: 'Patente 500',\n  AG437RG: 'Patente Amarok',\n  AG453WA: 'Patente Berlingo',\n  AE082TC: 'Patente C3',\n};\n\nfunction isVehiclePatentCategory(source) {\n  const path = Array.isArray(source.category_path) ? source.category_path : [];\n  const drivePath = String(source.drive_path || '');\n  return path.includes('Patentes Vehiculos') || drivePath.includes('Patentes Vehiculos');\n}\n\nfunction extractArbaVehiclePatentPages(text) {\n  const rawText = String(text || '');\n  const rawPages = rawText.includes('\\f')\n    ? rawText.split(/\\f+/)\n    : rawText.split(/(?=Identificador\\s+de\\s+la\\s+operaci[oó]n:?)/i);\n  const pages = rawPages.map(page => normalizeWhitespace(page)).filter(Boolean);\n  return pages.map((pageText, index) => {\n    const plateMatch = pageText.match(/\\b([A-Z]{2}[0-9]{3}[A-Z]{2})\\s+\\d{3}\\/\\d{2}\\b/i);\n    if (!plateMatch) return null;\n    const plate = plateMatch[1].toUpperCase();\n    const vehicleFolder = VEHICLE_PATENT_CATEGORY_BY_PLATE[plate] || null;\n    return {\n      page_index: index,\n      page_number: index + 1,\n      page_count: pages.length,\n      plate,\n      vehicle_folder: vehicleFolder,\n      raw_text: pageText,\n    };\n  }).filter(Boolean);\n}\n\nreturn items.flatMap((item, index) => {\n  const pairedIndex = Array.isArray(item.pairedItem) ? item.pairedItem[0]?.item : item.pairedItem?.item;\n  const source = $('Descargar archivo').all()[pairedIndex]?.json || item.json;\n  const fullPdfText = String(item.json.text || item.json.data || '');\n  const extractionError = item.json.error || null;\n  const patentPages = isVehiclePatentCategory(source) ? extractArbaVehiclePatentPages(fullPdfText) : [];\n  const parts = patentPages.length > 1 ? patentPages : [{ raw_text: normalizeWhitespace(fullPdfText), page_index: null, page_number: null, page_count: null, plate: null, vehicle_folder: null }];\n\n  return parts.map((part) => {\n  const pdfText = part.raw_text;\n  const hasText = pdfText.length >= 80;\n  const paymentDate = hasText ? parseDate(pdfText) : null;\n  const amount = hasText ? parseAmount(pdfText) : null;\n  const fiscalPeriod = parseFiscalPeriod(source.name, pdfText, source.processing_year || 2026);\n  const categoryPath = part.vehicle_folder\n    ? ['Patentes Vehiculos', part.vehicle_folder]\n    : (source.category_path || []);\n  const originalDriveFileId = source.drive_file_id || source.id;\n  const logicalDriveFileId = part.plate\n    ? originalDriveFileId + '#page=' + part.page_number + '#plate=' + part.plate\n    : originalDriveFileId;\n  const logicalDrivePath = part.vehicle_folder\n    ? (\n        String(source.drive_path || '').includes('Patentes Vehiculos/2026/')\n          ? String(source.drive_path || '').replace('Patentes Vehiculos/2026/', 'Patentes Vehiculos/' + part.vehicle_folder + '/2026/')\n          : String(source.drive_path || '').replace(/Patentes Vehiculos\\/[^/]+(?:\\/2026)?\\//, 'Patentes Vehiculos/' + part.vehicle_folder + '/2026/')\n      ) + '#page=' + part.page_number\n    : source.drive_path;\n  const currency = /\\b(?:usd|u\\$s)\\b/i.test(pdfText) ? 'USD' : (/\\$|\\bars\\b|pesos?/i.test(pdfText) ? 'ARS' : null);\n  const serviceReason = hasText ? parseServiceReason(pdfText) : null;\n  const transferReason = hasText ? parseTransferReason(pdfText) : null;\n  const vepReasonData = hasText ? parseVepReason(pdfText) : null;\n  const vepReason = vepReasonData?.reason || null;\n  const vepReasonNote = vepReasonData?.note || null;\n  const vepRawReason = vepReasonData?.raw_reason || null;\n  const vepNumber = hasText ? parseVepNumber(pdfText) : null;\n  const personalAnnotation = hasText ? parsePersonalAnnotation(pdfText) : null;\n  const paymentReference = hasText ? parsePaymentReference(pdfText) : null;\n  const issuerBank = hasText ? parseIssuerBank(pdfText) : null;\n  const categoryFallbackReason = Array.isArray(source.category_path) && source.category_path.length\n    ? source.category_path[source.category_path.length - 1]\n    : null;\n  const reason = serviceReason || vepReason || transferReason || categoryFallbackReason || null;\n  const reviewReasons = [];\n\n  if (extractionError) reviewReasons.push('pdf_text_extraction_error');\n  if (!hasText) reviewReasons.push('pdf_without_extractable_text_or_scanned');\n  if (hasText && !paymentDate) reviewReasons.push('payment_date_not_detected');\n  if (hasText && !amount) reviewReasons.push('amount_not_detected');\n  if (hasText && !reason) reviewReasons.push('reason_not_detected');\n  if (fiscalPeriod.source === 'processing_year_fallback') reviewReasons.push('fiscal_period_not_detected');\n  if (part.plate && !part.vehicle_folder) reviewReasons.push('vehicle_patent_plate_not_mapped');\n  if (hasText && !issuerBank) reviewReasons.push('issuer_not_detected_in_pdf_text');\n\n  const processed = hasText && paymentDate && amount && reason && issuerBank && fiscalPeriod.source !== 'processing_year_fallback';\n\n  return {\n    json: {\n      ...source,\n      id: logicalDriveFileId,\n      drive_file_id: logicalDriveFileId,\n      original_drive_file_id: originalDriveFileId,\n      drive_path: logicalDrivePath,\n      category_path: categoryPath,\n      source_kind: hasText ? 'pdf_text' : 'pdf_scanned',\n      payment_date: paymentDate,\n      payment_time: null,\n      fiscal_period_year: fiscalPeriod.fiscal_period_year,\n      fiscal_period_month: fiscalPeriod.fiscal_period_month,\n      fiscal_period_kind: fiscalPeriod.fiscal_period_kind,\n      covered_fiscal_months: fiscalPeriod.covered_fiscal_months,\n      amount,\n      currency,\n      reason,\n      reference: paymentReference || vepNumber,\n      issuer: issuerBank,\n      payee: null,\n      user_note: personalAnnotation || vepReasonNote,\n      raw_text: pdfText || null,\n      extracted_data: {\n        stage: 'final_pdf_text_first_pass',\n        extractor: 'n8n_readPDF_plus_rules',\n        source_kind: hasText ? 'pdf_text' : 'pdf_scanned',\n        text_length: pdfText.length,\n        drive_path: logicalDrivePath || null,\n        category_path: categoryPath,\n        original_drive_path: source.drive_path || null,\n        original_drive_file_id: originalDriveFileId,\n        logical_drive_file_id: logicalDriveFileId,\n        pdf_page_number: part.page_number,\n        pdf_page_index: part.page_index,\n        pdf_page_count: part.page_count,\n        vehicle_patent_plate: part.plate,\n        vehicle_patent_folder: part.vehicle_folder,\n        vehicle_patent_mapping_source: part.plate ? 'VEHICLE_PATENT_CATEGORY_BY_PLATE' : null,\n        file_modified_at: source.modifiedTime || null,\n        mime_type: source.mimeType || null,\n        md5Checksum: source.drive_md5_checksum || source.md5Checksum || null,\n        drive_md5_checksum: source.drive_md5_checksum || source.md5Checksum || null,\n        size: source.size || null,\n        sha256: source.sha256 || null,\n        content_hash: source.content_hash || source.sha256 || null,\n        content_hash_algorithm: source.content_hash_algorithm || (source.sha256 ? 'sha256' : null),\n        extraction_error: extractionError,\n        service_reason: serviceReason,\n        transfer_reason: transferReason,\n        vep_reason: vepReason,\n        vep_reason_note: vepReasonNote,\n        vep_raw_reason: vepRawReason,\n        vep_number: vepNumber,\n        personal_annotation: personalAnnotation,\n        payment_reference: paymentReference,\n        issuer_bank: issuerBank,\n        issuer_source: issuerBank ? 'pdf_text_bank_name' : (hasText ? 'not_detected_in_pdf_text' : 'ocr_or_vision_pending'),\n        fiscal_period_source: fiscalPeriod.source,\n        covered_fiscal_months: fiscalPeriod.covered_fiscal_months || null,\n        field_confidence: {\n          raw_text: hasText ? 0.9 : 0,\n          payment_date: paymentDate ? 0.65 : 0,\n          amount: amount ? 0.65 : 0,\n          currency: currency ? 0.6 : 0,\n          fiscal_period: fiscalPeriod.confidence,\n          reason: serviceReason || vepReason ? 0.85 : (transferReason ? 0.75 : (categoryFallbackReason ? 0.55 : 0)),\n          reference: (paymentReference || vepNumber) ? 0.85 : 0,\n          issuer: issuerBank ? 0.9 : 0\n        },\n        review_reasons: reviewReasons\n      },\n      processing_status: processed ? 'processed' : 'review_required',\n      processing_error: extractionError\n    },\n    binary: item.binary\n  };\n  });\n});"
+        },
+        "id": "normalize-pdf-extraction",
+        "name": "Normalizar extracción PDF",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2880,
+          160
+        ],
+        "notes": "Normaliza texto extraido de PDF a los campos de documents. Es deterministico y marca revision si falta fecha/importe/texto."
+      },
+      {
+        "parameters": {
+          "jsCode": "return items.map((item) => {\n  const mimeType = item.json.mimeType || '';\n  const sourceKind = mimeType === 'application/pdf' ? 'pdf_scanned' : (mimeType.startsWith('image/') ? 'image' : 'other');\n  const reason = sourceKind === 'image'\n    ? 'image_requires_ocr_or_vision'\n    : (sourceKind === 'pdf_scanned' ? 'pdf_requires_ocr_or_vision' : 'unsupported_file_type_for_text_extraction');\n  return {\n    json: {\n      ...item.json,\n      source_kind: sourceKind,\n      payment_date: null,\n      payment_time: null,\n      fiscal_period_year: item.json.processing_year || 2026,\n      fiscal_period_month: null,\n      fiscal_period_kind: 'year',\n      covered_fiscal_months: null,\n      amount: null,\n      currency: null,\n      reason: null,\n      reference: null,\n      issuer: null,\n      payee: null,\n      user_note: null,\n      raw_text: null,\n      extracted_data: {\n        stage: 'final_ocr_required',\n        extractor: 'ocr_or_vision_pending',\n        source_kind: sourceKind,\n        drive_path: item.json.drive_path || null,\n        category_path: item.json.category_path || [],\n        file_modified_at: item.json.modifiedTime || null,\n        mime_type: mimeType || null,\n        md5Checksum: item.json.drive_md5_checksum || item.json.md5Checksum || null,\n        drive_md5_checksum: item.json.drive_md5_checksum || item.json.md5Checksum || null,\n        size: item.json.size || null,\n        sha256: item.json.sha256 || null,\n        content_hash: item.json.content_hash || item.json.sha256 || null,\n        content_hash_algorithm: item.json.content_hash_algorithm || (item.json.sha256 ? 'sha256' : null),\n        issuer_bank: null,\n        issuer_source: 'ocr_or_vision_pending',\n        review_reasons: [reason, 'issuer_requires_ocr_or_vision']\n      },\n      processing_status: 'review_required',\n      processing_error: null\n    },\n    binary: item.binary\n  };\n});"
+        },
+        "id": "mark-ocr-required",
+        "name": "Marcar requiere OCR",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3100,
+          360
+        ],
+        "notes": "Rama para imagenes, otros binarios o PDFs sin texto suficiente. Prepara el documento para OCR/vision sin inventar datos."
+      },
+      {
+        "parameters": {
+          "action": "hash",
+          "type": "SHA256",
+          "binaryData": true,
+          "binaryPropertyName": "data",
+          "dataPropertyName": "sha256",
+          "encoding": "hex"
+        },
+        "id": "hash-pdf-binary",
+        "name": "Calcular SHA256 PDF",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 2,
+        "position": [
+          3100,
+          160
+        ],
+        "notes": "Hash para la rama PDF despues de extraer texto, porque ReadPDF necesita el binario original."
+      },
+      {
+        "parameters": {
+          "jsCode": "return items.map((item, index) => {\n  const source = $('Normalizar extracción PDF').all()[index]?.json || item.json;\n  const sha256 = item.json.sha256 || item.json.data || null;\n  const driveMd5Checksum = source.md5Checksum || source.drive_md5_checksum || null;\n  return {\n    json: {\n      ...source,\n      sha256,\n      content_hash: sha256,\n      content_hash_algorithm: sha256 ? 'sha256' : null,\n      drive_md5_checksum: driveMd5Checksum,\n    },\n    binary: item.binary,\n  };\n});"
+        },
+        "id": "prepare-pdf-save-with-hash",
+        "name": "Preparar guardado PDF con hash",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3320,
+          160
+        ],
+        "notes": "Combina los campos normalizados del PDF con el SHA-256 calculado."
+      },
+      {
+        "id": "needs-ocr-vision-issuer",
+        "name": "Necesita OCR/Vision issuer?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          3100,
+          160
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "missing-issuer",
+                "leftValue": "={{ !$json.issuer }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "notes": "Envia a OCR/vision todo documento sin entidad pagadora. El nodo OCR recupera el binario original desde Descargar archivo si Read PDF no lo conserva."
+      },
+      {
+        "id": "infer-issuer-ocr-vision",
+        "name": "Inferir entidad pagadora OCR/Vision",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3320,
+          260
+        ],
+        "parameters": {
+          "jsCode": "function normalizeWhitespace(value) {\n  return String(value || '').replace(/\\s+/g, ' ').trim();\n}\n\nfunction normalizeConfidence(value) {\n  if (typeof value === 'number') return value;\n  const text = normalizeWhitespace(value).toLowerCase();\n  if (!text) return 0;\n  if (text === 'alta' || text === 'alto' || text === 'high') return 0.9;\n  if (text === 'media' || text === 'medio' || text === 'medium') return 0.6;\n  if (text === 'baja' || text === 'bajo' || text === 'low') return 0.3;\n  const numeric = Number(text.replace(',', '.'));\n  return Number.isFinite(numeric) ? numeric : 0;\n}\n\nfunction safeJsonParse(value) {\n  const text = normalizeWhitespace(value);\n  if (!text) return null;\n  try {\n    return JSON.parse(text);\n  } catch {}\n  const fenced = text.match(new RegExp('\\`{3}(?:json)?\\\\\\\\s*([\\\\\\\\s\\\\\\\\S]*?)\\`{3}', 'i'));\n  if (fenced) {\n    try { return JSON.parse(fenced[1]); } catch {}\n  }\n  const objectMatch = text.match(/\\{[\\s\\S]*\\}/);\n  if (objectMatch) {\n    try { return JSON.parse(objectMatch[0]); } catch {}\n  }\n  return null;\n}\n\nfunction responseText(payload) {\n  if (payload?.output_text) return payload.output_text;\n  const parts = [];\n  for (const output of payload?.output || []) {\n    for (const content of output?.content || []) {\n      if (typeof content?.text === 'string') parts.push(content.text);\n    }\n  }\n  return parts.join('\\n');\n}\n\nfunction withReviewReason(item, reason, extra = {}) {\n  const existingReasons = Array.isArray(item.json.extracted_data?.review_reasons)\n    ? item.json.extracted_data.review_reasons\n    : [];\n  const reviewReasons = Array.from(new Set([...existingReasons, reason]));\n  return {\n    json: {\n      ...item.json,\n      ...extra,\n      extracted_data: {\n        ...(item.json.extracted_data || {}),\n        ...extra.extracted_data,\n        review_reasons: reviewReasons,\n      },\n      processing_status: 'review_required',\n    },\n    binary: item.binary,\n  };\n}\n\nconst apiKey = $env.OPENAI_FINANZAS_API_KEY || '';\nconst openaiKeySource = $env.OPENAI_FINANZAS_API_KEY ? 'OPENAI_FINANZAS_API_KEY' : 'missing';\nconst model = $env.OPENAI_FINANZAS_MODEL || 'gpt-4.1-mini-2025-04-14';\nconst httpRequest = this.helpers.httpRequest.bind(this.helpers);\n\nreturn await Promise.all(items.map(async (item, index) => {\n  if (item.json.issuer) return item;\n\n  const pairedIndex = Array.isArray(item.pairedItem) ? item.pairedItem[0]?.item : item.pairedItem?.item;\n  const downloadedItem = $('Descargar archivo').all()[pairedIndex] || {};\n  const binary = item.binary?.data || downloadedItem.binary?.data;\n  let base64 = '';\n  if (binary?.data && binary.data !== 'filesystem-v2') {\n    base64 = binary.data;\n  } else if (binary?.id || binary?.data === 'filesystem-v2') {\n    const buffer = await this.helpers.getBinaryDataBuffer(index, 'data');\n    base64 = Buffer.from(buffer).toString('base64');\n  }\n  const mimeType = item.json.mimeType || binary?.mimeType || downloadedItem.json?.mimeType || 'application/octet-stream';\n  const fileName = item.json.name || item.json.file_name || binary?.fileName || downloadedItem.json?.name || 'documento';\n\n  if (!apiKey) {\n    return withReviewReason(item, 'openai_finanzas_api_key_missing', {\n      extracted_data: {\n        issuer_source: 'ocr_or_vision_pending',\n        ocr_vision_model: model,\n        openai_key_source: openaiKeySource,\n      },\n    });\n  }\n  if (!base64) {\n    return withReviewReason(item, 'binary_missing_for_ocr_or_vision', {\n      extracted_data: {\n        issuer_source: 'ocr_or_vision_pending',\n        ocr_vision_model: model,\n        openai_key_source: openaiKeySource,\n      },\n    });\n  }\n\n  const fileContent = mimeType.startsWith('image/')\n    ? { type: 'input_image', image_url: 'data:' + mimeType + ';base64,' + base64 }\n    : { type: 'input_file', filename: fileName, file_data: 'data:' + mimeType + ';base64,' + base64 };\n\n  const instruction = [\n    'Analiza este comprobante de pago argentino.',\n    'Tu tarea principal es identificar la entidad pagadora/emisora desde texto visible, OCR o logo del banco/billetera.',\n    'La entidad pagadora es el banco, billetera o home banking desde donde se emitio el pago o transferencia, no el destinatario.',\n    'No inventes. Si no estas seguro, usa issuer=null, confidence baja y needs_review=true.',\n    'Responde solo JSON valido con estas claves exactas: issuer, issuer_source, confidence, raw_text, needs_review, review_reasons.',\n    'issuer_source debe ser uno de: logo_visual, ocr_text, visual_and_ocr_text, not_detected.',\n  ].join(' ');\n\n  try {\n    const payload = await httpRequest({\n      method: 'POST',\n      url: 'https://api.openai.com/v1/responses',\n      headers: {\n        Authorization: 'Bearer ' + apiKey,\n        'Content-Type': 'application/json',\n      },\n      body: {\n        model,\n        temperature: 0,\n        input: [\n          {\n            role: 'user',\n            content: [\n              { type: 'input_text', text: instruction },\n              fileContent,\n            ],\n          },\n        ],\n      },\n      json: true,\n    });\n\n    const parsed = safeJsonParse(responseText(payload)) || {};\n    const issuer = normalizeWhitespace(parsed.issuer) || null;\n    const confidence = normalizeConfidence(parsed.confidence);\n    const issuerSource = ['logo_visual', 'ocr_text', 'visual_and_ocr_text'].includes(parsed.issuer_source)\n      ? parsed.issuer_source\n      : (issuer ? 'ocr_text' : 'not_detected');\n    const ocrText = normalizeWhitespace(parsed.raw_text);\n    const reviewReasons = Array.isArray(parsed.review_reasons)\n      ? parsed.review_reasons.map(normalizeWhitespace).filter(Boolean)\n      : [];\n    const trustedIssuer = issuer && Number.isFinite(confidence) && confidence >= 0.75;\n\n    return {\n      json: {\n        ...item.json,\n        issuer: trustedIssuer ? issuer : null,\n        raw_text: item.json.raw_text || ocrText || null,\n        extracted_data: {\n          ...(item.json.extracted_data || {}),\n          issuer_bank: trustedIssuer ? issuer : null,\n          issuer_source: trustedIssuer ? issuerSource : 'ocr_or_vision_low_confidence',\n          ocr_vision_model: payload.model || model,\n          openai_key_source: openaiKeySource,\n          ocr_vision_confidence: Number.isFinite(confidence) ? confidence : 0,\n          ocr_vision_raw_text_length: ocrText.length,\n          ocr_vision_response_id: payload.id || null,\n          review_reasons: trustedIssuer\n            ? reviewReasons.filter(reason => reason !== 'issuer_requires_ocr_or_vision')\n            : Array.from(new Set([...reviewReasons, 'issuer_not_detected_by_ocr_or_vision'])),\n          field_confidence: {\n            ...(item.json.extracted_data?.field_confidence || {}),\n            issuer: trustedIssuer ? confidence : 0,\n          },\n        },\n        processing_status: trustedIssuer && item.json.payment_date && item.json.amount && item.json.reason\n          ? 'processed'\n          : 'review_required',\n      },\n      binary: item.binary,\n    };\n  } catch (error) {\n    return withReviewReason(item, 'ocr_or_vision_openai_error', {\n      processing_error: String(error?.message || error).slice(0, 500),\n      extracted_data: {\n        issuer_source: 'ocr_or_vision_error',\n        ocr_vision_model: model,\n        openai_key_source: openaiKeySource,\n      },\n    });\n  }\n}));"
+        },
+        "notes": "Fallback OCR/vision con OpenAI para imagenes, PDFs escaneados o PDFs con texto sin banco detectado. Usa OPENAI_FINANZAS_API_KEY y no toca la key general de Promatex."
+      }
+    ],
+    "connections": {
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Config": {
+        "main": [
+          [
+            {
+              "node": "Inicializar recorrido",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Inicializar recorrido": {
+        "main": [
+          [
+            {
+              "node": "Preparar carpeta actual",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Preparar carpeta actual": {
+        "main": [
+          [
+            {
+              "node": "Listar carpeta actual",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Listar carpeta actual": {
+        "main": [
+          [
+            {
+              "node": "Acumular archivos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Acumular archivos": {
+        "main": [
+          [
+            {
+              "node": "Quedan carpetas?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Quedan carpetas?": {
+        "main": [
+          [
+            {
+              "node": "Preparar carpeta actual",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Emitir archivos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Emitir archivos": {
+        "main": [
+          [
+            {
+              "node": "Buscar por Drive ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar por Drive ID": {
+        "main": [
+          [
+            {
+              "node": "Decidir procesamiento",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Decidir procesamiento": {
+        "main": [
+          [
+            {
+              "node": "Debe descargar?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Debe descargar?": {
+        "main": [
+          [
+            {
+              "node": "Descargar archivo",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Actualizar visto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Descargar archivo": {
+        "main": [
+          [
+            {
+              "node": "Es PDF?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calcular SHA256": {
+        "main": [
+          [
+            {
+              "node": "Preparar metadata con hash",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Preparar metadata con hash": {
+        "main": [
+          [
+            {
+              "node": "Marcar requiere OCR",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Es PDF?": {
+        "main": [
+          [
+            {
+              "node": "Extraer texto PDF",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Calcular SHA256",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extraer texto PDF": {
+        "main": [
+          [
+            {
+              "node": "Normalizar extracción PDF",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalizar extracción PDF": {
+        "main": [
+          [
+            {
+              "node": "Necesita OCR/Vision issuer?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Marcar requiere OCR": {
+        "main": [
+          [
+            {
+              "node": "Inferir entidad pagadora OCR/Vision",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Necesita OCR/Vision issuer?": {
+        "main": [
+          [
+            {
+              "node": "Inferir entidad pagadora OCR/Vision",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Guardar documento",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Inferir entidad pagadora OCR/Vision": {
+        "main": [
+          [
+            {
+              "node": "Guardar documento",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "staticData": {},
+    "pinData": {},
+    "versionId": "6da582a4-24f5-47f6-b8e7-ff633d37430a",
+    "meta": {
+      "templateCredsSetupCompleted": false
+    },
+    "triggerCount": 0,
+    "active": 0,
+    "isArchived": 0
+  }
+]

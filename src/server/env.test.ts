@@ -27,6 +27,48 @@ describe("readServerEnv", () => {
     expect(env.METABASE_SITE_URL).toBeNull();
   });
 
+  it("accepts empty optional Drive webhook settings", () => {
+    const env = readServerEnv({
+      DATABASE_URL: "postgresql://app:secret@localhost:55432/financial_dashboard",
+      SESSION_SECRET: "a-session-secret-with-at-least-32-chars",
+      GOOGLE_DRIVE_WEBHOOK_CHANNEL_ID: "",
+      GOOGLE_DRIVE_WEBHOOK_TOKEN: "",
+      GOOGLE_DRIVE_WEBHOOK_URL: "",
+      N8N_DRIVE_INCREMENTAL_WEBHOOK_URL: "",
+      N8N_DRIVE_INCREMENTAL_WEBHOOK_TOKEN: ""
+    });
+
+    expect(env.GOOGLE_DRIVE_WEBHOOK_CHANNEL_ID).toBeNull();
+    expect(env.GOOGLE_DRIVE_WEBHOOK_TOKEN).toBeNull();
+    expect(env.GOOGLE_DRIVE_WEBHOOK_URL).toBeNull();
+    expect(env.N8N_DRIVE_INCREMENTAL_WEBHOOK_URL).toBeNull();
+    expect(env.N8N_DRIVE_INCREMENTAL_WEBHOOK_TOKEN).toBeNull();
+  });
+
+  it("accepts configured Drive webhook settings", () => {
+    const env = readServerEnv({
+      DATABASE_URL: "postgresql://app:secret@localhost:55432/financial_dashboard",
+      SESSION_SECRET: "a-session-secret-with-at-least-32-chars",
+      GOOGLE_DRIVE_WEBHOOK_CHANNEL_ID: "drive-channel",
+      GOOGLE_DRIVE_WEBHOOK_TOKEN: "drive-token",
+      GOOGLE_DRIVE_WEBHOOK_URL:
+        "https://app.example.com/api/v1/drive/webhook",
+      N8N_DRIVE_INCREMENTAL_WEBHOOK_URL:
+        "https://n8n.example.com/webhook/drive-incremental",
+      N8N_DRIVE_INCREMENTAL_WEBHOOK_TOKEN: "n8n-token"
+    });
+
+    expect(env.GOOGLE_DRIVE_WEBHOOK_CHANNEL_ID).toBe("drive-channel");
+    expect(env.GOOGLE_DRIVE_WEBHOOK_TOKEN).toBe("drive-token");
+    expect(env.GOOGLE_DRIVE_WEBHOOK_URL).toBe(
+      "https://app.example.com/api/v1/drive/webhook"
+    );
+    expect(env.N8N_DRIVE_INCREMENTAL_WEBHOOK_URL).toBe(
+      "https://n8n.example.com/webhook/drive-incremental"
+    );
+    expect(env.N8N_DRIVE_INCREMENTAL_WEBHOOK_TOKEN).toBe("n8n-token");
+  });
+
   it("rejects an invalid database URL", () => {
     expect(() =>
       readServerEnv({

@@ -15,9 +15,37 @@
   gap: 16px;
 }
 
-.actionGrid,
+.tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tabs a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 12px;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+}
+
+.tabs a:hover,
+.tabs a:focus-visible,
+.tabs .tabActive {
+  border-color: rgb(69 218 203 / 46%);
+  background: rgb(69 218 203 / 12%);
+  color: var(--accent-strong);
+}
+
 .statusGrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .spendPanel {
@@ -32,10 +60,80 @@
   gap: 16px;
 }
 
+.modalBackdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(4 13 22 / 72%);
+  padding: 24px;
+}
+
+.reviewModal {
+  width: min(1180px, 100%);
+  max-height: min(860px, calc(100vh - 48px));
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  box-shadow: 0 22px 70px rgb(0 0 0 / 36%);
+}
+
+.modalHeader {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 14px 16px;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.modalHeader a {
+  color: var(--accent-strong);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.modalSplit {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.08fr) minmax(360px, 0.92fr);
+  align-items: stretch;
+  gap: 16px;
+  padding: 16px;
+}
+
+.modalSplit :global(.panel) {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.modalSplit :global(.panel-body) {
+  display: grid;
+}
+
 @media (max-width: 720px) {
   .actionGrid,
   .statusGrid,
   .spendPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .modalBackdrop {
+    align-items: stretch;
+    padding: 10px;
+  }
+
+  .modalSplit {
     grid-template-columns: 1fr;
   }
 }

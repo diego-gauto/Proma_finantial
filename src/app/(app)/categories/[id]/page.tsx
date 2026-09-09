@@ -1,24 +1,22 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
-import { DocumentsTable } from "@/components/documents/DocumentsTable";
+import { BackLink } from "@/components/navigation/BackLink";
 import { PaymentRuleForm } from "@/components/payment-rules/PaymentRuleForm";
 import { PaymentRuleHistory } from "@/components/payment-rules/PaymentRuleHistory";
-import { Button } from "@/components/ui/Button";
+import { getCurrentRule } from "@/components/payment-rules/payment-rule-presenter";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import { listCategoryNodes } from "@/db/categories.repository";
-import { listDocuments } from "@/db/documents.repository";
 import { listPaymentRules } from "@/db/payment-rules.repository";
 import {
-  getCategoryBreadcrumbs,
-  getDescendantCategoryIds
+  getCategoryBreadcrumbs
 } from "@/server/categories/category-tree";
-import { getCategorySummaries } from "@/server/categories/category-summary";
 import { resolveApplicableRule } from "@/server/compliance/resolve-rule";
-import { buildDocumentTableRows } from "@/server/documents/document-display";
 
 import {
-  closePaymentRuleAction,
-  createPaymentRuleAction
+  createPaymentRuleAction,
+  updatePaymentRuleAction
 } from "./rules/actions";
 
 import styles from "./page.module.css";
@@ -27,12 +25,15 @@ export const dynamic = "force-dynamic";
 
 interface CategoryDetailPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function CategoryDetailPage({
-  params
+  params,
+  searchParams
 }: CategoryDetailPageProps) {
   const { id } = await params;
+  const rawSearchParams = await searchParams;
   const [categories, rules] = await Promise.all([
     listCategoryNodes(),
     listPaymentRules()
@@ -43,16 +44,6 @@ export default async function CategoryDetailPage({
     notFound();
   }
 
-  const categoryIds = getDescendantCategoryIds(categories, id);
-  const documents = await listDocuments({
-    filters: { categoryIds },
-    limit: 250
-  });
-  const summaries = getCategorySummaries(categories, documents);
-  const summary = summaries.get(id) ?? {
-    descendantDocumentCount: documents.length,
-    directDocumentCount: documents.filter((document) => document.categoryNodeId === id).length
-  };
   const ownRules = rules.filter((rule) => rule.categoryNodeId === id);
   const inheritedRule = resolveApplicableRule(
     categories,
@@ -61,59 +52,106 @@ export default async function CategoryDetailPage({
     new Date().toISOString().slice(0, 7)
   );
   const breadcrumbs = getCategoryBreadcrumbs(categories, id);
+  const currentRule = getCurrentRule(ownRules);
+  const hasDescendants = categories.some((item) => item.parentId === id);
+  const ruleModalMode = getFirstValue(rawSearchParams.ruleModal);
+  const selectedRuleId = getFirstValue(rawSearchParams.ruleId);
+  const modalRule =
+    ruleModalMode === "edit" && selectedRuleId
+      ? ownRules.find((rule) => rule.id === selectedRuleId) ?? currentRule
+      : null;
+  const isRuleModalOpen = ruleModalMode === "new" || ruleModalMode === "edit";
 
   return (
     <div className={styles.page}>
+      <BackLink href="/categories" />
       <div className={styles.header}>
         <div className={styles.titleBlock}>
           <h1>{category.name}</h1>
-          <p>{breadcrumbs.join(" / ")}</p>
+          {breadcrumbs.length > 1 ? (
+            <p>{breadcrumbs.slice(0, -1).join(" / ")}</p>
+          ) : null}
         </div>
-        <Button href={`/documents?categoryId=${category.id}`}>
-          Ver documentos filtrados
-        </Button>
       </div>
 
-      <section className={styles.summaryGrid}>
-        <div className={styles.metric}>
-          <span>Documentos directos</span>
-          <strong>{summary.directDocumentCount}</strong>
-        </div>
-        <div className={styles.metric}>
-          <span>Con descendientes</span>
-          <strong>{summary.descendantDocumentCount}</strong>
-        </div>
-        <div className={styles.metric}>
-          <span>Reglas propias</span>
-          <strong>{ownRules.length}</strong>
-        </div>
-        <div className={styles.metric}>
-          <span>Estado</span>
-          <strong>{category.active ? "Activa" : "Inactiva"}</strong>
-        </div>
-      </section>
-
-      <section className={styles.rulesGrid}>
-        <Card title="Historial de reglas">
+      <section className={styles.rulesStack}>
+        <Card
+          title="Historial de reglas"
+          actions={
+            <Button
+              href={`/categories/${id}?ruleModal=new`}
+              variant="primary"
+            >
+              Nueva regla
+            </Button>
+          }
+        >
           {inheritedRule && inheritedRule.categoryNodeId !== id ? (
-            <p className="muted">
-              Regla heredada vigente: {inheritedRule.name}
+            <p className={styles.inheritedRule}>
+              Hereda actualmente: {inheritedRule.name}
             </p>
           ) : null}
-          <PaymentRuleHistory
-            action={closePaymentRuleAction}
-            categoryNodeId={id}
-            rules={ownRules}
-          />
-        </Card>
-        <Card title="Nueva regla de pago">
-          <PaymentRuleForm action={createPaymentRuleAction} category={category} />
+          <PaymentRuleHistory categoryId={id} rules={ownRules} />
         </Card>
       </section>
 
-      <Card title="Documentos de la categoria y descendientes">
-        <DocumentsTable rows={buildDocumentTableRows(categories, documents)} />
-      </Card>
+      {isRuleModalOpen ? (
+        <div className={styles.modalBackdrop}>
+          <section aria-label="Formulario de regla de pago" className={styles.ruleModal}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h2>{ruleModalMode === "edit" ? "Editar regla actual" : "Nueva regla de pago"}</h2>
+                <p>{category.name}</p>
+              </div>
+              <Link aria-label="Cerrar formulario de regla" href={`/categories/${id}`}>
+                Cerrar
+              </Link>
+            </div>
+            <div className={styles.modalBody}>
+              <PaymentRuleForm
+                action={
+                  ruleModalMode === "edit"
+                    ? updatePaymentRuleAction
+                    : createPaymentRuleAction
+                }
+                cancelHref={`/categories/${id}`}
+                canApplyToDescendants={hasDescendants}
+                category={category}
+                existingRuleNames={ownRules.map((rule) => rule.name)}
+                initialRule={modalRule}
+                minimumActiveFromMonth={
+                  ruleModalMode === "new"
+                    ? getFirstDayOfNextMonth(currentRule?.activeFrom)
+                    : undefined
+                }
+                submitLabel={
+                  ruleModalMode === "edit" ? "Guardar cambios" : "Crear regla"
+                }
+              />
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function getFirstValue(value: string | string[] | undefined): string | null {
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+
+  return value ?? null;
+}
+
+function getFirstDayOfNextMonth(activeFrom: string | undefined): string | undefined {
+  if (!activeFrom) {
+    return undefined;
+  }
+
+  const [year, month] = activeFrom.slice(0, 7).split("-").map(Number);
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+
+  return `${nextYear}-${String(nextMonth).padStart(2, "0")}`;
 }

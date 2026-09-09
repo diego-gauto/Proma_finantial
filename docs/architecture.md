@@ -72,10 +72,12 @@ El esquema real usa ids `bigint` y separa el periodo fiscal en columnas `fiscal_
 
 - Login.
 - Inicio operativo: alerta de documentos a revisar, faltantes, duplicados, filtros, graficos y listados.
-- Documentos: listado filtrable + detalle/correccion en pantalla dividida.
-- Categorias: arbol navegable; cada nodo permite configurar reglas de pago.
+- Inicio operativo: incluye el flujo guiado por anio/periodo fiscal y categoria; cuando la categoria efectiva es hoja, la composicion de la dona muestra los documentos de esa categoria.
+- Revision de documentos: popup sobre Inicio para documentos abiertos desde la tabla de hoja, y pantalla dividida compartida para documentos pendientes.
+- Categorias: arbol navegable horizontal; cada nodo muestra regla propia o heredada y permite configurar reglas de pago.
 - Usuarios: alta simple de usuarios.
-- Reportes: entrada opcional a Metabase si se conserva como herramienta externa.
+
+`/documents` y `/rules` se conservan solo como redirecciones para links antiguos. `Reportes` no forma parte de la navegacion v1.
 
 ## Disenio de interfaz
 

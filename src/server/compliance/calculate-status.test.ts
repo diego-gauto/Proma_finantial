@@ -57,6 +57,30 @@ describe("calculateComplianceStatus", () => {
     expect(status.missing).toEqual([]);
   });
 
+  it("does not mark a covered fiscal month missing when one document covers multiple months", () => {
+    const documents: ComplianceDocument[] = [
+      {
+        id: "doc-setia",
+        categoryNodeId: "leaf",
+        fiscalPeriod: "2026-05",
+        fiscalPeriodKind: "month",
+        coveredFiscalMonths: [4, 5],
+        processingStatus: "processed"
+      }
+    ];
+
+    const status = calculateComplianceStatus({
+      categories,
+      rules: [rule],
+      documents,
+      fromFiscalPeriod: "2026-04",
+      toFiscalPeriod: "2026-05",
+      today: "2026-07-01"
+    });
+
+    expect(status.missing).toEqual([]);
+  });
+
   it("marks a monthly period missing after its grace period", () => {
     const status = calculateComplianceStatus({
       categories,
@@ -137,7 +161,22 @@ describe("calculateComplianceStatus", () => {
         categoryNodeId: "leaf",
         fiscalPeriod: "2026-01",
         fiscalPeriodKind: "month",
-        documentIds: ["doc-1", "doc-2"]
+        documents: [
+          {
+            amount: null,
+            currency: null,
+            fileName: null,
+            id: "doc-1",
+            paymentDate: null
+          },
+          {
+            amount: null,
+            currency: null,
+            fileName: null,
+            id: "doc-2",
+            paymentDate: null
+          }
+        ]
       }
     ]);
   });
@@ -282,5 +321,89 @@ describe("calculateComplianceStatus", () => {
     expect(status.missing.map((period) => period.fiscalPeriod)).toEqual([
       "2026"
     ]);
+  });
+
+  it("does not generate expected periods for a category with an explicit no-control rule", () => {
+    const inheritedRule: ComplianceRule = {
+      ...rule,
+      id: "root-rule",
+      categoryNodeId: "root",
+      appliesToDescendants: true
+    };
+    const noControlRule: ComplianceRule = {
+      ...rule,
+      id: "leaf-no-control",
+      categoryNodeId: "leaf",
+      cadence: "no_pattern",
+      customPeriodMonths: null
+    };
+
+    const status = calculateComplianceStatus({
+      categories,
+      rules: [inheritedRule, noControlRule],
+      documents: [],
+      fromFiscalPeriod: "2026-01",
+      toFiscalPeriod: "2026-02",
+      today: "2026-04-01"
+    });
+
+    expect(status.expected.map((period) => period.categoryNodeId)).toEqual([
+      "root",
+      "root"
+    ]);
+    expect(status.missing.map((period) => period.categoryNodeId)).toEqual([
+      "root",
+      "root"
+    ]);
+  });
+
+  it("generates missing periods only for selected categories when a category filter is active", () => {
+    const status = calculateComplianceStatus({
+      categories: [
+        ...categories,
+        { id: "other", parentId: null, name: "Other", sortOrder: 2 }
+      ],
+      rules: [
+        rule,
+        {
+          ...rule,
+          id: "other-rule",
+          categoryNodeId: "other"
+        }
+      ],
+      documents: [],
+      fromFiscalPeriod: "2026-01",
+      toFiscalPeriod: "2026-01",
+      targetCategoryIds: ["leaf"],
+      today: "2026-02-20"
+    });
+
+    expect(status.missing.map((period) => period.categoryNodeId)).toEqual([
+      "leaf"
+    ]);
+  });
+
+  it("keeps inherited ancestor rules available while filtering generated categories", () => {
+    const inheritedRule: ComplianceRule = {
+      ...rule,
+      id: "root-rule",
+      categoryNodeId: "root",
+      appliesToDescendants: true
+    };
+
+    const status = calculateComplianceStatus({
+      categories,
+      rules: [inheritedRule],
+      documents: [],
+      fromFiscalPeriod: "2026-01",
+      toFiscalPeriod: "2026-01",
+      targetCategoryIds: ["leaf"],
+      today: "2026-02-20"
+    });
+
+    expect(status.missing.map((period) => period.categoryNodeId)).toEqual([
+      "leaf"
+    ]);
+    expect(status.missing[0]?.rule.id).toBe("root-rule");
   });
 });

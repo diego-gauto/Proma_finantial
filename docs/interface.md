@@ -16,11 +16,10 @@ Orden de prioridad visual:
 ## Navegacion principal
 
 - Inicio.
-- Documentos.
 - Categorias.
-- Reglas.
 - Usuarios.
-- Reportes, opcional si Metabase queda disponible.
+
+`Documentos`, `Reglas` y `Reportes` no viven como rutas principales en v1. Los documentos se revisan desde Inicio o desde la cola de revision; las reglas se gestionan desde cada nodo de `Categorias`; reportes queda oculto hasta que exista una necesidad real fuera del tablero operativo.
 
 ## Inicio operativo
 
@@ -82,22 +81,30 @@ Cuando el usuario entra a revisar documentos pendientes:
 - Campos faltantes o dudosos tienen aviso visual claro.
 - Campos con valores predefinidos usan select, no input libre.
 - Boton principal: guardar correccion y marcar como procesado.
+- Acciones visibles: cancelar y actualizar datos.
 
 El objetivo es que el usuario compare documento contra datos extraidos sin cambiar de pantalla.
+
+## Documentos
+
+La revision de documentos vive en el tablero principal y en la cola de revision. La ruta `/documents` queda redundante y puede redirigir a Inicio.
 
 ## Reglas de pago
 
 Las reglas se editan desde el nodo de categoria. Deben permitir configurar:
 
-- periodicidad;
-- periodo fiscal esperado;
-- fecha probable de pago;
+- nombre identificatorio;
+- periodicidad mensual, bimestral, trimestral, cuatrimestral, semestral, anual, personalizada o sin control;
+- meses pares/impares cuando la periodicidad es bimestral;
+- meses con pago cuando la periodicidad es personalizada;
+- mes y anio de inicio de vigencia;
+- fecha probable de pago expresada en lenguaje operativo;
 - tolerancia;
 - dias de aviso previo;
-- vigencia historica;
+- aplicacion a descendientes;
 - notas.
 
-Cuando se modifica una regla vigente, la UI debe guiar a cerrar la regla anterior y crear una nueva para no romper calculos historicos.
+La pantalla de reglas de una categoria muestra solo el alta de nueva regla y el historial. No muestra documentos ni metricas de categoria. Cuando se crea una nueva regla, la app cierra automaticamente la regla vigente anterior para no romper calculos historicos.
 
 ## Graficos
 
@@ -118,7 +125,9 @@ A la derecha de la dona, mientras haya subcategorias para desglosar, mostrar una
 - porcentaje del total;
 - cantidad de pagos.
 
-Cuando la categoria efectiva no tiene hijos activos, reemplazar ese listado por los documentos que componen la categoria, con periodo fiscal, fecha de pago, monto, numero de identificacion/operacion (`reference`, o `id` como respaldo) y entidad del pago (`payee` o `issuer`).
+Cuando la categoria efectiva no tiene hijos activos, reemplazar ese listado por los documentos que componen la categoria. La tabla muestra periodo fiscal, fecha de pago, importe, estado y acceso a revisar la extraccion.
+
+El acceso a un documento abre un popup sobre Inicio con el documento a la izquierda y los datos editables a la derecha, reutilizando el mismo componente de revision de documentos pendientes. Al guardar una correccion, el documento pasa a `processed`.
 
 Debajo, a ancho completo y recalculado por los filtros activos, siempre que no haya un periodo fiscal mensual puntual seleccionado:
 

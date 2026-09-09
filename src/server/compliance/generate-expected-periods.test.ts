@@ -64,6 +64,48 @@ describe("generateExpectedPeriods", () => {
     expect(periods[0]?.dueDate).toBe("2025-03-31");
   });
 
+  it("generates annual rules paid inside the fiscal year as the selected fiscal month", () => {
+    const periods = generateExpectedPeriods(
+      {
+        ...monthlyRule,
+        cadence: "annual",
+        intervalMonths: 12,
+        anchorPeriodMonth: 1,
+        fiscalPeriodKind: "month",
+        paymentMonthOffset: 0
+      },
+      {
+        categoryNodeId: "cat-1",
+        fromFiscalPeriod: "2026-01",
+        toFiscalPeriod: "2026-12"
+      }
+    );
+
+    expect(periods.map((period) => period.fiscalPeriod)).toEqual(["2026-01"]);
+    expect(periods[0]?.dueDate).toBe("2026-01-10");
+  });
+
+  it("generates annual rules paid after period end using December as fiscal file month", () => {
+    const periods = generateExpectedPeriods(
+      {
+        ...monthlyRule,
+        cadence: "annual",
+        intervalMonths: 12,
+        anchorPeriodMonth: 12,
+        fiscalPeriodKind: "month",
+        paymentMonthOffset: 6
+      },
+      {
+        categoryNodeId: "cat-1",
+        fromFiscalPeriod: "2026-01",
+        toFiscalPeriod: "2026-12"
+      }
+    );
+
+    expect(periods.map((period) => period.fiscalPeriod)).toEqual(["2026-12"]);
+    expect(periods[0]?.dueDate).toBe("2027-06-10");
+  });
+
   it("generates only the configured fiscal months for custom rules", () => {
     const periods = generateExpectedPeriods(
       {

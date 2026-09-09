@@ -22,21 +22,31 @@ interface DocumentsTableProps {
 const columnHelper = legacyCreateColumnHelper<DocumentTableRow>();
 
 const columns = [
-  columnHelper.accessor("reason", {
+  columnHelper.accessor("documentTitle", {
     cell: (info) => {
       const row = info.row.original;
       return (
         <div className={styles.mainCell}>
           <Link href={row.reviewHref ?? row.detailHref}>{info.getValue()}</Link>
-          <span className={styles.meta}>{row.categoryLabel}</span>
-          <span className={styles.meta}>{row.reference}</span>
         </div>
       );
     },
     header: "Documento"
   }),
-  columnHelper.accessor("entity", {
-    header: "Entidad"
+  columnHelper.accessor("categoryPath", {
+    cell: (info) => (
+      <div className={styles.locationStack}>
+        {info.getValue().map((segment, index) => (
+          <span
+            className={styles[`locationLevel${Math.min(index + 1, 3)}`]}
+            key={`${segment}-${index}`}
+          >
+            {segment}
+          </span>
+        ))}
+      </div>
+    ),
+    header: "Ubicacion"
   }),
   columnHelper.accessor("fiscalPeriod", {
     header: "Periodo fiscal"
@@ -56,18 +66,24 @@ const columns = [
     ),
     header: "Estado"
   }),
+  columnHelper.accessor("unresolvedFields", {
+    cell: (info) => {
+      const fields = info.getValue();
+
+      return fields.length ? (
+        <span className={styles.issueText}>{fields.join(", ")}</span>
+      ) : (
+        <span className={styles.meta}>Sin pendientes detectados</span>
+      );
+    },
+    header: "Falta inferir"
+  }),
   columnHelper.display({
     cell: (info) => {
       const row = info.row.original;
       return (
         <div className={styles.actions}>
-          <Link href={row.detailHref}>Detalle</Link>
-          {row.reviewHref ? <Link href={row.reviewHref}>Revisar</Link> : null}
-          {row.driveHref ? (
-            <a href={row.driveHref} rel="noreferrer" target="_blank">
-              Drive
-            </a>
-          ) : null}
+          <Link href={row.reviewHref ?? row.detailHref}>Revisar</Link>
         </div>
       );
     },

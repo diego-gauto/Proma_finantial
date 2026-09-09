@@ -1,32 +1,35 @@
 import Link from "next/link";
 
 import type { CategoryTreeNode } from "@/server/categories/category-tree";
-import type { CategorySummary } from "@/server/categories/category-summary";
+import type { CategoryRuleSummary } from "@/server/categories/category-rule-summary";
 
 import styles from "./CategoryNodeSummary.module.css";
 
 interface CategoryNodeSummaryProps {
   node: CategoryTreeNode;
-  summary: CategorySummary;
+  ruleSummary?: CategoryRuleSummary;
 }
 
 export function CategoryNodeSummary({
   node,
-  summary
+  ruleSummary
 }: CategoryNodeSummaryProps) {
+  const ruleType = ruleSummary?.type ?? "none";
+
   return (
     <div className={styles.summary}>
       <div>
         <Link href={`/categories/${node.id}`}>{node.name}</Link>
-        <div className={styles.meta}>
-          <span>{summary.directDocumentCount} directos</span>
-          <span>{summary.descendantDocumentCount} con descendientes</span>
-          <span>{node.children.length} subcategorias</span>
+        <div className={styles.ruleMeta}>
+          <span className={`${styles.rule} ${styles[ruleType]}`}>
+            {ruleSummary?.label ?? "Sin regla vigente"}
+          </span>
+          <Link className={styles.ruleAction} href={`/categories/${node.id}`}>
+            Editar reglas
+          </Link>
         </div>
       </div>
-      <span className={`${styles.status} ${node.active ? "" : styles.inactive}`}>
-        {node.active ? "Activa" : "Inactiva"}
-      </span>
+      {!node.active ? <span className={styles.status}>Inactiva</span> : null}
     </div>
   );
 }

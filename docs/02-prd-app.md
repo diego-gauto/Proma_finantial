@@ -16,7 +16,7 @@ Esta app es el consumidor de esos datos: la interfaz donde el gerente (y eventua
 
 ## 3. Objetivos del producto (v1)
 
-1. Ver el listado de documentos procesados, con sus datos extraídos, filtrable y buscable.
+1. Ver documentos procesados desde la pantalla principal al elegir anio/periodo fiscal y navegar hasta una categoria hoja, evitando cargar un listado general inicial.
 2. Navegar el árbol de categorías y ver los documentos de cada nodo (incluyendo sus descendientes).
 3. Ver qué documentos quedaron en `review_required` o `error` y poder corregirlos a mano.
 4. Configurar las reglas de pago (`payment_rules`) por nodo del árbol.
@@ -26,11 +26,14 @@ Esta app es el consumidor de esos datos: la interfaz donde el gerente (y eventua
 
 ## 4. Funcionalidades
 
-### 4.1 Listado de documentos
+### 4.1 Documentos dentro del tablero
 
-- Tabla/lista con: fecha de pago, período fiscal (formateado como `2026-01` o `2025` según `fiscal_period_kind`), categoría (breadcrumb del árbol, ej. `Servicios > Telefonia fija > Cuenta 032`), motivo, monto, moneda, estado de procesamiento, link a Drive.
-- Filtros: por rango de fecha de pago, por período fiscal (año / año+mes), por categoría (incluye descendientes), por estado (`processed`, `review_required`, `error`), por texto libre (motivo, referencia, emisor).
-- Cada fila permite abrir el detalle del documento.
+- La ruta principal de operacion es `Inicio`; `Documentos` no es una pantalla separada en v1.
+- En la composicion del grafico de torta, cuando la categoria efectiva no tiene hijos activos, se reemplaza el desglose por una tabla de documentos.
+- Tabla simple con: periodo fiscal, fecha de pago, importe, estado y acceso a revisar la extraccion.
+- Al abrir un documento desde esa tabla, se muestra un popup con el documento a la izquierda y los datos extraidos editables a la derecha, usando el mismo componente de revision.
+- Si el usuario completa lo faltante o corrige lo dudoso y guarda, el documento queda marcado como `processed`.
+- Nada de tabla gigante inicial trayendo todo.
 
 ### 4.2 Detalle de documento
 

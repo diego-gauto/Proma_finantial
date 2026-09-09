@@ -1,0 +1,721 @@
+[
+  {
+    "id": "proyecto1DriveIncrementalSync",
+    "name": "Proyecto 1 - Sync incremental Google Drive",
+    "active": false,
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "proyecto1-drive-incremental-sync",
+          "responseMode": "onReceived",
+          "responseCode": 202,
+          "responseData": "firstEntryJson",
+          "options": {}
+        },
+        "id": "6074343d-6c2d-4070-9af0-e40e08df15001",
+        "name": "Webhook Next",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "webhookId": "proyecto1-drive-incremental-sync",
+        "position": [
+          -980,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const expected = String($env.N8N_DRIVE_INCREMENTAL_WEBHOOK_TOKEN || '').trim();\nif (!expected) {\n  throw new Error('missing_next_webhook_token_config');\n}\nconst headers = $json.headers || {};\nconst authHeader = String(headers.authorization || headers.Authorization || '').trim();\nconst receivedToken = authHeader.replace(/^Bearer\\s+/i, '').trim();\nif (receivedToken !== expected) {\n  throw new Error('invalid_next_webhook_token');\n}\nconst body = $json.body && typeof $json.body === 'object' ? $json.body : $json;\nconst scope = body.scope || 'documents_root';\nif (scope !== 'documents_root') {\n  throw new Error('invalid_drive_sync_scope');\n}\nreturn [{ json: { ...body, scope, received_at: new Date().toISOString() } }];"
+        },
+        "id": "54e170ce-bb45-466e-994d-3565fe661001",
+        "name": "Validar token Next",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -720,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT scope, root_folder_id, start_page_token FROM drive_sync_state WHERE scope = 'documents_root';",
+          "options": {}
+        },
+        "id": "f246cc53-448a-473c-b433-bb619852499e",
+        "name": "Leer estado Drive",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          -460,
+          0
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "PgFinanzasP1Cred",
+            "name": "Postgres Finanzas Proyecto 1"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "has-token",
+                "leftValue": "={{ ($json.start_page_token || '').length }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "02f65451-83fc-4ca9-9819-4ab143790f6e",
+        "name": "Tiene cursor?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -220,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://www.googleapis.com/drive/v3/changes/startPageToken",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleDriveOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "supportsAllDrives",
+                "value": "true"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "2356683b-426d-4700-b8ce-195a8066145c",
+        "name": "Obtener cursor inicial",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          60,
+          160
+        ],
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "VzZlfgxu2EeOdQLH",
+            "name": "Google Drive account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE drive_sync_state SET start_page_token = $1, last_successful_sync_at = now(), last_error_at = NULL, last_error = NULL, updated_at = now() WHERE scope = 'documents_root' RETURNING scope, start_page_token, last_successful_sync_at;",
+          "options": {
+            "queryReplacement": "={{ [$json.startPageToken] }}"
+          }
+        },
+        "id": "ff5836aa-12b0-4e28-8d8c-fdf1b5167b16",
+        "name": "Guardar cursor inicial",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          340,
+          160
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "PgFinanzasP1Cred",
+            "name": "Postgres Finanzas Proyecto 1"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://www.googleapis.com/drive/v3/changes",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleDriveOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "pageToken",
+                "value": "={{ $json.start_page_token }}"
+              },
+              {
+                "name": "spaces",
+                "value": "drive"
+              },
+              {
+                "name": "pageSize",
+                "value": "1000"
+              },
+              {
+                "name": "supportsAllDrives",
+                "value": "true"
+              },
+              {
+                "name": "includeItemsFromAllDrives",
+                "value": "true"
+              },
+              {
+                "name": "fields",
+                "value": "newStartPageToken,nextPageToken,changes(fileId,removed,time,file(id,name,mimeType,modifiedTime,parents,trashed,webViewLink,md5Checksum,size))"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "a3a637c1-fce1-42f0-8faf-dc899052fe42",
+        "name": "Listar cambios Drive",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          60,
+          -120
+        ],
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "VzZlfgxu2EeOdQLH",
+            "name": "Google Drive account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH payload AS (\n  SELECT\n    $1::jsonb AS body,\n    $2::text AS previous_token\n),\nraw_changes AS (\n  SELECT\n    change_item.value AS raw_change,\n    change_item.value->>'fileId' AS drive_id,\n    NULLIF(change_item.value->>'changeId', '') AS change_id,\n    COALESCE((change_item.value->>'removed')::boolean, false) AS removed,\n    NULLIF(change_item.value->>'time', '')::timestamptz AS change_time,\n    change_item.value->'file' AS file_metadata\n  FROM payload\n  CROSS JOIN LATERAL jsonb_array_elements(COALESCE(payload.body->'changes', '[]'::jsonb)) AS change_item(value)\n),\nparsed AS (\n  SELECT\n    r.raw_change,\n    r.drive_id,\n    r.change_id,\n    r.removed,\n    r.change_time,\n    r.file_metadata,\n    COALESCE(r.file_metadata->>'name', '[removed]') AS new_name,\n    COALESCE(r.file_metadata->>'mimeType', 'application/octet-stream') AS mime_type,\n    CASE WHEN r.file_metadata->>'mimeType' = 'application/vnd.google-apps.folder' THEN 'folder' ELSE 'file' END AS item_type,\n    NULLIF(r.file_metadata->'parents'->>0, '') AS new_parent_drive_id,\n    COALESCE((r.file_metadata->>'trashed')::boolean, r.removed) AS trashed,\n    NULLIF(r.file_metadata->>'modifiedTime', '')::timestamptz AS modified_time,\n    NULLIF(r.file_metadata->>'md5Checksum', '') AS md5_checksum,\n    NULLIF(r.file_metadata->>'webViewLink', '') AS web_view_link,\n    NULLIF(r.file_metadata->>'size', '')::bigint AS size_bytes\n  FROM raw_changes r\n  WHERE r.drive_id IS NOT NULL\n),\nscope_state AS (\n  SELECT root_folder_id\n  FROM drive_sync_state\n  WHERE scope = 'documents_root'\n),\nwith_existing AS (\n  SELECT\n    p.*,\n    existing.name AS old_name,\n    existing.parent_drive_id AS old_parent_drive_id,\n    existing.drive_path AS old_drive_path,\n    existing.trashed AS old_trashed,\n    existing.within_root AS old_within_root,\n    existing.category_node_id AS old_category_node_id,\n    parent_item.category_node_id AS parent_category_node_id,\n    parent_item.drive_path AS parent_drive_path,\n    related.id AS current_document_id,\n    duplicate_active.id AS duplicate_active_document_id,\n    duplicate_inactive.id AS duplicate_inactive_document_id,\n    (\n      p.new_parent_drive_id = scope_state.root_folder_id\n      OR existing.drive_id IS NOT NULL\n      OR parent_item.within_root IS TRUE\n    ) AS detected_within_root\n  FROM parsed p\n  CROSS JOIN scope_state\n  LEFT JOIN drive_items existing ON existing.drive_id = p.drive_id\n  LEFT JOIN drive_items parent_item ON parent_item.drive_id = p.new_parent_drive_id\n  LEFT JOIN documents related ON related.drive_item_id = p.drive_id\n  LEFT JOIN LATERAL (\n    SELECT d.id\n    FROM documents d\n    WHERE p.md5_checksum IS NOT NULL\n      AND (\n        d.content_hash = p.md5_checksum\n        OR d.drive_md5_checksum = p.md5_checksum\n      )\n      AND d.active = true\n      AND d.drive_item_id IS DISTINCT FROM p.drive_id\n    ORDER BY d.id\n    LIMIT 1\n  ) duplicate_active ON true\n  LEFT JOIN LATERAL (\n    SELECT d.id\n    FROM documents d\n    WHERE p.md5_checksum IS NOT NULL\n      AND (\n        d.content_hash = p.md5_checksum\n        OR d.drive_md5_checksum = p.md5_checksum\n      )\n      AND d.active = false\n    ORDER BY d.id\n    LIMIT 1\n  ) duplicate_inactive ON true\n),\nclassified AS (\n  SELECT\n    w.*,\n    CASE\n      WHEN w.removed OR w.trashed THEN 'trashed'\n      WHEN w.detected_within_root IS NOT TRUE THEN 'removed_from_scope'\n      WHEN w.old_name IS NULL AND w.duplicate_active_document_id IS NOT NULL THEN 'duplicate_candidate'\n      WHEN w.old_name IS NULL AND w.duplicate_inactive_document_id IS NOT NULL THEN 'restored'\n      WHEN w.old_name IS NULL THEN 'created'\n      WHEN w.old_trashed = true AND w.trashed = false THEN 'restored'\n      WHEN w.old_parent_drive_id IS DISTINCT FROM w.new_parent_drive_id THEN 'moved'\n      WHEN w.old_name IS DISTINCT FROM w.new_name THEN 'renamed'\n      ELSE 'metadata_changed'\n    END AS event_type,\n    COALESCE(w.md5_checksum, NULL) AS content_hash,\n    CASE\n      WHEN w.old_name IS NULL AND w.duplicate_active_document_id IS NOT NULL THEN true\n      WHEN w.old_name IS NULL AND w.duplicate_inactive_document_id IS NOT NULL THEN true\n      WHEN w.detected_within_root IS NOT TRUE THEN true\n      ELSE false\n    END AS review_required,\n    CASE\n      WHEN w.old_name IS NULL AND w.duplicate_active_document_id IS NOT NULL THEN 'El hash ya existe en un documento activo; requiere decision humana.'\n      WHEN w.old_name IS NULL AND w.duplicate_inactive_document_id IS NOT NULL THEN 'El hash coincide con un documento inactivo; posible restitucion.'\n      WHEN w.detected_within_root IS NOT TRUE THEN 'Cambio detectado fuera del alcance conocido o con carpeta padre desconocida.'\n      ELSE NULL\n    END AS review_reason,\n    COALESCE(\n      w.current_document_id,\n      w.duplicate_active_document_id,\n      w.duplicate_inactive_document_id\n    ) AS related_document_id\n  FROM with_existing w\n),\nnormalized AS (\n  SELECT\n    c.*,\n    (regexp_match(c.new_name, '\\m(0?[1-9]|1[0-2])\\s*[-_]\\s*(0?[1-9]|1[0-2])\\s*[-_ ]+\\s*(20\\d{2}|\\d{2})\\M')) AS fiscal_range_match,\n    (regexp_match(c.new_name, '\\m(0?[1-9]|1[0-2])[-_ ]?(20\\d{2}|\\d{2})\\M')) AS fiscal_single_match\n  FROM classified c\n),\ndocument_payload AS (\n  SELECT\n    n.*,\n    COALESCE(n.parent_drive_path || '/' || n.new_name, n.new_name) AS new_drive_path,\n    CASE\n      WHEN n.fiscal_range_match IS NOT NULL THEN\n        CASE\n          WHEN (n.fiscal_range_match)[3]::integer < 100 THEN (n.fiscal_range_match)[3]::integer + 2000\n          ELSE (n.fiscal_range_match)[3]::integer\n        END\n      WHEN n.fiscal_single_match IS NOT NULL THEN\n        CASE\n          WHEN (n.fiscal_single_match)[2]::integer < 100 THEN (n.fiscal_single_match)[2]::integer + 2000\n          ELSE (n.fiscal_single_match)[2]::integer\n        END\n      ELSE 2026\n    END::smallint AS fiscal_period_year,\n    CASE\n      WHEN n.fiscal_range_match IS NOT NULL THEN GREATEST((n.fiscal_range_match)[1]::integer, (n.fiscal_range_match)[2]::integer)\n      WHEN n.fiscal_single_match IS NOT NULL THEN (n.fiscal_single_match)[1]::integer\n      ELSE NULL\n    END::smallint AS fiscal_period_month,\n    CASE\n      WHEN n.fiscal_range_match IS NOT NULL OR n.fiscal_single_match IS NOT NULL THEN 'month'\n      ELSE 'year'\n    END AS fiscal_period_kind,\n    CASE\n      WHEN n.fiscal_range_match IS NOT NULL THEN ARRAY(\n        SELECT generate_series(\n          LEAST((n.fiscal_range_match)[1]::integer, (n.fiscal_range_match)[2]::integer),\n          GREATEST((n.fiscal_range_match)[1]::integer, (n.fiscal_range_match)[2]::integer)\n        )\n      )\n      WHEN n.fiscal_single_match IS NOT NULL THEN ARRAY[(n.fiscal_single_match)[1]::integer]\n      ELSE NULL\n    END AS covered_fiscal_months\n  FROM normalized n\n),\nupsert_items AS (\n  INSERT INTO drive_items (\n    drive_id,\n    name,\n    mime_type,\n    item_type,\n    parent_drive_id,\n    drive_path,\n    within_root,\n    trashed,\n    modified_time,\n    md5_checksum,\n    content_hash,\n    content_hash_algorithm,\n    web_view_link,\n    size_bytes,\n    category_node_id,\n    last_seen_at,\n    last_event_type,\n    raw_metadata\n  )\n  SELECT\n    d.drive_id,\n    d.new_name,\n    d.mime_type,\n    d.item_type,\n    d.new_parent_drive_id,\n    d.new_drive_path,\n    COALESCE(d.detected_within_root, false),\n    d.trashed,\n    d.modified_time,\n    d.md5_checksum,\n    d.md5_checksum,\n    CASE WHEN d.md5_checksum IS NOT NULL THEN 'drive_md5' ELSE NULL END,\n    d.web_view_link,\n    d.size_bytes,\n    CASE\n      WHEN d.item_type = 'file' THEN COALESCE(d.parent_category_node_id, d.old_category_node_id)\n      ELSE d.old_category_node_id\n    END,\n    now(),\n    d.event_type,\n    COALESCE(d.file_metadata, '{}'::jsonb)\n  FROM document_payload d\n  ON CONFLICT (drive_id) DO UPDATE SET\n    name = EXCLUDED.name,\n    mime_type = EXCLUDED.mime_type,\n    item_type = EXCLUDED.item_type,\n    parent_drive_id = EXCLUDED.parent_drive_id,\n    within_root = EXCLUDED.within_root,\n    trashed = EXCLUDED.trashed,\n    modified_time = EXCLUDED.modified_time,\n    md5_checksum = EXCLUDED.md5_checksum,\n    content_hash = EXCLUDED.content_hash,\n    content_hash_algorithm = EXCLUDED.content_hash_algorithm,\n    web_view_link = EXCLUDED.web_view_link,\n    size_bytes = EXCLUDED.size_bytes,\n    drive_path = EXCLUDED.drive_path,\n    category_node_id = CASE\n      WHEN EXCLUDED.item_type = 'file' THEN EXCLUDED.category_node_id\n      ELSE COALESCE(drive_items.category_node_id, EXCLUDED.category_node_id)\n    END,\n    last_seen_at = EXCLUDED.last_seen_at,\n    last_event_type = EXCLUDED.last_event_type,\n    raw_metadata = drive_items.raw_metadata || EXCLUDED.raw_metadata\n  RETURNING drive_id\n),\ncreated_documents AS (\n  INSERT INTO documents (\n    drive_file_id,\n    drive_url,\n    file_name,\n    drive_path,\n    category_node_id,\n    fiscal_period_year,\n    fiscal_period_month,\n    fiscal_period_kind,\n    covered_fiscal_months,\n    extracted_data,\n    processing_status,\n    processing_error,\n    content_hash,\n    content_hash_algorithm,\n    drive_md5_checksum,\n    drive_parent_id,\n    active,\n    review_reason,\n    last_seen_at,\n    drive_item_id\n  )\n  SELECT\n    d.drive_id,\n    d.web_view_link,\n    d.new_name,\n    d.new_drive_path,\n    COALESCE(d.parent_category_node_id, d.old_category_node_id, resolve_category_node(ARRAY['Sin categoria'])),\n    d.fiscal_period_year,\n    d.fiscal_period_month,\n    d.fiscal_period_kind,\n    d.covered_fiscal_months,\n    jsonb_strip_nulls(jsonb_build_object(\n      'stage', 'drive_incremental_sync',\n      'source_kind', 'drive_event_created',\n      'mime_type', d.mime_type,\n      'size', d.size_bytes,\n      'drive_parent_id', d.new_parent_drive_id,\n      'md5Checksum', d.md5_checksum,\n      'drive_md5_checksum', d.md5_checksum,\n      'content_hash', d.content_hash,\n      'content_hash_algorithm', CASE WHEN d.content_hash IS NOT NULL THEN 'drive_md5' ELSE NULL END,\n      'review_reasons', jsonb_build_array('pending_document_extraction'),\n      'raw_drive_change', d.raw_change\n    )),\n    'review_required',\n    NULL,\n    d.content_hash,\n    CASE WHEN d.content_hash IS NOT NULL THEN 'drive_md5' ELSE NULL END,\n    d.md5_checksum,\n    d.new_parent_drive_id,\n    true,\n    'Nuevo archivo detectado; pendiente de extraccion documental.',\n    now(),\n    d.drive_id\n  FROM document_payload d\n  WHERE d.event_type = 'created'\n    AND d.item_type = 'file'\n  ON CONFLICT (drive_file_id) DO UPDATE SET\n    drive_url = COALESCE(EXCLUDED.drive_url, documents.drive_url),\n    file_name = EXCLUDED.file_name,\n    drive_path = EXCLUDED.drive_path,\n    drive_parent_id = COALESCE(EXCLUDED.drive_parent_id, documents.drive_parent_id),\n    content_hash = COALESCE(EXCLUDED.content_hash, documents.content_hash),\n    content_hash_algorithm = COALESCE(EXCLUDED.content_hash_algorithm, documents.content_hash_algorithm),\n    drive_md5_checksum = COALESCE(EXCLUDED.drive_md5_checksum, documents.drive_md5_checksum),\n    drive_item_id = COALESCE(EXCLUDED.drive_item_id, documents.drive_item_id),\n    active = true,\n    removed_at = NULL,\n    removed_reason = NULL,\n    review_reason = CASE\n      WHEN documents.processing_status = 'processed' THEN documents.review_reason\n      ELSE EXCLUDED.review_reason\n    END,\n    processing_status = CASE\n      WHEN documents.processing_status = 'processed' THEN documents.processing_status\n      ELSE 'review_required'\n    END,\n    extracted_data = documents.extracted_data || EXCLUDED.extracted_data,\n    last_seen_at = now()\n  RETURNING id, drive_item_id\n),\ntrashed_documents AS (\n  UPDATE documents d\n  SET\n    active = false,\n    removed_at = COALESCE(d.removed_at, now()),\n    removed_reason = 'trashed',\n    review_reason = COALESCE(d.review_reason, 'Archivo marcado como eliminado o enviado a papelera en Drive.'),\n    last_seen_at = now()\n  FROM document_payload p\n  WHERE p.event_type = 'trashed'\n    AND d.drive_item_id = p.drive_id\n    AND d.active = true\n  RETURNING d.id\n),\nout_of_scope_documents AS (\n  UPDATE documents d\n  SET\n    active = false,\n    removed_at = COALESCE(d.removed_at, now()),\n    removed_reason = 'moved_out_of_scope',\n    review_reason = COALESCE(d.review_reason, 'Archivo movido fuera del alcance controlado en Drive.'),\n    drive_parent_id = COALESCE(p.new_parent_drive_id, d.drive_parent_id),\n    last_seen_at = now()\n  FROM document_payload p\n  WHERE p.event_type = 'removed_from_scope'\n    AND d.drive_item_id = p.drive_id\n    AND d.active = true\n  RETURNING d.id\n),\nrestored_documents AS (\n  UPDATE documents d\n  SET\n    active = true,\n    removed_at = NULL,\n    removed_reason = NULL,\n    review_reason = NULL,\n    file_name = COALESCE(p.new_name, d.file_name),\n    drive_url = COALESCE(p.web_view_link, d.drive_url),\n    drive_path = COALESCE(p.new_drive_path, d.drive_path),\n    category_node_id = COALESCE(p.parent_category_node_id, d.category_node_id),\n    drive_parent_id = COALESCE(p.new_parent_drive_id, d.drive_parent_id),\n    last_seen_at = now()\n  FROM document_payload p\n  WHERE p.event_type = 'restored'\n    AND p.review_required = false\n    AND d.drive_item_id = p.drive_id\n  RETURNING d.id\n),\nmetadata_documents AS (\n  UPDATE documents d\n  SET\n    file_name = COALESCE(p.new_name, d.file_name),\n    drive_url = COALESCE(p.web_view_link, d.drive_url),\n    drive_path = COALESCE(p.new_drive_path, d.drive_path),\n    category_node_id = COALESCE(p.parent_category_node_id, d.category_node_id),\n    drive_parent_id = COALESCE(p.new_parent_drive_id, d.drive_parent_id),\n    drive_md5_checksum = COALESCE(p.md5_checksum, d.drive_md5_checksum),\n    content_hash = COALESCE(p.content_hash, d.content_hash),\n    content_hash_algorithm = COALESCE(CASE WHEN p.content_hash IS NOT NULL THEN 'drive_md5' ELSE NULL END, d.content_hash_algorithm),\n    last_seen_at = now()\n  FROM document_payload p\n  WHERE p.event_type IN ('renamed', 'moved', 'metadata_changed')\n    AND p.review_required = false\n    AND d.drive_item_id = p.drive_id\n  RETURNING d.id\n),\nrenamed_category_nodes AS (\n  UPDATE category_nodes c\n  SET\n    name = p.new_name,\n    updated_at = now()\n  FROM document_payload p\n  WHERE p.event_type = 'renamed'\n    AND p.item_type = 'folder'\n    AND c.drive_folder_id = p.drive_id\n    AND c.name IS DISTINCT FROM p.new_name\n  RETURNING c.id\n),\nmoved_category_nodes AS (\n  UPDATE category_nodes c\n  SET\n    parent_id = p.parent_category_node_id,\n    updated_at = now()\n  FROM document_payload p\n  WHERE p.event_type = 'moved'\n    AND p.item_type = 'folder'\n    AND c.drive_folder_id = p.drive_id\n    AND p.parent_category_node_id IS DISTINCT FROM c.id\n    AND c.parent_id IS DISTINCT FROM p.parent_category_node_id\n  RETURNING c.id\n),\nlogged_events AS (\n  INSERT INTO drive_change_events (\n    drive_id,\n    change_id,\n    event_type,\n    item_type,\n    old_parent_drive_id,\n    new_parent_drive_id,\n    old_drive_path,\n    new_drive_path,\n    old_name,\n    new_name,\n    content_hash,\n    related_document_id,\n    review_required,\n    review_reason,\n    processed_at,\n    raw_change\n  )\n  SELECT\n    d.drive_id,\n    d.change_id,\n    d.event_type,\n    d.item_type,\n    d.old_parent_drive_id,\n    d.new_parent_drive_id,\n    d.old_drive_path,\n    d.new_drive_path,\n    d.old_name,\n    d.new_name,\n    d.content_hash,\n    COALESCE(created_documents.id, d.related_document_id),\n    CASE\n      WHEN d.event_type = 'created' AND d.item_type = 'file' THEN false\n      ELSE d.review_required\n    END,\n    CASE\n      WHEN d.event_type = 'created' AND d.item_type = 'file' THEN 'Documento creado en estado review_required para extraccion documental.'\n      ELSE d.review_reason\n    END,\n    now(),\n    d.raw_change\n  FROM document_payload d\n  LEFT JOIN created_documents ON created_documents.drive_item_id = d.drive_id\n  RETURNING id, event_type\n),\nupdate_cursor AS (\n  UPDATE drive_sync_state\n  SET\n    start_page_token = COALESCE((SELECT body->>'newStartPageToken' FROM payload), start_page_token),\n    last_change_id = (\n      SELECT change_id\n      FROM parsed\n      WHERE change_id IS NOT NULL\n      ORDER BY change_time DESC NULLS LAST, change_id DESC\n      LIMIT 1\n    ),\n    last_successful_sync_at = now(),\n    last_error_at = NULL,\n    last_error = NULL,\n    updated_at = now()\n  WHERE scope = 'documents_root'\n  RETURNING scope, start_page_token, last_change_id, last_successful_sync_at\n)\nSELECT\n  (SELECT count(*) FROM raw_changes) AS changes_seen,\n  (SELECT count(*) FROM upsert_items) AS items_upserted,\n  (SELECT count(*) FROM logged_events) AS events_logged,\n  (SELECT count(*) FROM created_documents) AS documents_created_or_updated,\n  (SELECT count(*) FROM trashed_documents) AS documents_trashed,\n  (SELECT count(*) FROM out_of_scope_documents) AS documents_moved_out_of_scope,\n  (SELECT count(*) FROM restored_documents) AS documents_restored,\n  (SELECT count(*) FROM metadata_documents) AS documents_metadata_updated,\n  (SELECT count(*) FROM renamed_category_nodes) AS categories_renamed,\n  (SELECT count(*) FROM moved_category_nodes) AS categories_moved,\n  update_cursor.scope,\n  update_cursor.start_page_token,\n  update_cursor.last_change_id,\n  update_cursor.last_successful_sync_at\nFROM update_cursor;",
+          "options": {
+            "queryReplacement": "={{ [JSON.stringify($json), $('Leer estado Drive').first().json.start_page_token] }}"
+          }
+        },
+        "id": "de039776-09d7-4ae5-b0cf-1ba0ab71403a",
+        "name": "Sincronizar cambios y documentos",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          380,
+          -120
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "PgFinanzasP1Cred",
+            "name": "Postgres Finanzas Proyecto 1"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH payload AS (\n  SELECT $1::jsonb AS body\n),\nraw_changes AS (\n  SELECT\n    change_item.value AS raw_change,\n    change_item.value->>'fileId' AS drive_id,\n    NULLIF(change_item.value->>'changeId', '') AS change_id,\n    COALESCE((change_item.value->>'removed')::boolean, false) AS removed,\n    change_item.value->'file' AS file_metadata\n  FROM payload\n  CROSS JOIN LATERAL jsonb_array_elements(COALESCE(payload.body->'changes', '[]'::jsonb)) AS change_item(value)\n),\nparsed AS (\n  SELECT\n    r.raw_change,\n    r.drive_id,\n    r.change_id,\n    COALESCE(r.file_metadata->>'name', '[removed]') AS name,\n    COALESCE(r.file_metadata->>'mimeType', 'application/octet-stream') AS mime_type,\n    NULLIF(r.file_metadata->'parents'->>0, '') AS parent_drive_id,\n    COALESCE((r.file_metadata->>'trashed')::boolean, r.removed) AS trashed,\n    NULLIF(r.file_metadata->>'modifiedTime', '') AS modified_time,\n    NULLIF(r.file_metadata->>'md5Checksum', '') AS md5_checksum,\n    NULLIF(r.file_metadata->>'webViewLink', '') AS web_view_link,\n    NULLIF(r.file_metadata->>'size', '') AS size_bytes\n  FROM raw_changes r\n  WHERE r.drive_id IS NOT NULL\n),\ncategory_paths AS (\n  WITH RECURSIVE tree AS (\n    SELECT\n      id,\n      parent_id,\n      name,\n      ARRAY[name]::text[] AS path_parts\n    FROM category_nodes\n    WHERE parent_id IS NULL\n    UNION ALL\n    SELECT\n      child.id,\n      child.parent_id,\n      child.name,\n      tree.path_parts || child.name\n    FROM category_nodes child\n    JOIN tree ON tree.id = child.parent_id\n  )\n  SELECT id, path_parts\n  FROM tree\n),\ncreated_events AS (\n  SELECT DISTINCT ON (p.drive_id)\n    p.*,\n    item.category_node_id,\n    COALESCE(parent_item.drive_path || '/' || p.name, item.drive_path, p.name) AS drive_path,\n    COALESCE(category_paths.path_parts, ARRAY['Sin categoria']::text[]) AS category_path\n  FROM parsed p\n  LEFT JOIN documents existing_document ON existing_document.drive_item_id = p.drive_id\n  JOIN drive_change_events event\n    ON event.drive_id = p.drive_id\n   AND event.review_required = false\n   AND (event.change_id IS NOT DISTINCT FROM p.change_id)\n   AND (\n     event.event_type = 'created'\n     OR (\n       event.event_type = 'metadata_changed'\n       AND existing_document.processing_status = 'review_required'\n       AND existing_document.extracted_data->'review_reasons' ? 'pdf_text_extraction_error'\n     )\n   )\n  JOIN drive_items item ON item.drive_id = p.drive_id\n  LEFT JOIN drive_items parent_item ON parent_item.drive_id = p.parent_drive_id\n  LEFT JOIN category_paths ON category_paths.id = item.category_node_id\n  WHERE p.mime_type <> 'application/vnd.google-apps.folder'\n    AND p.trashed = false\n  ORDER BY p.drive_id, event.processed_at DESC NULLS LAST, event.id DESC\n)\nSELECT\n  drive_id AS id,\n  drive_id AS drive_file_id,\n  drive_id AS drive_item_id,\n  web_view_link AS \"webViewLink\",\n  name,\n  mime_type AS \"mimeType\",\n  modified_time AS \"modifiedTime\",\n  md5_checksum AS \"md5Checksum\",\n  size_bytes AS size,\n  parent_drive_id,\n  parent_drive_id AS drive_parent_id,\n  drive_path,\n  category_path,\n  category_path[1] AS root_category,\n  2026 AS processing_year,\n  raw_change\nFROM created_events;",
+          "options": {
+            "queryReplacement": "={{ [JSON.stringify($('Listar cambios Drive').first().json)] }}"
+          }
+        },
+        "id": "6c8078e6-5075-42a1-a67d-38229758e001",
+        "name": "Emitir archivos nuevos a extraer",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          680,
+          -120
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "PgFinanzasP1Cred",
+            "name": "Postgres Finanzas Proyecto 1"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "has-drive-file-id",
+                "leftValue": "={{ ($json.drive_file_id || '').length }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "f9f4ea14-4484-4eee-84a5-b401d633e001",
+        "name": "Hay archivos nuevos?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          820,
+          -120
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "download",
+          "fileId": {
+            "__rl": true,
+            "value": "={{ $json.id }}",
+            "mode": "id"
+          },
+          "options": {}
+        },
+        "id": "5c3269a8-2ff2-4271-a47a-b9b6de40e001",
+        "name": "Descargar archivo nuevo",
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          1080,
+          -120
+        ],
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "VzZlfgxu2EeOdQLH",
+            "name": "Google Drive account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "action": "hash",
+          "binaryData": true,
+          "binaryPropertyName": "data",
+          "type": "SHA256",
+          "dataPropertyName": "sha256",
+          "encoding": "hex"
+        },
+        "id": "724e77df-f961-4a7b-b08a-4b2919b8e001",
+        "name": "Calcular SHA256",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 2,
+        "position": [
+          1340,
+          -120
+        ],
+        "notes": "Etapa 1: hash SHA-256 del binario usando nodo Crypto nativo, porque Code node no permite require(crypto)."
+      },
+      {
+        "parameters": {
+          "jsCode": "return items.map((item, index) => {\n  const source = $('Emitir archivos nuevos a extraer').all()[index]?.json || $('Emitir archivos nuevos a extraer').item.json;\n  const driveMd5Checksum = source.md5Checksum || source.drive_md5_checksum || item.json.md5Checksum || null;\n  const contentHash = item.json.sha256 || driveMd5Checksum;\n  return {\n    json: {\n      ...source,\n      sha256: item.json.sha256 || null,\n      content_hash: contentHash,\n      content_hash_algorithm: item.json.sha256 ? 'sha256' : (driveMd5Checksum ? 'drive_md5' : null),\n      drive_md5_checksum: driveMd5Checksum,\n    },\n    binary: item.binary,\n  };\n});"
+        },
+        "id": "aa065876-b029-4f07-99d3-f29e6a20e001",
+        "name": "Preparar metadata con hash",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1600,
+          -120
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "is-pdf-mime",
+                "leftValue": "={{ $json.mimeType }}",
+                "rightValue": "application/pdf",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "4045f265-6f05-48f4-9071-a583795de001",
+        "name": "Es PDF?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1860,
+          -120
+        ]
+      },
+      {
+        "parameters": {
+          "binaryPropertyName": "data",
+          "encrypted": false
+        },
+        "id": "5f50f655-5b36-4766-bf66-32236df9e001",
+        "name": "Extraer texto PDF",
+        "type": "n8n-nodes-base.readPDF",
+        "typeVersion": 1,
+        "position": [
+          2120,
+          -220
+        ],
+        "continueOnFail": true,
+        "notes": "Extrae texto de PDFs digitales sin usar IA. Si no hay texto suficiente, el siguiente nodo lo marca para OCR/revision."
+      },
+      {
+        "parameters": {
+          "jsCode": "function normalizeWhitespace(value) {\n  return String(value || '').replace(/\\s+/g, ' ').trim();\n}\n\nfunction parseDate(text) {\n  const match = text.match(/\\b(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{2,4})\\b/);\n  if (!match) return null;\n  const day = Number(match[1]);\n  const month = Number(match[2]);\n  let year = Number(match[3]);\n  if (year < 100) year += 2000;\n  if (month < 1 || month > 12 || day < 1 || day > 31) return null;\n  return String(year).padStart(4, '0') + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');\n}\n\nfunction parseAmount(text) {\n  function toNumber(raw) {\n    if (!raw) return null;\n    const normalized = raw.includes(',')\n      ? raw.replace(/\\./g, '').replace(',', '.')\n      : raw.replace(/,/g, '');\n    const amount = Number(normalized);\n    return Number.isFinite(amount) ? amount : null;\n  }\n\n  function formatAmount(amount) {\n    return Number.isFinite(amount) ? amount.toFixed(2) : null;\n  }\n\n  function debitTokenToAmount(raw) {\n    let token = String(raw || '').trim();\n    const gluedCodeMatch = token.match(/^\\d{5}(\\d{1,3}(?:\\.\\d{3})*,\\d{2})$/);\n    if (gluedCodeMatch) token = gluedCodeMatch[1];\n    return toNumber(token);\n  }\n\n  const debitMovementAmounts = [];\n  if (/Detalle\\s+de\\s+movimientos/i.test(text) && /D[eé]bito\\s+Cr[eé]dito/i.test(text)) {\n    const debitPattern = /\\b(\\d{5,6}\\d{1,3}(?:\\.\\d{3})*,\\d{2}|[0-9]{1,3}(?:\\.[0-9]{3})*,[0-9]{2})\\s+0,00/gi;\n    for (const match of text.matchAll(debitPattern)) {\n      const amount = debitTokenToAmount(match[1]);\n      if (amount && amount > 0) debitMovementAmounts.push(amount);\n    }\n    if (debitMovementAmounts.length) {\n      return formatAmount(debitMovementAmounts.reduce((sum, amount) => sum + amount, 0));\n    }\n  }\n\n  const candidates = [];\n  const amountToken = '([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})|[0-9]+(?:[.,][0-9]{2}))';\n  const patterns = [\n    new RegExp('Vencimiento\\\\s+Importe[\\\\s\\\\S]{0,120}?\\\\b\\\\d{1,2}[\\\\/.-]\\\\d{1,2}[\\\\/.-]\\\\d{2,4}\\\\s+' + amountToken, 'gi'),\n    new RegExp('Vencimiento\\\\s+Importe\\\\s+Cuota\\\\s+Cod\\\\.Seg\\\\.[\\\\s\\\\S]{0,80}?\\\\s+' + amountToken + '\\\\s+\\\\d{6,}', 'gi'),\n    /(?:total|importe|monto|abonado|pagado|pago)\\s*[:$]?\\s*(?:ars|\\$)?\\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})|[0-9]+(?:[.,][0-9]{2}))/gi,\n    /(?:ars|\\$)\\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})|[0-9]+(?:[.,][0-9]{2}))/gi\n  ];\n  for (const pattern of patterns) {\n    for (const match of text.matchAll(pattern)) candidates.push(match[1]);\n  }\n  if (!candidates.length) return null;\n  const raw = candidates[candidates.length - 1];\n  return formatAmount(toNumber(raw));\n}\n\nfunction normalizeCoveredFiscalMonths(months) {\n  const normalized = [...new Set((months || [])\n    .map((month) => Number(month))\n    .filter((month) => Number.isInteger(month) && month >= 1 && month <= 12))]\n    .sort((left, right) => left - right);\n  return normalized.length ? normalized : null;\n}\n\nfunction parseFiscalPeriodRangeFromName(fileName, fallbackYear = 2026) {\n  const text = String(fileName || '');\n  const match = text.match(/\\b(0?[1-9]|1[0-2])\\s*[-_]\\s*(0?[1-9]|1[0-2])\\s*[-_ ]+\\s*(20\\d{2}|\\d{2})\\b/);\n  if (!match) return null;\n  let year = Number(match[3]);\n  if (year < 100) year += 2000;\n  if (!Number.isInteger(year)) year = fallbackYear;\n  const firstMonth = Number(match[1]);\n  const lastMonth = Number(match[2]);\n  const fromMonth = Math.min(firstMonth, lastMonth);\n  const toMonth = Math.max(firstMonth, lastMonth);\n  const covered = [];\n  for (let month = fromMonth; month <= toMonth; month += 1) {\n    covered.push(month);\n  }\n  return {\n    fiscal_period_year: year,\n    fiscal_period_month: toMonth,\n    fiscal_period_kind: 'month',\n    covered_fiscal_months: normalizeCoveredFiscalMonths(covered),\n    source: 'file_name_range',\n    confidence: 0.75\n  };\n}\n\nfunction parseFiscalPeriod(fileName, text, fallbackYear = 2026) {\n  const fromNameRange = parseFiscalPeriodRangeFromName(fileName, fallbackYear);\n  if (fromNameRange) return fromNameRange;\n  const fromFiscal = text.match(/Per[ií]odo\\s+Fiscal:\\s*(0?[0-9]|1[0-2])[\\/.-](20\\d{2}|\\d{2})/i);\n  const fromText = text.match(/(?:periodo|per[ií]odo|mes)\\s*[:\\-]?\\s*(0?[1-9]|1[0-2])[\\/.-](20\\d{2}|\\d{2})/i);\n  const fromName = String(fileName || '').match(/\\b(0?[1-9]|1[0-2])[-_ ]?(20\\d{2}|\\d{2})\\b/);\n  const match = fromFiscal || fromText || fromName;\n  if (!match) {\n    return { fiscal_period_year: fallbackYear, fiscal_period_month: null, fiscal_period_kind: 'year', covered_fiscal_months: null, source: 'processing_year_fallback', confidence: 0.2 };\n  }\n  const numericMonth = Number(match[1]);\n  let year = Number(match[2]);\n  if (year < 100) year += 2000;\n  if (match === fromFiscal && numericMonth === 0) {\n    return { fiscal_period_year: year, fiscal_period_month: null, fiscal_period_kind: 'year', covered_fiscal_months: null, source: 'fiscal_period_label', confidence: 0.85 };\n  }\n  return { fiscal_period_year: year, fiscal_period_month: numericMonth, fiscal_period_kind: 'month', covered_fiscal_months: normalizeCoveredFiscalMonths([numericMonth]), source: match === fromName ? 'file_name' : 'pdf_text', confidence: match === fromName ? 0.7 : 0.85 };\n}\n\nfunction cleanExtractedLabel(value) {\n  return normalizeWhitespace(value).replace(/[.;,]+$/, '').trim() || null;\n}\n\nfunction parseServiceReason(text) {\n  const patterns = [\n    /Servicio:\\s*([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+Cod\\.?\\s+de\\s+Ente:|\\s+Identificaci[oó]n:|\\s+Cuenta\\s+de\\s+D[eé]bito:|\\s+Anotaci[oó]n\\s+Personal:|\\s+Vencimiento\\b|$)/i,\n    /Servicio\\s+([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+Datos\\s+del\\s+pagador|\\s+Datos\\s+particulares|\\s+Identificaci[oó]n\\b|\\s+Estado\\b|$)/i,\n  ];\n  for (const pattern of patterns) {\n    const match = text.match(pattern);\n    if (match) return cleanExtractedLabel(match[1]);\n  }\n  return null;\n}\n\nfunction parseTransferReason(text) {\n  const motivoMatch = text.match(/Motivo\\s+Tipo\\s+de\\s+transferencia\\s+([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+Datos\\s+del\\s+destinatario|\\s+Razon\\s+Social\\b|$)/i);\n  if (motivoMatch) return cleanExtractedLabel(motivoMatch[1]);\n  const descMatch = text.match(/Descripci[oó]n:\\s*([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+CUIL\\/CUIT|\\s+Fecha\\s+de\\s+Generaci[oó]n|\\s+Concepto:|$)/i);\n  if (descMatch) return cleanExtractedLabel(descMatch[1]);\n  return null;\n}\n\nfunction parseVepReason(text) {\n  const match = text.match(/Pago\\s+de:\\s*([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+Concepto:|\\s+Subconcepto:|\\s+Per[ií]odo\\s+Fiscal:|\\s+N[uú]mero\\s+de\\s+VEP:|$)/i);\n  const rawReason = match ? cleanExtractedLabel(match[1]) : null;\n  if (!rawReason) return null;\n  const suffixMatch = rawReason.match(/^(.*?)\\s+-\\s+(SOLO\\s+PAGO)$/i);\n  if (!suffixMatch) return { reason: rawReason, note: null, raw_reason: rawReason };\n  return {\n    reason: cleanExtractedLabel(suffixMatch[1]),\n    note: normalizeWhitespace(suffixMatch[2]).toUpperCase(),\n    raw_reason: rawReason\n  };\n}\n\nfunction parseVepNumber(text) {\n  const match = text.match(/N[uú]mero\\s+de\\s+VEP:\\s*(\\d{6,})/i);\n  return match ? cleanExtractedLabel(match[1]) : null;\n}\n\nfunction parseIssuerBank(text) {\n  const candidates = [\n    { name: 'Banco Credicoop Coop. Ltdo.', pattern: /Banco\\s+Credicoop(?:\\s+Coop\\.?\\s+Ltda?\\.?|\\s+Cooperativo\\s+Ltda?\\.?)?/i },\n    { name: 'Banco Galicia', pattern: /(?:Banco\\s+)?Galicia/i },\n    { name: 'Banco de la Nacion Argentina', pattern: /Banco\\s+(?:de\\s+la\\s+)?Naci[oó]n|\\bBNA\\b/i },\n    { name: 'Banco Provincia', pattern: /Banco\\s+Provincia/i },\n    { name: 'Banco Santander', pattern: /(?:Banco\\s+)?Santander/i },\n    { name: 'BBVA', pattern: /\\bBBVA\\b|Franc[eé]s/i },\n    { name: 'Banco Macro', pattern: /Banco\\s+Macro|\\bMacro\\b/i },\n    { name: 'ICBC', pattern: /\\bICBC\\b/i },\n    { name: 'Mercado Pago', pattern: /Mercado\\s+Pago/i },\n    { name: 'Uala', pattern: /\\bUal[aá]\\b/i },\n  ];\n\n  for (const candidate of candidates) {\n    if (candidate.pattern.test(text)) return candidate.name;\n  }\n  return null;\n}\n\nfunction parsePersonalAnnotation(text) {\n  const match = text.match(/Anotaci[oó]n\\s+Personal:\\s*([A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ._\\/-]*?)(?=\\s+Vencimiento\\b|\\s+Importe\\b|$)/i);\n  return match ? cleanExtractedLabel(match[1]) : null;\n}\n\nfunction parsePaymentReference(text) {\n  const patterns = [\n    /Fecha\\s+Nro\\s+Transacci[oó]n\\s+\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{2,4}\\s*-?\\s*\\d{1,2}:\\d{2}(?::\\d{2})?\\s+(\\d{6,})/i,\n    /Nro\\s+Transacci[oó]n(?:\\s+\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{2,4})?(?:\\s*-?\\s*\\d{1,2}:\\d{2}(?::\\d{2})?)?\\s+(\\d{6,})/i,\n    /Nro\\s+de\\s+Operaci[oó]n\\s+(\\d{6,})/i,\n    /Identificador\\s+de\\s+la\\s+operaci[oó]n:?\\s*([A-Z0-9-]+)/i,\n  ];\n  for (const pattern of patterns) {\n    const match = text.match(pattern);\n    if (match) return cleanExtractedLabel(match[1]);\n  }\n  return null;\n}\n\nconst VEHICLE_PATENT_CATEGORY_BY_PLATE = {\n  AC743LH: 'Patente 500',\n  AG437RG: 'Patente Amarok',\n  AG453WA: 'Patente Berlingo',\n  AE082TC: 'Patente C3',\n};\n\nfunction isVehiclePatentCategory(source) {\n  const path = Array.isArray(source.category_path) ? source.category_path : [];\n  const drivePath = String(source.drive_path || '');\n  return path.includes('Patentes Vehiculos') || drivePath.includes('Patentes Vehiculos');\n}\n\nfunction extractArbaVehiclePatentPages(text) {\n  const rawText = String(text || '');\n  const rawPages = rawText.includes('\\f')\n    ? rawText.split(/\\f+/)\n    : rawText.split(/(?=Identificador\\s+de\\s+la\\s+operaci[oó]n:?)/i);\n  const pages = rawPages.map(page => normalizeWhitespace(page)).filter(Boolean);\n  return pages.map((pageText, index) => {\n    const plateMatch = pageText.match(/\\b([A-Z]{2}[0-9]{3}[A-Z]{2})\\s+\\d{3}\\/\\d{2}\\b/i);\n    if (!plateMatch) return null;\n    const plate = plateMatch[1].toUpperCase();\n    const vehicleFolder = VEHICLE_PATENT_CATEGORY_BY_PLATE[plate] || null;\n    return {\n      page_index: index,\n      page_number: index + 1,\n      page_count: pages.length,\n      plate,\n      vehicle_folder: vehicleFolder,\n      raw_text: pageText,\n    };\n  }).filter(Boolean);\n}\n\nreturn items.flatMap((item, index) => {\n  const pairedIndex = Array.isArray(item.pairedItem) ? item.pairedItem[0]?.item : item.pairedItem?.item;\n  const sourceIndex = Number.isInteger(pairedIndex) ? pairedIndex : index;\n  const downloadedSource = $('Descargar archivo nuevo').all()[sourceIndex]?.json || {};\n  const preparedSource = $('Preparar metadata con hash').all()[sourceIndex]?.json || {};\n  const source = { ...downloadedSource, ...preparedSource, ...item.json };\n  const fullPdfText = String(item.json.text || item.json.data || '');\n  const extractionError = item.json.error || null;\n  const patentPages = isVehiclePatentCategory(source) ? extractArbaVehiclePatentPages(fullPdfText) : [];\n  const parts = patentPages.length > 1 ? patentPages : [{ raw_text: normalizeWhitespace(fullPdfText), page_index: null, page_number: null, page_count: null, plate: null, vehicle_folder: null }];\n\n  return parts.map((part) => {\n  const pdfText = part.raw_text;\n  const hasText = pdfText.length >= 80;\n  const paymentDate = hasText ? parseDate(pdfText) : null;\n  const amount = hasText ? parseAmount(pdfText) : null;\n  const fiscalPeriod = parseFiscalPeriod(source.name, pdfText, source.processing_year || 2026);\n  const categoryPath = part.vehicle_folder\n    ? ['Patentes Vehiculos', part.vehicle_folder]\n    : (source.category_path || []);\n  const originalDriveFileId = source.drive_file_id || source.id;\n  const logicalDriveFileId = part.plate\n    ? originalDriveFileId + '#page=' + part.page_number + '#plate=' + part.plate\n    : originalDriveFileId;\n  const logicalDrivePath = part.vehicle_folder\n    ? (\n        String(source.drive_path || '').includes('Patentes Vehiculos/2026/')\n          ? String(source.drive_path || '').replace('Patentes Vehiculos/2026/', 'Patentes Vehiculos/' + part.vehicle_folder + '/2026/')\n          : String(source.drive_path || '').replace(/Patentes Vehiculos\\/[^/]+(?:\\/2026)?\\//, 'Patentes Vehiculos/' + part.vehicle_folder + '/2026/')\n      ) + '#page=' + part.page_number\n    : source.drive_path;\n  const currency = /\\b(?:usd|u\\$s)\\b/i.test(pdfText) ? 'USD' : (/\\$|\\bars\\b|pesos?/i.test(pdfText) ? 'ARS' : null);\n  const serviceReason = hasText ? parseServiceReason(pdfText) : null;\n  const transferReason = hasText ? parseTransferReason(pdfText) : null;\n  const vepReasonData = hasText ? parseVepReason(pdfText) : null;\n  const vepReason = vepReasonData?.reason || null;\n  const vepReasonNote = vepReasonData?.note || null;\n  const vepRawReason = vepReasonData?.raw_reason || null;\n  const vepNumber = hasText ? parseVepNumber(pdfText) : null;\n  const personalAnnotation = hasText ? parsePersonalAnnotation(pdfText) : null;\n  const paymentReference = hasText ? parsePaymentReference(pdfText) : null;\n  const issuerBank = hasText ? parseIssuerBank(pdfText) : null;\n  const categoryFallbackReason = Array.isArray(source.category_path) && source.category_path.length\n    ? source.category_path[source.category_path.length - 1]\n    : null;\n  const reason = serviceReason || vepReason || transferReason || categoryFallbackReason || null;\n  const reviewReasons = [];\n\n  if (extractionError) reviewReasons.push('pdf_text_extraction_error');\n  if (!hasText) reviewReasons.push('pdf_without_extractable_text_or_scanned');\n  if (hasText && !paymentDate) reviewReasons.push('payment_date_not_detected');\n  if (hasText && !amount) reviewReasons.push('amount_not_detected');\n  if (hasText && !reason) reviewReasons.push('reason_not_detected');\n  if (fiscalPeriod.source === 'processing_year_fallback') reviewReasons.push('fiscal_period_not_detected');\n  if (part.plate && !part.vehicle_folder) reviewReasons.push('vehicle_patent_plate_not_mapped');\n  if (hasText && !issuerBank) reviewReasons.push('issuer_not_detected_in_pdf_text');\n\n  const processed = hasText && paymentDate && amount && reason && issuerBank && fiscalPeriod.source !== 'processing_year_fallback';\n\n  return {\n    json: {\n      ...source,\n      id: logicalDriveFileId,\n      drive_file_id: logicalDriveFileId,\n      original_drive_file_id: originalDriveFileId,\n      drive_path: logicalDrivePath,\n      category_path: categoryPath,\n      source_kind: hasText ? 'pdf_text' : 'pdf_scanned',\n      payment_date: paymentDate,\n      payment_time: null,\n      fiscal_period_year: fiscalPeriod.fiscal_period_year,\n      fiscal_period_month: fiscalPeriod.fiscal_period_month,\n      fiscal_period_kind: fiscalPeriod.fiscal_period_kind,\n      covered_fiscal_months: fiscalPeriod.covered_fiscal_months,\n      amount,\n      currency,\n      reason,\n      reference: paymentReference || vepNumber,\n      issuer: issuerBank,\n      payee: null,\n      user_note: personalAnnotation || vepReasonNote,\n      raw_text: pdfText || null,\n      extracted_data: {\n        stage: 'final_pdf_text_first_pass',\n        extractor: 'n8n_readPDF_plus_rules',\n        source_kind: hasText ? 'pdf_text' : 'pdf_scanned',\n        text_length: pdfText.length,\n        drive_path: logicalDrivePath || null,\n        category_path: categoryPath,\n        original_drive_path: source.drive_path || null,\n        original_drive_file_id: originalDriveFileId,\n        logical_drive_file_id: logicalDriveFileId,\n        pdf_page_number: part.page_number,\n        pdf_page_index: part.page_index,\n        pdf_page_count: part.page_count,\n        vehicle_patent_plate: part.plate,\n        vehicle_patent_folder: part.vehicle_folder,\n        vehicle_patent_mapping_source: part.plate ? 'VEHICLE_PATENT_CATEGORY_BY_PLATE' : null,\n        file_modified_at: source.modifiedTime || null,\n        mime_type: source.mimeType || null,\n        md5Checksum: source.drive_md5_checksum || source.md5Checksum || null,\n        drive_md5_checksum: source.drive_md5_checksum || source.md5Checksum || null,\n        size: source.size || null,\n        sha256: source.sha256 || null,\n        content_hash: source.content_hash || source.sha256 || null,\n        content_hash_algorithm: source.content_hash_algorithm || (source.sha256 ? 'sha256' : null),\n        extraction_error: extractionError,\n        service_reason: serviceReason,\n        transfer_reason: transferReason,\n        vep_reason: vepReason,\n        vep_reason_note: vepReasonNote,\n        vep_raw_reason: vepRawReason,\n        vep_number: vepNumber,\n        personal_annotation: personalAnnotation,\n        payment_reference: paymentReference,\n        issuer_bank: issuerBank,\n        issuer_source: issuerBank ? 'pdf_text_bank_name' : (hasText ? 'not_detected_in_pdf_text' : 'ocr_or_vision_pending'),\n        fiscal_period_source: fiscalPeriod.source,\n        covered_fiscal_months: fiscalPeriod.covered_fiscal_months || null,\n        field_confidence: {\n          raw_text: hasText ? 0.9 : 0,\n          payment_date: paymentDate ? 0.65 : 0,\n          amount: amount ? 0.65 : 0,\n          currency: currency ? 0.6 : 0,\n          fiscal_period: fiscalPeriod.confidence,\n          reason: serviceReason || vepReason ? 0.85 : (transferReason ? 0.75 : (categoryFallbackReason ? 0.55 : 0)),\n          reference: (paymentReference || vepNumber) ? 0.85 : 0,\n          issuer: issuerBank ? 0.9 : 0\n        },\n        review_reasons: reviewReasons\n      },\n      processing_status: processed ? 'processed' : 'review_required',\n      processing_error: extractionError\n    },\n    binary: item.binary\n  };\n  });\n});"
+        },
+        "id": "5e2454e8-e60b-4e72-b7fe-44704029e001",
+        "name": "Normalizar extracción PDF",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2380,
+          -220
+        ],
+        "notes": "Normaliza texto extraido de PDF a los campos de documents. Es deterministico y marca revision si falta fecha/importe/texto."
+      },
+      {
+        "parameters": {
+          "jsCode": "return items.map((item) => {\n  const mimeType = item.json.mimeType || '';\n  const sourceKind = mimeType === 'application/pdf' ? 'pdf_scanned' : (mimeType.startsWith('image/') ? 'image' : 'other');\n  const reason = sourceKind === 'image'\n    ? 'image_requires_ocr_or_vision'\n    : (sourceKind === 'pdf_scanned' ? 'pdf_requires_ocr_or_vision' : 'unsupported_file_type_for_text_extraction');\n  return {\n    json: {\n      ...item.json,\n      source_kind: sourceKind,\n      payment_date: null,\n      payment_time: null,\n      fiscal_period_year: item.json.processing_year || 2026,\n      fiscal_period_month: null,\n      fiscal_period_kind: 'year',\n      covered_fiscal_months: null,\n      amount: null,\n      currency: null,\n      reason: null,\n      reference: null,\n      issuer: null,\n      payee: null,\n      user_note: null,\n      raw_text: null,\n      extracted_data: {\n        stage: 'final_ocr_required',\n        extractor: 'ocr_or_vision_pending',\n        source_kind: sourceKind,\n        drive_path: item.json.drive_path || null,\n        category_path: item.json.category_path || [],\n        file_modified_at: item.json.modifiedTime || null,\n        mime_type: mimeType || null,\n        md5Checksum: item.json.drive_md5_checksum || item.json.md5Checksum || null,\n        drive_md5_checksum: item.json.drive_md5_checksum || item.json.md5Checksum || null,\n        size: item.json.size || null,\n        sha256: item.json.sha256 || null,\n        content_hash: item.json.content_hash || item.json.sha256 || null,\n        content_hash_algorithm: item.json.content_hash_algorithm || (item.json.sha256 ? 'sha256' : null),\n        issuer_bank: null,\n        issuer_source: 'ocr_or_vision_pending',\n        review_reasons: [reason, 'issuer_requires_ocr_or_vision']\n      },\n      processing_status: 'review_required',\n      processing_error: null\n    },\n    binary: item.binary\n  };\n});"
+        },
+        "id": "5fa62403-d30e-482a-b59d-1625a955e001",
+        "name": "Marcar requiere OCR",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2120,
+          20
+        ],
+        "notes": "Rama para imagenes, otros binarios o PDFs sin texto suficiente. Prepara el documento para OCR/vision sin inventar datos."
+      },
+      {
+        "id": "9d7f6360-a715-489b-aaec-42e7da3de001",
+        "name": "Necesita OCR/Vision issuer?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2640,
+          -220
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "missing-issuer",
+                "leftValue": "={{ !$json.issuer }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "notes": "Envia a OCR/vision todo documento sin entidad pagadora. El nodo OCR recupera el binario original desde Descargar archivo si Read PDF no lo conserva."
+      },
+      {
+        "id": "e1cc6744-c983-4244-8d85-784f9f77e001",
+        "name": "Inferir entidad pagadora OCR/Vision",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2900,
+          -120
+        ],
+        "parameters": {
+          "jsCode": "function normalizeReasons(value) {\n  return Array.isArray(value) ? value.map((reason) => String(reason || '').trim()).filter(Boolean) : [];\n}\n\nreturn items.map((item) => {\n  const existingData = item.json.extracted_data || {};\n  const reviewReasons = Array.from(new Set([\n    ...normalizeReasons(existingData.review_reasons),\n    'issuer_requires_ocr_or_vision',\n    'ocr_or_vision_runtime_unavailable',\n  ]));\n\n  return {\n    json: {\n      ...item.json,\n      extracted_data: {\n        ...existingData,\n        issuer_source: 'ocr_or_vision_pending',\n        review_reasons: reviewReasons,\n      },\n      processing_status: 'review_required',\n      processing_error: null,\n    },\n    binary: item.binary,\n  };\n});"
+        },
+        "notes": "Fallback OCR/vision con OpenAI para imagenes, PDFs escaneados o PDFs con texto sin banco detectado. Usa OPENAI_FINANZAS_API_KEY y no toca la key general de Promatex."
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH input AS (\n  SELECT\n    $1::text AS drive_file_id,\n    $2::text AS drive_url,\n    $3::text AS file_name,\n    $4::jsonb AS category_path_json,\n    $5::text AS drive_path,\n    $6::smallint AS fiscal_period_year,\n    $7::smallint AS fiscal_period_month,\n    $8::text AS fiscal_period_kind,\n    $9::date AS payment_date,\n    $10::time AS payment_time,\n    $11::numeric AS amount,\n    $12::text AS currency,\n    $13::text AS reason,\n    $14::text AS reference,\n    $15::text AS issuer,\n    $16::text AS payee,\n    $17::text AS user_note,\n    $18::text AS raw_text,\n    $19::jsonb AS extracted_data,\n    $20::text AS processing_status,\n    $21::text AS processing_error,\n    $22::integer[] AS covered_fiscal_months,\n    $23::text AS content_hash,\n    $24::text AS content_hash_algorithm,\n    $25::text AS drive_md5_checksum,\n    $26::text AS drive_parent_id,\n    $27::text AS drive_item_id\n),\ncategory AS (\n  SELECT resolve_category_node(\n    ARRAY(SELECT jsonb_array_elements_text(category_path_json))\n  ) AS category_node_id\n  FROM input\n)\nINSERT INTO documents (\n  drive_file_id, drive_url, file_name, drive_path, category_node_id,\n  payment_date, payment_time, fiscal_period_year, fiscal_period_month, fiscal_period_kind, covered_fiscal_months,\n  amount, currency, reason, reference, issuer, payee, user_note, raw_text,\n  extracted_data, processing_status, processing_error, content_hash, content_hash_algorithm, drive_md5_checksum, drive_parent_id, active, last_seen_at, drive_item_id\n)\nSELECT\n  i.drive_file_id, i.drive_url, i.file_name, i.drive_path, c.category_node_id,\n  i.payment_date, i.payment_time, i.fiscal_period_year, i.fiscal_period_month, i.fiscal_period_kind, i.covered_fiscal_months,\n  i.amount, i.currency, i.reason, i.reference, i.issuer, i.payee, i.user_note, i.raw_text,\n  i.extracted_data, i.processing_status, i.processing_error, i.content_hash, i.content_hash_algorithm, i.drive_md5_checksum, i.drive_parent_id, true, now(), i.drive_item_id\nFROM input i\nCROSS JOIN category c\nON CONFLICT (drive_file_id) DO UPDATE SET\n  drive_url = EXCLUDED.drive_url,\n  file_name = EXCLUDED.file_name,\n  drive_path = EXCLUDED.drive_path,\n  category_node_id = EXCLUDED.category_node_id,\n  payment_date = EXCLUDED.payment_date,\n  payment_time = EXCLUDED.payment_time,\n  fiscal_period_year = EXCLUDED.fiscal_period_year,\n  fiscal_period_month = EXCLUDED.fiscal_period_month,\n  fiscal_period_kind = EXCLUDED.fiscal_period_kind,\n  covered_fiscal_months = EXCLUDED.covered_fiscal_months,\n  amount = EXCLUDED.amount,\n  currency = EXCLUDED.currency,\n  reason = EXCLUDED.reason,\n  reference = EXCLUDED.reference,\n  issuer = COALESCE(EXCLUDED.issuer, documents.issuer),\n  payee = EXCLUDED.payee,\n  user_note = EXCLUDED.user_note,\n  raw_text = EXCLUDED.raw_text,\n  extracted_data = EXCLUDED.extracted_data,\n  processing_status = EXCLUDED.processing_status,\n  processing_error = EXCLUDED.processing_error,\n  content_hash = EXCLUDED.content_hash,\n  content_hash_algorithm = EXCLUDED.content_hash_algorithm,\n  drive_md5_checksum = EXCLUDED.drive_md5_checksum,\n  drive_parent_id = EXCLUDED.drive_parent_id,\n  drive_item_id = EXCLUDED.drive_item_id,\n  active = true,\n  removed_at = NULL,\n  removed_reason = NULL,\n  review_reason = NULL,\n  last_seen_at = now()\nRETURNING id, drive_file_id, processing_status, category_node_id;",
+          "options": {
+            "queryReplacement": "={{ [\n  $json.id || $json.drive_file_id,\n  $json.webViewLink || null,\n  $json.name,\n  JSON.stringify($json.category_path || []),\n  $json.drive_path,\n  $json.fiscal_period_year || $json.processing_year || 2026,\n  $json.fiscal_period_month || null,\n  $json.fiscal_period_kind || 'year',\n  $json.payment_date || null,\n  $json.payment_time || null,\n  $json.amount || null,\n  $json.currency || null,\n  $json.reason || null,\n  $json.reference || null,\n  $json.issuer || null,\n  $json.payee || null,\n  $json.user_note || null,\n  $json.raw_text || null,\n  JSON.stringify($json.extracted_data || {}),\n  $json.processing_status || 'review_required',\n  $json.processing_error || null,\n  $json.covered_fiscal_months || null,\n  $json.content_hash || null,\n  $json.content_hash_algorithm || null,\n  $json.drive_md5_checksum || $json.md5Checksum || null,\n  $json.drive_parent_id || $json.parent_drive_id || null,\n  $json.original_drive_file_id || $json.drive_item_id || $json.drive_file_id || $json.id || null\n] }}"
+          }
+        },
+        "id": "a658d92b-a405-4e78-acba-2d328d0de001",
+        "name": "Guardar documento extraido",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          3180,
+          -120
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "PgFinanzasP1Cred",
+            "name": "Postgres Finanzas Proyecto 1"
+          }
+        },
+        "notes": "Etapa 1: guarda metadata, hash y estado pending. OCR/IA queda para la etapa 2."
+      }
+    ],
+    "connections": {
+      "Webhook Next": {
+        "main": [
+          [
+            {
+              "node": "Validar token Next",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validar token Next": {
+        "main": [
+          [
+            {
+              "node": "Leer estado Drive",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Leer estado Drive": {
+        "main": [
+          [
+            {
+              "node": "Tiene cursor?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Tiene cursor?": {
+        "main": [
+          [
+            {
+              "node": "Listar cambios Drive",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Obtener cursor inicial",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Obtener cursor inicial": {
+        "main": [
+          [
+            {
+              "node": "Guardar cursor inicial",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Listar cambios Drive": {
+        "main": [
+          [
+            {
+              "node": "Sincronizar cambios y documentos",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sincronizar cambios y documentos": {
+        "main": [
+          [
+            {
+              "node": "Emitir archivos nuevos a extraer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Emitir archivos nuevos a extraer": {
+        "main": [
+          [
+            {
+              "node": "Hay archivos nuevos?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Hay archivos nuevos?": {
+        "main": [
+          [
+            {
+              "node": "Descargar archivo nuevo",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Descargar archivo nuevo": {
+        "main": [
+          [
+            {
+              "node": "Preparar metadata con hash",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calcular SHA256": {
+        "main": [
+          [
+            {
+              "node": "Preparar metadata con hash",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Preparar metadata con hash": {
+        "main": [
+          [
+            {
+              "node": "Es PDF?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Es PDF?": {
+        "main": [
+          [
+            {
+              "node": "Extraer texto PDF",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Marcar requiere OCR",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extraer texto PDF": {
+        "main": [
+          [
+            {
+              "node": "Normalizar extracción PDF",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalizar extracción PDF": {
+        "main": [
+          [
+            {
+              "node": "Necesita OCR/Vision issuer?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Marcar requiere OCR": {
+        "main": [
+          [
+            {
+              "node": "Inferir entidad pagadora OCR/Vision",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Necesita OCR/Vision issuer?": {
+        "main": [
+          [
+            {
+              "node": "Inferir entidad pagadora OCR/Vision",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Guardar documento extraido",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Inferir entidad pagadora OCR/Vision": {
+        "main": [
+          [
+            {
+              "node": "Guardar documento extraido",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "staticData": null,
+    "pinData": {},
+    "versionId": "4e4b79e2-6045-47f4-a70e-e08bc46d0001",
+    "triggerCount": 0,
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "stage": "drive-incremental-sync"
+    },
+    "parentFolderId": null,
+    "isArchived": false,
+    "versionCounter": 1,
+    "description": "Workflow unico incremental: lee cambios de Drive y aplica directamente alta, duplicado, baja, restauracion o metadata en documents, registrando auditoria."
+  }
+]

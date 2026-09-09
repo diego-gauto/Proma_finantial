@@ -3,6 +3,35 @@
   gap: 16px;
 }
 
+.header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.header p {
+  max-width: 68ch;
+  margin: 6px 0 0;
+  color: var(--text-muted);
+}
+
+.header a {
+  color: var(--accent-strong);
+  font-weight: 750;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.filtersStack {
+  display: grid;
+  gap: 14px;
+}
+
 .summary {
   display: flex;
   align-items: center;
@@ -51,4 +80,24 @@
 
 .empty {
   color: var(--text-muted);
+  margin: 0;
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 18px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .header,
+  .summary {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .header a {
+    white-space: normal;
+  }
 }

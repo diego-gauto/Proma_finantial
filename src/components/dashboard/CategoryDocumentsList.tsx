@@ -1,20 +1,21 @@
 import type { DocumentRow } from "@/db/types";
+import { buildDashboardDocumentReviewHref } from "@/server/dashboard/dashboard-document-links";
+import type { DashboardFilters } from "@/server/dashboard/dashboard-filters";
+import { getDocumentStatusLabel } from "@/server/documents/document-display";
 
 import styles from "./CategoryDocumentsList.module.css";
 
 export function CategoryDocumentsList({
-  documents
+  documents,
+  filters
 }: {
   documents: DocumentRow[];
+  filters: DashboardFilters;
 }) {
-  const processedDocuments = documents.filter(
-    (document) => document.processingStatus === "processed"
-  );
-
-  if (!processedDocuments.length) {
+  if (!documents.length) {
     return (
       <div className={styles.empty}>
-        No hay documentos procesados para esta categoria.
+        No hay documentos para esta categoria y periodo.
       </div>
     );
   }
@@ -23,22 +24,41 @@ export function CategoryDocumentsList({
     <div className={styles.wrapper}>
       <div className={styles.header}>
         <h3>Documentos de la categoria</h3>
-        <span>{processedDocuments.length} pagos</span>
+        <span>{documents.length} documentos</span>
       </div>
-      <div className={styles.list}>
-        {processedDocuments.map((document) => (
-          <article className={styles.row} key={document.id}>
-            <div>
-              <strong>{document.reference ?? document.id}</strong>
-              <span>{document.payee ?? document.issuer ?? "Sin entidad"}</span>
-            </div>
-            <div>
-              <span>{document.fiscalPeriod ?? "Sin periodo"}</span>
-              <span>{document.paymentDate ?? "Sin fecha"}</span>
-            </div>
-            <strong>{formatCurrency(document.amount)}</strong>
-          </article>
-        ))}
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Periodo fiscal</th>
+              <th>Fecha de pago</th>
+              <th>Importe</th>
+              <th>Estado</th>
+              <th>Documento</th>
+            </tr>
+          </thead>
+          <tbody>
+            {documents.map((document) => (
+              <tr key={document.id}>
+                <td data-label="Periodo fiscal">
+                  {document.fiscalPeriod ?? "Sin periodo"}
+                </td>
+                <td data-label="Fecha de pago">
+                  {document.paymentDate ?? "Sin fecha"}
+                </td>
+                <td data-label="Importe">{formatCurrency(document.amount)}</td>
+                <td data-label="Estado">
+                  {getDocumentStatusLabel(document.processingStatus)}
+                </td>
+                <td data-label="Documento">
+                  <a href={buildDashboardDocumentReviewHref(document.id, filters)}>
+                    Revisar
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

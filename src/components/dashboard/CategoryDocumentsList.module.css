@@ -22,41 +22,51 @@
   font-size: 13px;
 }
 
-.list {
-  display: grid;
+.tableWrap {
   max-height: 360px;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 8px;
 }
 
-.row {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(132px, 0.42fr) auto;
-  align-items: center;
-  gap: 14px;
-  border-bottom: 1px solid var(--border);
-  padding: 10px 12px;
+.table {
+  width: 100%;
+  min-width: 660px;
+  border-collapse: collapse;
+  font-size: 13px;
 }
 
-.row:last-child {
+.table th,
+.table td {
+  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.table tr:last-child td {
   border-bottom: 0;
 }
 
-.row div {
-  display: grid;
-  min-width: 0;
-  gap: 3px;
-}
-
-.row strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.table td:nth-child(3) {
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
   white-space: nowrap;
 }
 
-.row > strong:last-child {
-  text-align: right;
+.table a {
+  color: var(--accent-strong);
+  font-weight: 750;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .empty {
@@ -70,11 +80,44 @@
 }
 
 @media (max-width: 720px) {
-  .row {
-    grid-template-columns: 1fr;
+  .table {
+    min-width: 0;
   }
 
-  .row > strong:last-child {
-    text-align: left;
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table tr {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+  }
+
+  .table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table td {
+    display: grid;
+    grid-template-columns: minmax(112px, 0.42fr) minmax(0, 1fr);
+    gap: 10px;
+    border-bottom: 0;
+    padding: 7px 12px;
+  }
+
+  .table td::before {
+    color: var(--text-muted);
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 750;
+    text-transform: uppercase;
   }
 }

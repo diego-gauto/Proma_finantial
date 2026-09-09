@@ -2,11 +2,9 @@ import Link from "next/link";
 
 const navItems = [
   { href: "/", label: "Inicio" },
-  { href: "/documents", label: "Documentos" },
+  { href: "/payment-status", label: "Proximos Pagos y Vencidos" },
   { href: "/categories", label: "Categorias" },
-  { href: "/rules", label: "Reglas" },
-  { href: "/users", label: "Usuarios" },
-  { href: "/reports", label: "Reportes" }
+  { href: "/users", label: "Usuarios" }
 ];
 
 export function AppNav() {

@@ -87,3 +87,33 @@ export function getDescendantCategoryIds(
   visit(categoryId);
   return ids;
 }
+
+export function getLeafCategoryIds(
+  categories: CategoryNodeRow[],
+  categoryId: string | null = null
+): string[] {
+  const targetIds = categoryId
+    ? new Set(getDescendantCategoryIds(categories, categoryId))
+    : new Set(categories.filter((category) => category.active).map((category) => category.id));
+  const activeChildrenByParent = new Map<string, CategoryNodeRow[]>();
+
+  for (const category of sortCategories(categories)) {
+    if (!category.active || !category.parentId || !targetIds.has(category.id)) {
+      continue;
+    }
+
+    const siblings = activeChildrenByParent.get(category.parentId) ?? [];
+    siblings.push(category);
+    activeChildrenByParent.set(category.parentId, siblings);
+  }
+
+  return sortCategories(categories)
+    .filter((category) => {
+      if (!category.active || !targetIds.has(category.id)) {
+        return false;
+      }
+
+      return !(activeChildrenByParent.get(category.id)?.length);
+    })
+    .map((category) => category.id);
+}

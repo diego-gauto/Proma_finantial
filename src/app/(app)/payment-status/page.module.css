@@ -1,0 +1,9 @@
+.page {
+  display: grid;
+  gap: 16px;
+}
+
+.listStack {
+  display: grid;
+  gap: 12px;
+}

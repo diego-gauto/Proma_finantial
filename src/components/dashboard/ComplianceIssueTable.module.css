@@ -1,0 +1,278 @@
+.tableShell {
+  display: grid;
+  gap: 10px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgb(18 22 43 / 70%);
+}
+
+.table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--border);
+  padding: 11px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+.categoryToneA {
+  background: rgb(24 30 54 / 52%);
+}
+
+.categoryToneB {
+  background: rgb(16 38 45 / 48%);
+}
+
+.table tbody tr:hover {
+  background: rgb(69 218 203 / 10%);
+}
+
+.table th {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.locationLink {
+  display: grid;
+  gap: 3px;
+  min-width: 190px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.locationLink:hover .locationLevel1 {
+  color: var(--accent-strong);
+}
+
+.locationLevel1,
+.locationLevel2,
+.locationLevel3,
+.locationLevel4 {
+  line-height: 1.18;
+}
+
+.locationLevel1 {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 780;
+}
+
+.locationLevel2 {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.locationLevel3 {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 620;
+}
+
+.locationLevel4 {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 560;
+}
+
+.period,
+.day {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.period {
+  color: var(--text);
+  font-weight: 680;
+}
+
+.day {
+  color: var(--accent-strong);
+  font-weight: 760;
+}
+
+.statusMetric {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 6px;
+  background: rgb(69 218 203 / 10%);
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+  font-weight: 780;
+  padding: 0 9px;
+  white-space: nowrap;
+}
+
+.duplicateStack {
+  display: grid;
+  gap: 7px;
+  min-width: 320px;
+}
+
+.duplicateDocument {
+  display: grid;
+  grid-template-columns: 86px minmax(82px, max-content) minmax(160px, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 4%);
+  padding: 7px 8px;
+}
+
+.duplicateDate,
+.duplicateAmount {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 740;
+  white-space: nowrap;
+}
+
+.duplicateAmount {
+  color: var(--accent-strong);
+}
+
+.duplicateFile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.paginationActions {
+  display: flex;
+  gap: 8px;
+}
+
+.pagination button {
+  min-height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0 12px;
+}
+
+.pagination button:hover:not(:disabled),
+.pagination button:focus-visible {
+  border-color: rgb(69 218 203 / 42%);
+  background: rgb(69 218 203 / 10%);
+  color: var(--accent-strong);
+  outline: none;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.empty {
+  display: grid;
+  min-height: 118px;
+  place-items: center;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  padding: 16px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .table {
+    min-width: 0;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table tr {
+    border-bottom: 1px solid var(--border);
+    padding: 8px 0;
+  }
+
+  .table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table td {
+    display: grid;
+    grid-template-columns: minmax(104px, 0.4fr) minmax(0, 1fr);
+    gap: 10px;
+    border-bottom: 0;
+    padding: 7px 12px;
+  }
+
+  .table td::before {
+    color: var(--text-muted);
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 750;
+    text-transform: uppercase;
+  }
+
+  .locationLink {
+    min-width: 0;
+  }
+
+  .duplicateStack {
+    min-width: 0;
+  }
+
+  .duplicateDocument {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .paginationActions {
+    width: 100%;
+  }
+
+  .pagination button {
+    flex: 1;
+  }
+}

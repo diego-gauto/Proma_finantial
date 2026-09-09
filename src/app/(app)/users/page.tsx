@@ -1,5 +1,6 @@
 import { UserCreateForm } from "@/components/users/UserCreateForm";
 import { UsersTable } from "@/components/users/UsersTable";
+import { BackLink } from "@/components/navigation/BackLink";
 import { Card } from "@/components/ui/Card";
 import { listUsers } from "@/server/users/users.repository";
 
@@ -13,6 +14,7 @@ export default async function UsersPage() {
 
   return (
     <div className={styles.page}>
+      <BackLink href="/" />
       <section className={styles.summary}>
         <div className={styles.metric}>
           <span>Usuarios activos</span>

@@ -1,24 +1,51 @@
+import type { ReactNode } from "react";
+
 import { Button } from "@/components/ui/Button";
 import type { CategoryNodeRow, DocumentRow } from "@/db/types";
+import { getDocumentReviewIssues } from "@/server/documents/document-display";
 
 import styles from "./DocumentReview.module.css";
 
 interface DocumentReviewFormProps {
   action: (formData: FormData) => void | Promise<void>;
+  cancelHref?: string;
   categories: CategoryNodeRow[];
   document: DocumentRow;
+  redirectTo?: string;
 }
 
 export function DocumentReviewForm({
   action,
-  categories,
-  document
+  cancelHref = "/",
+  document,
+  redirectTo
 }: DocumentReviewFormProps) {
+  const reviewIssues = getDocumentReviewIssues(document);
+  const isIssue = (label: string) => reviewIssues.includes(label);
+
   return (
     <form action={action} className={styles.form}>
       <input name="id" type="hidden" value={document.id} />
+      <input
+        name="categoryNodeId"
+        type="hidden"
+        value={document.categoryNodeId ?? ""}
+      />
+      <input name="fiscalPeriodKind" type="hidden" value="month" />
+      <input name="issuer" type="hidden" value={document.issuer ?? ""} />
+      <input name="payee" type="hidden" value={document.payee ?? ""} />
+      <input name="reason" type="hidden" value={document.reason ?? ""} />
+      {redirectTo ? (
+        <input name="redirectTo" type="hidden" value={redirectTo} />
+      ) : null}
+      {reviewIssues.length ? (
+        <div className={styles.issueSummary}>
+          <span>No se pudo inferir</span>
+          <strong>{reviewIssues.join(", ")}</strong>
+        </div>
+      ) : null}
       <div className={styles.formGrid}>
-        <label className={styles.field}>
+        <Field className={styles.field} isFlagged={isIssue("Monto")}>
           <span>Monto</span>
           <input
             defaultValue={document.amount ?? ""}
@@ -26,51 +53,36 @@ export function DocumentReviewForm({
             name="amount"
             required
           />
-        </label>
-        <label className={styles.field}>
+        </Field>
+        <Field className={styles.field} isFlagged={!document.currency}>
           <span>Moneda</span>
           <select defaultValue={document.currency ?? "ARS"} name="currency">
             <option value="ARS">ARS</option>
             <option value="USD">USD</option>
           </select>
-        </label>
-        <label className={`${styles.field} ${styles.fieldFull}`}>
-          <span>Categoria</span>
-          <select
-            defaultValue={document.categoryNodeId ?? ""}
-            name="categoryNodeId"
-            required
-          >
-            <option value="">Elegir categoria</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={styles.field}>
+        </Field>
+        <Field
+          className={styles.field}
+          isFlagged={isIssue("Periodo fiscal")}
+        >
           <span>Periodo fiscal</span>
           <input
             defaultValue={document.fiscalPeriod ?? ""}
             name="fiscalPeriod"
-            pattern="\d{4}(-\d{2})?"
-            placeholder="2026-08"
+            pattern="\d{4}-\d{2}"
+            placeholder="2026-07"
             required
           />
-        </label>
-        <label className={styles.field}>
-          <span>Tipo de periodo</span>
-          <select
-            defaultValue={document.fiscalPeriodKind}
-            name="fiscalPeriodKind"
-          >
-            <option value="month">Mensual</option>
-            <option value="year">Anual</option>
-            <option value="unknown">Sin determinar</option>
-          </select>
-        </label>
-        <label className={styles.field}>
+        </Field>
+        <Field className={styles.field} isFlagged={false}>
+          <span>Meses fiscales cubiertos</span>
+          <input
+            defaultValue={formatCoveredFiscalMonths(document)}
+            name="coveredFiscalMonths"
+            placeholder="4, 5"
+          />
+        </Field>
+        <Field className={styles.field} isFlagged={isIssue("Fecha de pago")}>
           <span>Fecha de pago</span>
           <input
             defaultValue={document.paymentDate ?? ""}
@@ -78,33 +90,65 @@ export function DocumentReviewForm({
             required
             type="date"
           />
-        </label>
-        <label className={styles.field}>
+        </Field>
+        <Field className={styles.field} isFlagged={false}>
           <span>Identificador / operacion</span>
           <input defaultValue={document.reference ?? ""} name="reference" />
-        </label>
-        <label className={`${styles.field} ${styles.fieldFull}`}>
-          <span>Motivo</span>
-          <input defaultValue={document.reason ?? ""} name="reason" required />
-        </label>
-        <label className={styles.field}>
-          <span>Entidad emisora</span>
-          <input defaultValue={document.issuer ?? ""} name="issuer" />
-        </label>
-        <label className={styles.field}>
-          <span>Entidad pagadora</span>
-          <input defaultValue={document.payee ?? ""} name="payee" />
-        </label>
-        <label className={`${styles.field} ${styles.fieldFull}`}>
-          <span>Nota de correccion</span>
-          <textarea defaultValue={document.userNote ?? ""} name="userNote" />
-        </label>
+        </Field>
+        <Field
+          className={`${styles.field} ${styles.fieldFull}`}
+          isFlagged={false}
+        >
+          <span>Notas del corrector</span>
+          <textarea
+            name="userNote"
+            placeholder="Agregar una nota interna si hace falta."
+          />
+        </Field>
       </div>
       <div className={styles.actions}>
+        <Button href={cancelHref} variant="secondary">
+          Cancelar
+        </Button>
         <Button type="submit" variant="primary">
-          Guardar como procesado
+          Guardar correccion
         </Button>
       </div>
     </form>
+  );
+}
+
+function formatCoveredFiscalMonths(document: DocumentRow): string {
+  if (document.coveredFiscalMonths?.length) {
+    return document.coveredFiscalMonths.join(", ");
+  }
+
+  if (document.fiscalPeriod?.includes("-")) {
+    return String(Number(document.fiscalPeriod.slice(5, 7)));
+  }
+
+  return "";
+}
+
+function Field({
+  children,
+  className,
+  isFlagged
+}: {
+  children: ReactNode;
+  className: string;
+  isFlagged: boolean;
+}) {
+  return (
+    <label
+      className={[className, isFlagged ? styles.fieldFlagged : ""]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {children}
+      {isFlagged ? (
+        <small className={styles.fieldWarning}>Revisar este dato</small>
+      ) : null}
+    </label>
   );
 }

@@ -1,6 +1,7 @@
 .panel {
   display: grid;
   gap: 18px;
+  height: 190px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -25,7 +26,6 @@
 
 .reset,
 .yearChip,
-.centerYear,
 .monthChip {
   border: 1px solid var(--border);
   background: var(--surface-muted);
@@ -38,7 +38,8 @@
     border-color 180ms ease,
     box-shadow 180ms ease,
     color 180ms ease,
-    opacity 180ms ease;
+    opacity 180ms ease,
+    transform 180ms ease;
 }
 
 .reset {
@@ -54,124 +55,79 @@
 
 .stage {
   display: grid;
-  grid-template-columns: minmax(140px, 1fr) minmax(260px, 360px) minmax(140px, 1fr);
-  align-items: start;
-  gap: 20px;
-  min-height: 174px;
+  justify-items: center;
+  gap: 12px;
+  min-height: 106px;
 }
 
-.stageCentered {
-  grid-template-columns: minmax(0, 1fr);
-  justify-content: center;
-}
-
-.stageCentered .sideYears {
-  display: none;
-}
-
-.stageCentered .centerStack {
-  width: 100%;
-}
-
-.sideYears {
+.yearRail {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
-  align-content: center;
-  min-height: 112px;
-  padding-top: 34px;
-  opacity: 0.62;
-}
-
-.sideYears:first-child {
-  justify-content: flex-end;
-}
-
-.sideYears:last-child {
-  justify-content: flex-start;
+  width: min(100%, 460px);
 }
 
 .yearChip {
-  min-width: 86px;
-  min-height: 44px;
-  border-radius: 999px;
+  width: 108px;
+  height: 50px;
+  border-radius: 4px;
   color: var(--text-muted);
   padding: 0 18px;
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1;
+  transform: scaleX(1);
+  transform-origin: center;
 }
 
-.yearChip:hover,
-.yearChipPending {
+.yearChip:hover {
   border-color: rgb(124 89 255 / 78%);
   background: rgb(124 89 255 / 18%);
   color: var(--text);
   box-shadow: 0 14px 34px rgb(124 89 255 / 18%);
 }
 
-.centerStack {
+.yearChipSelected {
+  border-color: rgb(124 89 255 / 82%);
+  background: rgb(124 89 255 / 20%);
+  color: var(--text);
+  box-shadow: 0 14px 32px rgb(124 89 255 / 20%);
+  transform: scaleX(1.06);
+}
+
+.monthStack {
   display: grid;
   justify-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-height: 42px;
   min-width: 0;
-}
-
-.centerYear {
-  display: grid;
-  place-items: center;
-  gap: 6px;
-  width: min(100%, 320px);
-  min-height: 116px;
-  border-color: rgb(124 89 255 / 82%);
-  border-radius: 24px;
-  background:
-    linear-gradient(135deg, rgb(124 89 255 / 25%), rgb(25 182 164 / 12%)),
-    var(--surface-muted);
-  padding: 18px 22px;
-  text-align: center;
-  box-shadow:
-    0 0 0 1px rgb(124 89 255 / 14%),
-    0 24px 68px rgb(124 89 255 / 18%);
-}
-
-.centerYear strong {
-  font-size: clamp(42px, 5vw, 62px);
-  font-weight: 900;
-  line-height: 0.95;
-}
-
-.centerYear span {
-  color: var(--accent-strong);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.centerYearPending {
-  border-color: rgb(85 240 221 / 86%);
-  background:
-    linear-gradient(135deg, rgb(25 182 164 / 26%), rgb(124 89 255 / 16%)),
-    var(--surface-muted);
+  width: 100%;
 }
 
 .monthRail {
   display: flex;
   flex-wrap: nowrap;
   justify-content: center;
-  gap: 8px;
-  width: min(100%, 760px);
+  gap: 6px;
+  width: 100%;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
 }
 
 .monthChip {
-  min-width: 78px;
-  min-height: 36px;
-  border-radius: 999px;
-  padding: 0 13px;
+  flex: 0 0 auto;
+  min-width: 70px;
+  min-height: 32px;
+  border-radius: 4px;
+  padding: 0 10px;
   color: var(--text-muted);
+  font-size: 13px;
   white-space: nowrap;
 }
 
 .monthChip:hover,
-.monthChipSelected,
-.monthChipPending {
+.monthChipSelected {
   border-color: var(--accent);
   background: var(--accent);
   color: #061018;
@@ -179,32 +135,19 @@
 }
 
 @media (max-width: 820px) {
-  .stage {
-    grid-template-columns: 1fr;
+  .panel {
+    height: auto;
+    min-height: 190px;
   }
 
-  .sideYears,
-  .sideYears:first-child,
-  .sideYears:last-child {
-    flex-wrap: wrap;
-    justify-content: center;
-    min-height: auto;
-    padding-top: 0;
-  }
-
-  .monthRail {
-    flex-wrap: wrap;
-  }
-
-  .centerStack {
-    order: -1;
+  .yearRail {
+    width: 100%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .reset,
   .yearChip,
-  .centerYear,
   .monthChip {
     transition: none;
   }

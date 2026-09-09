@@ -3,17 +3,16 @@ import { getCategoryBreadcrumbs } from "@/server/categories/category-tree";
 
 export interface DocumentTableRow {
   amountLabel: string;
-  categoryLabel: string;
+  categoryPath: string[];
   detailHref: string;
-  driveHref: string | null;
-  entity: string;
+  documentTitle: string;
   fiscalPeriod: string;
   id: string;
   paymentDate: string;
   processingStatus: DocumentRow["processingStatus"];
-  reason: string;
   reference: string;
   reviewHref: string | null;
+  unresolvedFields: string[];
 }
 
 const statusLabels: Record<DocumentRow["processingStatus"], string> = {
@@ -29,26 +28,47 @@ export function buildDocumentTableRows(
 ): DocumentTableRow[] {
   return documents.map((document) => ({
     amountLabel: formatDocumentAmount(document),
-    categoryLabel: getDocumentCategoryLabel(categories, document),
+    categoryPath: getDocumentCategoryPath(categories, document),
     detailHref: `/documents/${document.id}`,
-    driveHref: document.driveUrl,
-    entity: getDocumentEntity(document),
+    documentTitle: getDocumentTitle(document),
     fiscalPeriod: document.fiscalPeriod ?? "Sin periodo",
     id: document.id,
     paymentDate: document.paymentDate ?? "Sin fecha",
     processingStatus: document.processingStatus,
-    reason: document.reason ?? "Sin motivo",
     reference: document.reference ?? document.fileName ?? "Sin identificador",
     reviewHref:
       document.processingStatus === "review_required" ||
       document.processingStatus === "error"
         ? `/documents/review/${document.id}`
-        : null
+        : null,
+    unresolvedFields: getDocumentReviewIssues(document)
   }));
 }
 
-export function getDocumentEntity(document: DocumentRow): string {
-  return document.issuer ?? document.payee ?? "Sin entidad";
+export function getDocumentReviewIssues(document: DocumentRow): string[] {
+  const issues: string[] = [];
+
+  if (!document.categoryNodeId) {
+    issues.push("Categoria");
+  }
+
+  if (
+    !document.fiscalPeriod ||
+    document.fiscalPeriodKind === "unknown" ||
+    !/^\d{4}-\d{2}$/.test(document.fiscalPeriod)
+  ) {
+    issues.push("Periodo fiscal");
+  }
+
+  if (!document.paymentDate) {
+    issues.push("Fecha de pago");
+  }
+
+  if (!document.amount) {
+    issues.push("Monto");
+  }
+
+  return issues;
 }
 
 export function getDocumentStatusLabel(
@@ -71,14 +91,23 @@ export function formatDocumentAmount(document: DocumentRow): string {
   return `${document.currency === "USD" ? "USD" : "$"} ${value}`;
 }
 
-function getDocumentCategoryLabel(
+function getDocumentCategoryPath(
   categories: CategoryNodeRow[],
   document: DocumentRow
-): string {
+): string[] {
   if (!document.categoryNodeId) {
-    return "Sin categoria";
+    return ["Sin categoria"];
   }
 
   const breadcrumbs = getCategoryBreadcrumbs(categories, document.categoryNodeId);
-  return breadcrumbs.length ? breadcrumbs.join(" / ") : "Sin categoria";
+  return breadcrumbs.length ? breadcrumbs : ["Sin categoria"];
+}
+
+function getDocumentTitle(document: DocumentRow): string {
+  return (
+    document.fileName ??
+    document.reference ??
+    document.reason ??
+    "Documento sin nombre"
+  );
 }

@@ -14,10 +14,13 @@ describe("buildDocumentWhereClause", () => {
     });
 
     expect(filters.where).toContain("fiscal_period_year = $1");
-    expect(filters.where).toContain("fiscal_period_month = $2");
+    expect(filters.where).toContain(
+      "$2 = any(case when cardinality(covered_fiscal_months) > 0 then covered_fiscal_months else array[fiscal_period_month] end)"
+    );
     expect(filters.where).toContain("payment_date >= $3");
     expect(filters.where).toContain("payment_date <= $4");
     expect(filters.where).toContain("category_node_id = any($6::bigint[])");
+    expect(filters.where).toContain("file_name ilike $7");
     expect(filters.where).toContain("payee ilike $7");
     expect(filters.values).toEqual([
       2026,
@@ -34,6 +37,14 @@ describe("buildDocumentWhereClause", () => {
     expect(buildDocumentWhereClause({ fiscalPeriod: "2026" })).toEqual({
       where: "fiscal_period_year = $1",
       values: [2026]
+    });
+  });
+
+  it("matches a fiscal month against the document coverage column", () => {
+    expect(buildDocumentWhereClause({ fiscalPeriod: "2026-04" })).toEqual({
+      where:
+        "fiscal_period_year = $1 and $2 = any(case when cardinality(covered_fiscal_months) > 0 then covered_fiscal_months else array[fiscal_period_month] end)",
+      values: [2026, 4]
     });
   });
 

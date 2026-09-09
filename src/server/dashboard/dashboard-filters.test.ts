@@ -34,6 +34,13 @@ const categories: CategoryNodeRow[] = [
 ];
 
 describe("parseDashboardFilters", () => {
+  it("defaults fiscal period to the current year", () => {
+    expect(parseDashboardFilters({}, new Date("2026-08-29"))).toEqual({
+      fiscalPeriod: "2026",
+      categoryId: null
+    });
+  });
+
   it("keeps fiscal period and category in query params", () => {
     expect(
       parseDashboardFilters({
@@ -65,11 +72,62 @@ describe("buildDashboardQuery", () => {
       })
     ).toBe("/");
   });
+
+  it("can target a non-dashboard route", () => {
+    expect(
+      buildDashboardQuery(
+        {
+          fiscalPeriod: "2026-08",
+          categoryId: "leaf"
+        },
+        "/documents"
+      )
+    ).toBe("/documents?fiscalPeriod=2026-08&categoryId=leaf");
+  });
+
+  it("preserves extra query params when changing filters", () => {
+    expect(
+      buildDashboardQuery(
+        {
+          fiscalPeriod: "2026-08",
+          categoryId: "leaf"
+        },
+        "/",
+        { tab: "faltantes" }
+      )
+    ).toBe("?tab=faltantes&fiscalPeriod=2026-08&categoryId=leaf");
+  });
 });
 
 describe("buildAvailableFiscalPeriods", () => {
-  it("includes months up to the current month for the current year", () => {
+  it("includes demo fiscal years and current year months", () => {
     expect(buildAvailableFiscalPeriods([], new Date("2026-08-28"))).toEqual([
+      "2024",
+      "2024-01",
+      "2024-02",
+      "2024-03",
+      "2024-04",
+      "2024-05",
+      "2024-06",
+      "2024-07",
+      "2024-08",
+      "2024-09",
+      "2024-10",
+      "2024-11",
+      "2024-12",
+      "2025",
+      "2025-01",
+      "2025-02",
+      "2025-03",
+      "2025-04",
+      "2025-05",
+      "2025-06",
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
       "2026",
       "2026-01",
       "2026-02",
@@ -99,6 +157,8 @@ describe("getFiscalPeriodStage", () => {
     expect(
       getFiscalPeriodStage(
         [
+          "2024",
+          "2024-01",
           "2026",
           "2026-01",
           "2026-02",
@@ -110,7 +170,7 @@ describe("getFiscalPeriodStage", () => {
         new Date("2026-08-30")
       )
     ).toEqual({
-      sideYears: ["2026"],
+      sideYears: ["2024", "2026"],
       selectedYear: "2025",
       visibleMonths: ["2025-01", "2025-02"]
     });
@@ -128,10 +188,8 @@ describe("getFiscalPeriodStage", () => {
 });
 
 describe("shouldRevealFiscalMonths", () => {
-  it("keeps months hidden until a fiscal year or month is selected", () => {
-    expect(shouldRevealFiscalMonths(null)).toBe(false);
-    expect(shouldRevealFiscalMonths("2026")).toBe(true);
-    expect(shouldRevealFiscalMonths("2026-08")).toBe(true);
+  it("keeps months visible because the current fiscal year is selected by default", () => {
+    expect(shouldRevealFiscalMonths()).toBe(true);
   });
 });
 

@@ -1,44 +1,30 @@
+import { ComplianceIssueTable } from "@/components/dashboard/ComplianceIssueTable";
+import type { CategoryNodeRow } from "@/db/types";
 import type { ExpectedPeriod } from "@/server/compliance/compliance-types";
+import { buildOverdueIssueRows } from "@/server/dashboard/compliance-issue-view-model";
 
 export function OverduePaymentsPanel({
+  categories,
+  today,
   overdue
 }: {
+  categories: CategoryNodeRow[];
+  today: string;
   overdue: ExpectedPeriod[];
 }) {
+  const rows = buildOverdueIssueRows(overdue, categories, today);
+
   return (
-    <section className="panel">
-      <div className="panel-header">
+    <section className="metric-panel">
+      <div>
         <h2>Pagos vencidos no realizados</h2>
+        <p className="metric-value">{overdue.length}</p>
       </div>
-      <div className="panel-body">
-        <PaymentPeriodList emptyText="No hay pagos vencidos." periods={overdue} />
-      </div>
+      <ComplianceIssueTable
+        emptyText="No hay pagos vencidos del mes en curso."
+        key={rows.map((row) => row.id).join("|")}
+        rows={rows}
+      />
     </section>
-  );
-}
-
-function PaymentPeriodList({
-  emptyText,
-  periods
-}: {
-  emptyText: string;
-  periods: ExpectedPeriod[];
-}) {
-  if (!periods.length) {
-    return <p className="muted">{emptyText}</p>;
-  }
-
-  return (
-    <div className="stack-list">
-      {periods.slice(0, 8).map((period) => (
-        <a
-          href={`/documents?categoryId=${period.categoryNodeId}&fiscalPeriod=${period.fiscalPeriod}`}
-          key={`${period.categoryNodeId}-${period.fiscalPeriod}-${period.dueDate}`}
-        >
-          <span>{period.fiscalPeriod}</span>
-          <strong>{period.dueDate}</strong>
-        </a>
-      ))}
-    </div>
   );
 }

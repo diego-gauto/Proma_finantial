@@ -5,13 +5,51 @@ import { redirect } from "next/navigation";
 
 import {
   closePaymentRule,
-  createPaymentRule
+  listPaymentRules,
+  replaceActivePaymentRule,
+  updatePaymentRule
 } from "@/db/payment-rules.repository";
 import { parsePaymentRuleForm } from "@/server/payment-rules/payment-rule-form";
+import {
+  assertOpenRuleHasAtLeastOneMonthOfValidity,
+  assertRuleDoesNotOverlap
+} from "@/server/payment-rules/rule-overlap";
 
 export async function createPaymentRuleAction(formData: FormData) {
   const input = parsePaymentRuleForm(Object.fromEntries(formData.entries()));
-  await createPaymentRule(input);
+  const existingRules = await listPaymentRules();
+  assertOpenRuleHasAtLeastOneMonthOfValidity(input, existingRules);
+  const rulesToValidate = existingRules.filter(
+    (rule) =>
+      !(
+        rule.categoryNodeId === input.categoryNodeId &&
+        rule.active &&
+        !rule.activeTo &&
+        rule.activeFrom < input.activeFrom
+      )
+  );
+
+  assertRuleDoesNotOverlap(input, rulesToValidate);
+  await replaceActivePaymentRule(input);
+  revalidatePath("/categories");
+  revalidatePath(`/categories/${input.categoryNodeId}`);
+  redirect(`/categories/${input.categoryNodeId}`);
+}
+
+export async function updatePaymentRuleAction(formData: FormData) {
+  const ruleId = getText(formData, "ruleId");
+  const input = parsePaymentRuleForm(Object.fromEntries(formData.entries()));
+
+  if (!ruleId) {
+    throw new Error("Falta la regla para editar.");
+  }
+
+  const existingRules = await listPaymentRules();
+  assertRuleDoesNotOverlap(
+    input,
+    existingRules.filter((rule) => rule.id !== ruleId)
+  );
+  await updatePaymentRule(ruleId, input);
   revalidatePath("/categories");
   revalidatePath(`/categories/${input.categoryNodeId}`);
   redirect(`/categories/${input.categoryNodeId}`);

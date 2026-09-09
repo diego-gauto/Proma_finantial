@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/navigation/BackLink";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { getServerEnv } from "@/server/env";
@@ -12,6 +13,7 @@ export default function ReportsPage() {
 
   return (
     <div className={styles.page}>
+      <BackLink href="/" />
       <Card title="Reportes opcionales">
         <div className={styles.status}>
           <h3>{metabaseUrl ? "Metabase configurado" : "Metabase no configurado"}</h3>

@@ -24,7 +24,7 @@ function isRuleActiveForPeriod(
   rule: ComplianceRule,
   fiscalPeriod: string
 ): boolean {
-  if (!rule.active || rule.cadence === "no_pattern") {
+  if (!rule.active) {
     return false;
   }
 

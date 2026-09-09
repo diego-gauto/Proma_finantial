@@ -52,6 +52,8 @@ Si una tarea contradice el PRD o no esta cubierta por el plan, detenerse y pregu
 
 ## Testing y cierre de tareas
 
+- Antes de dar por terminada cualquier tarea, leer este `AGENTS.md` completo y ejecutar verificaciones suficientes para garantizar que el pedido quedo cumplido end-to-end. No alcanza con que compile si el flujo pedido falla en uso real.
+- Si una verificacion falla o no demuestra el cumplimiento del pedido, no se informa la tarea como terminada: se rehace el trabajo, se vuelve a ejecutar la verificacion necesaria y recien se cierra cuando el resultado es correcto.
 - Para cambios de servidor Next.js: correr build y tests relacionados.
 - Para cambios de interfaz: correr build y tests/lint si existen.
 - Para cambios de calculo de faltantes, duplicados o reglas: agregar tests unitarios o de integracion que cubran casos limite.
