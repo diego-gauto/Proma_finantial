@@ -81,6 +81,10 @@ describe("drive incremental sync workflow export", () => {
     expect(sql).toContain("d.drive_md5_checksum = p.md5_checksum");
     expect(sql).toContain("parent_item.category_node_id as parent_category_node_id");
     expect(sql).toContain("coalesce(d.parent_category_node_id, d.old_category_node_id)");
+    expect(sql).toContain(
+      "coalesce(d.parent_category_node_id, d.old_category_node_id) is not null"
+    );
+    expect(sql).not.toContain("resolve_category_node(array['sin categoria'])");
     expect(sql).toContain("raw_metadata = drive_items.raw_metadata || excluded.raw_metadata");
     expect(sql).toContain("renamed_category_nodes as");
     expect(sql).toContain("moved_category_nodes as");
