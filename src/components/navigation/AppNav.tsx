@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { logoutAction } from "./logout-action";
+
 const navItems = [
   { href: "/", label: "Inicio" },
   { href: "/payment-status", label: "Proximos Pagos y Vencidos" },
@@ -21,6 +23,15 @@ export function AppNav() {
           </Link>
         ))}
       </nav>
+      <details className="profile-menu">
+        <summary aria-label="Abrir perfil">GP</summary>
+        <div className="profile-popover">
+          <p>GP</p>
+          <form action={logoutAction}>
+            <button type="submit">Cerrar sesion</button>
+          </form>
+        </div>
+      </details>
     </header>
   );
 }

@@ -90,6 +90,68 @@ input {
   box-shadow: var(--shadow);
 }
 
+.profile-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.profile-menu summary {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.profile-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.profile-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  display: grid;
+  min-width: 160px;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.profile-popover p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.profile-popover button {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+  text-align: left;
+}
+
+.profile-popover button:hover {
+  border-color: rgb(15 118 110 / 45%);
+  color: rgb(15 118 110);
+}
+
 .main {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
