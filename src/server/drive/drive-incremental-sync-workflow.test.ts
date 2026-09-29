@@ -234,6 +234,122 @@ describe("drive incremental sync workflow export", () => {
     expect(result[0].json.extracted_data.covered_fiscal_months).toEqual([4, 5]);
   });
 
+  it("parses annual tax payment file names without treating the sequence as a fiscal month", () => {
+    const [workflow] = JSON.parse(readFileSync(workflowPath, "utf8")) as [
+      {
+        nodes: Array<{
+          name: string;
+          parameters: {
+            jsCode?: string;
+          };
+        }>;
+      },
+    ];
+    const normalizerNode = workflow.nodes.find(
+      (node) => node.name === "Normalizar extracción PDF"
+    );
+    const jsCode = normalizerNode?.parameters.jsCode;
+    expect(jsCode).toBeTruthy();
+
+    const baseText =
+      "Banco Credicoop Coop. Ltdo. Servicio: GANANCIAS Vencimiento Importe 20/05/2026 1.234,56 Nro Transaccion 123456789 ".repeat(
+        2
+      );
+
+    const result = Function("items", "$", jsCode ?? "")(
+      [
+        {
+          json: {
+            name: "liquidacion-2025-02.pdf",
+            drive_file_id: "annual-liquidacion",
+            drive_item_id: "annual-liquidacion",
+            drive_path: "Ganancias/2025/liquidacion-2025-02.pdf",
+            category_path: ["Ganancias"],
+            processing_year: 2026,
+            mimeType: "application/pdf",
+            text: baseText
+          },
+          binary: {}
+        },
+        {
+          json: {
+            name: "anticipo-01-2026.pdf",
+            drive_file_id: "annual-anticipo",
+            drive_item_id: "annual-anticipo",
+            drive_path: "Ganancias/2026/anticipo-01-2026.pdf",
+            category_path: ["Ganancias"],
+            processing_year: 2026,
+            mimeType: "application/pdf",
+            text: baseText
+          },
+          binary: {}
+        }
+      ],
+      (nodeName: string) => ({
+        all: () =>
+          nodeName === "Preparar metadata con hash"
+            ? [
+                {
+                  json: {
+                    name: "liquidacion-2025-02.pdf",
+                    drive_file_id: "annual-liquidacion",
+                    drive_item_id: "annual-liquidacion",
+                    drive_path: "Ganancias/2025/liquidacion-2025-02.pdf",
+                    category_path: ["Ganancias"],
+                    processing_year: 2026,
+                    mimeType: "application/pdf"
+                  }
+                },
+                {
+                  json: {
+                    name: "anticipo-01-2026.pdf",
+                    drive_file_id: "annual-anticipo",
+                    drive_item_id: "annual-anticipo",
+                    drive_path: "Ganancias/2026/anticipo-01-2026.pdf",
+                    category_path: ["Ganancias"],
+                    processing_year: 2026,
+                    mimeType: "application/pdf"
+                  }
+                }
+              ]
+            : []
+      })
+    ) as Array<{
+      json: {
+        fiscal_period_year: number;
+        fiscal_period_month: number | null;
+        fiscal_period_kind: string;
+        covered_fiscal_months: number[] | null;
+        extracted_data: {
+          fiscal_period_source: string;
+          annual_payment_type: string;
+          annual_payment_sequence: number;
+        };
+      };
+    }>;
+
+    expect(result).toHaveLength(2);
+    expect(result[0].json.fiscal_period_year).toBe(2025);
+    expect(result[0].json.fiscal_period_month).toBeNull();
+    expect(result[0].json.fiscal_period_kind).toBe("year");
+    expect(result[0].json.covered_fiscal_months).toBeNull();
+    expect(result[0].json.extracted_data.fiscal_period_source).toBe(
+      "file_name_annual_payment"
+    );
+    expect(result[0].json.extracted_data.annual_payment_type).toBe("liquidacion");
+    expect(result[0].json.extracted_data.annual_payment_sequence).toBe(2);
+
+    expect(result[1].json.fiscal_period_year).toBe(2026);
+    expect(result[1].json.fiscal_period_month).toBeNull();
+    expect(result[1].json.fiscal_period_kind).toBe("year");
+    expect(result[1].json.covered_fiscal_months).toBeNull();
+    expect(result[1].json.extracted_data.fiscal_period_source).toBe(
+      "file_name_annual_payment"
+    );
+    expect(result[1].json.extracted_data.annual_payment_type).toBe("anticipo");
+    expect(result[1].json.extracted_data.annual_payment_sequence).toBe(1);
+  });
+
   it("keeps the PDF text extraction path away from the Crypto node output", () => {
     const [workflow] = JSON.parse(readFileSync(workflowPath, "utf8")) as [
       {

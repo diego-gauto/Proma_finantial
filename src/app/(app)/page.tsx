@@ -127,7 +127,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       )}
 
       {data.reviewDocument ? (
-        <div className={styles.modalBackdrop}>
+        <div className={styles.modalBackdrop} data-review-modal-open="true">
           <section
             aria-label="Revision de documento"
             className={styles.reviewModal}
@@ -147,7 +147,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   <h2>Vista del documento</h2>
                 </div>
                 <div className="panel-body">
-                  <DocumentPreviewPane document={data.reviewDocument} />
+                  <DocumentPreviewPane
+                    document={data.reviewDocument}
+                    variant="modal"
+                  />
                 </div>
               </div>
               <div className="panel">
@@ -167,6 +170,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       null,
                       data.filters
                     )}
+                    variant="compact"
                   />
                 </div>
               </div>

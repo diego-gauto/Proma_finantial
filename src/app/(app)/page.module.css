@@ -60,6 +60,10 @@
   gap: 16px;
 }
 
+:global(body:has([data-review-modal-open="true"])) {
+  overflow: hidden;
+}
+
 .modalBackdrop {
   position: fixed;
   z-index: 40;
@@ -67,13 +71,13 @@
   display: grid;
   place-items: center;
   background: rgb(4 13 22 / 72%);
-  padding: 24px;
+  padding: 14px;
 }
 
 .reviewModal {
-  width: min(1180px, 100%);
-  max-height: min(860px, calc(100vh - 48px));
-  overflow: auto;
+  width: min(1240px, calc(100vw - 28px));
+  max-height: calc(100vh - 28px);
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--background);
@@ -81,9 +85,7 @@
 }
 
 .modalHeader {
-  position: sticky;
   z-index: 1;
-  top: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -106,19 +108,39 @@
 
 .modalSplit {
   display: grid;
-  grid-template-columns: minmax(360px, 1.08fr) minmax(360px, 0.92fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
   align-items: stretch;
-  gap: 16px;
-  padding: 16px;
+  gap: 12px;
+  height: calc(100vh - 104px);
+  min-height: 560px;
+  padding: 12px;
 }
 
 .modalSplit :global(.panel) {
+  min-width: 0;
   display: grid;
   grid-template-rows: auto 1fr;
+  overflow: hidden;
 }
 
 .modalSplit :global(.panel-body) {
+  min-width: 0;
+  min-height: 0;
   display: grid;
+  overflow: hidden;
+}
+
+.modalSplit :global(.panel:first-child .panel-body) {
+  padding: 10px;
+}
+
+.modalSplit :global(.panel:nth-child(2) .panel-body) {
+  align-content: start;
+  overflow: hidden;
+}
+
+.modalSplit :global(.actions) {
+  padding-top: 2px;
 }
 
 @media (max-width: 720px) {
@@ -133,7 +155,15 @@
     padding: 10px;
   }
 
+  .reviewModal {
+    width: 100%;
+    max-height: calc(100vh - 20px);
+    overflow: hidden;
+  }
+
   .modalSplit {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
   }
 }

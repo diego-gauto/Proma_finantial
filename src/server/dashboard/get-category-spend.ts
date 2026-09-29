@@ -75,7 +75,7 @@ export function getCategorySpend(
   const items = [...totals.entries()]
     .map(([categoryId, total]) => ({
       categoryId,
-      categoryName: categoriesById.get(categoryId)?.name ?? "Sin categoria",
+      categoryName: categoriesById.get(categoryId)?.name ?? "Categoria no asignada",
       amount: roundCurrency(total.amount),
       percentage: totalAmount ? roundPercent((total.amount / totalAmount) * 100) : 0,
       paymentCount: total.paymentCount

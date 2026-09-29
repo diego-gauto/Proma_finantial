@@ -313,7 +313,7 @@ created_documents AS (
     d.web_view_link,
     d.new_name,
     d.new_drive_path,
-    COALESCE(d.parent_category_node_id, d.old_category_node_id, resolve_category_node(ARRAY['Sin categoria'])),
+    COALESCE(d.parent_category_node_id, d.old_category_node_id),
     d.fiscal_period_year,
     d.fiscal_period_month,
     d.fiscal_period_kind,
@@ -344,6 +344,7 @@ created_documents AS (
   FROM document_payload d
   WHERE d.event_type = 'created'
     AND d.item_type = 'file'
+    AND COALESCE(d.parent_category_node_id, d.old_category_node_id) IS NOT NULL
   ON CONFLICT (drive_file_id) DO UPDATE SET
     drive_url = COALESCE(EXCLUDED.drive_url, documents.drive_url),
     file_name = EXCLUDED.file_name,
@@ -593,19 +594,28 @@ category_paths AS (
 created_events AS (
   SELECT DISTINCT ON (p.drive_id)
     p.*,
-    item.category_node_id,
+    COALESCE(item.category_node_id, parent_item.category_node_id) AS category_node_id,
     COALESCE(parent_item.drive_path || '/' || p.name, item.drive_path, p.name) AS drive_path,
-    COALESCE(category_paths.path_parts, ARRAY['Sin categoria']::text[]) AS category_path
+    category_paths.path_parts AS category_path
   FROM parsed p
+  LEFT JOIN documents existing_document ON existing_document.drive_item_id = p.drive_id
   JOIN drive_change_events event
     ON event.drive_id = p.drive_id
-   AND event.event_type = 'created'
    AND event.review_required = false
    AND (event.change_id IS NOT DISTINCT FROM p.change_id)
+   AND (
+     event.event_type = 'created'
+     OR (
+       event.event_type = 'metadata_changed'
+       AND existing_document.processing_status = 'review_required'
+       AND existing_document.extracted_data->'review_reasons' ? 'pdf_text_extraction_error'
+     )
+   )
   JOIN drive_items item ON item.drive_id = p.drive_id
   LEFT JOIN drive_items parent_item ON parent_item.drive_id = p.parent_drive_id
-  LEFT JOIN category_paths ON category_paths.id = item.category_node_id
+  LEFT JOIN category_paths ON category_paths.id = COALESCE(item.category_node_id, parent_item.category_node_id)
   WHERE p.mime_type <> 'application/vnd.google-apps.folder'
+    AND category_paths.path_parts IS NOT NULL
     AND p.trashed = false
   ORDER BY p.drive_id, event.processed_at DESC NULLS LAST, event.id DESC
 )
@@ -982,7 +992,7 @@ const connections = {
     main: [[{ node: "Descargar archivo nuevo", type: "main", index: 0 }], []],
   },
   "Descargar archivo nuevo": {
-    main: [[{ node: "Calcular SHA256", type: "main", index: 0 }]],
+    main: [[{ node: "Preparar metadata con hash", type: "main", index: 0 }]],
   },
   "Calcular SHA256": {
     main: [[{ node: "Preparar metadata con hash", type: "main", index: 0 }]],

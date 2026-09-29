@@ -96,11 +96,11 @@ function getDocumentCategoryPath(
   document: DocumentRow
 ): string[] {
   if (!document.categoryNodeId) {
-    return ["Sin categoria"];
+    return ["Categoria no asignada"];
   }
 
   const breadcrumbs = getCategoryBreadcrumbs(categories, document.categoryNodeId);
-  return breadcrumbs.length ? breadcrumbs : ["Sin categoria"];
+  return breadcrumbs.length ? breadcrumbs : ["Categoria no asignada"];
 }
 
 function getDocumentTitle(document: DocumentRow): string {

@@ -3,14 +3,24 @@ import type { DocumentRow } from "@/db/types";
 import styles from "./DocumentReview.module.css";
 import { buildDocumentPreviewUrl } from "./document-preview-url";
 
-export function DocumentPreviewPane({ document }: { document: DocumentRow }) {
+export function DocumentPreviewPane({
+  document,
+  variant = "default"
+}: {
+  document: DocumentRow;
+  variant?: "default" | "modal";
+}) {
   const previewUrl = buildDocumentPreviewUrl({
     driveFileId: document.driveFileId,
     driveUrl: document.driveUrl
   });
 
   return (
-    <div className={styles.preview}>
+    <div
+      className={[styles.preview, variant === "modal" ? styles.previewModal : ""]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div className={styles.previewMeta}>
         <span>
           {document.drivePath ??
@@ -25,6 +35,7 @@ export function DocumentPreviewPane({ document }: { document: DocumentRow }) {
         <div className={styles.viewerShell}>
           <iframe
             className={styles.documentFrame}
+            scrolling="no"
             src={previewUrl}
             title={`Vista previa de ${document.fileName ?? "documento"}`}
           />

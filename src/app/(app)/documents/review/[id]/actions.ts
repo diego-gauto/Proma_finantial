@@ -8,7 +8,7 @@ import { reviewDocument } from "@/server/documents/review-document";
 
 export async function reviewDocumentAction(formData: FormData) {
   const input: ReviewDocumentInput = {
-    amount: getText(formData, "amount"),
+    amount: normalizeAmountInput(getText(formData, "amount")),
     categoryNodeId: getText(formData, "categoryNodeId"),
     currency: getText(formData, "currency"),
     coveredFiscalMonths: getCoveredFiscalMonths(formData),
@@ -29,6 +29,19 @@ export async function reviewDocumentAction(formData: FormData) {
   revalidatePath("/documents");
   revalidatePath("/documents/review");
   redirect(getSafeRedirectPath(redirectTo) ?? `/documents/${document.id}`);
+}
+
+function normalizeAmountInput(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.includes(",")) {
+    return trimmed.replace(/\./g, "").replace(",", ".");
+  }
+
+  return trimmed;
 }
 
 function getText(formData: FormData, key: string): string {

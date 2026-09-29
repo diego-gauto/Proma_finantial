@@ -108,7 +108,7 @@ La pantalla de reglas de una categoria muestra solo el alta de nueva regla y el 
 
 ## Graficos
 
-El primer grafico analitico es una dona de gastos por categoria para el total filtrado, implementada con Recharts. Sin categoria seleccionada, agrupa por categorias raiz. Con categoria seleccionada, el total pasa a ser el gasto de esa categoria y sus descendientes, y la dona se desglosa por subcategorias directas de distancia 1. Si se selecciona una subcategoria, el mismo comportamiento se repite recursivamente hacia abajo. Las cards recuperadas del Proyecto 2 de Metabase se usan solo como referencia visual, porque pertenecen a pruebas de rutas y no deben embeberse como fuente productiva.
+El primer grafico analitico es una dona de gastos por categoria para el total filtrado, implementada con Recharts. Cuando no hay categoria seleccionada, agrupa por categorias raiz. Con categoria seleccionada, el total pasa a ser el gasto de esa categoria y sus descendientes, y la dona se desglosa por subcategorias directas de distancia 1. Si se selecciona una subcategoria, el mismo comportamiento se repite recursivamente hacia abajo. Las cards recuperadas del Proyecto 2 de Metabase se usan solo como referencia visual, porque pertenecen a pruebas de rutas y no deben embeberse como fuente productiva.
 
 La dona debe acercarse al comportamiento visual de Metabase:
 

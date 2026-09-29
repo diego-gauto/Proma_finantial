@@ -12,19 +12,26 @@ interface DocumentReviewFormProps {
   categories: CategoryNodeRow[];
   document: DocumentRow;
   redirectTo?: string;
+  variant?: "default" | "compact";
 }
 
 export function DocumentReviewForm({
   action,
   cancelHref = "/",
   document,
-  redirectTo
+  redirectTo,
+  variant = "default"
 }: DocumentReviewFormProps) {
   const reviewIssues = getDocumentReviewIssues(document);
   const isIssue = (label: string) => reviewIssues.includes(label);
 
   return (
-    <form action={action} className={styles.form}>
+    <form
+      action={action}
+      className={[styles.form, variant === "compact" ? styles.formCompact : ""]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <input name="id" type="hidden" value={document.id} />
       <input
         name="categoryNodeId"
@@ -32,6 +39,7 @@ export function DocumentReviewForm({
         value={document.categoryNodeId ?? ""}
       />
       <input name="fiscalPeriodKind" type="hidden" value="month" />
+      <input name="currency" type="hidden" value="ARS" />
       <input name="issuer" type="hidden" value={document.issuer ?? ""} />
       <input name="payee" type="hidden" value={document.payee ?? ""} />
       <input name="reason" type="hidden" value={document.reason ?? ""} />
@@ -45,21 +53,33 @@ export function DocumentReviewForm({
         </div>
       ) : null}
       <div className={styles.formGrid}>
-        <Field className={styles.field} isFlagged={isIssue("Monto")}>
+        <Field
+          className={`${styles.field} ${styles.fieldFull}`}
+          isFlagged={false}
+        >
+          <span>Identificador / operacion</span>
+          <input defaultValue={document.reference ?? ""} name="reference" />
+        </Field>
+        <Field className={styles.field} isFlagged={isIssue("Fecha de pago")}>
+          <span>Fecha de pago</span>
+          <input
+            defaultValue={document.paymentDate ?? ""}
+            name="paymentDate"
+            required
+            type="date"
+          />
+        </Field>
+        <Field
+          className={`${styles.field} ${styles.amountField}`}
+          isFlagged={isIssue("Monto")}
+        >
           <span>Monto</span>
           <input
-            defaultValue={document.amount ?? ""}
+            defaultValue={formatAmountForInput(document.amount)}
             inputMode="decimal"
             name="amount"
             required
           />
-        </Field>
-        <Field className={styles.field} isFlagged={!document.currency}>
-          <span>Moneda</span>
-          <select defaultValue={document.currency ?? "ARS"} name="currency">
-            <option value="ARS">ARS</option>
-            <option value="USD">USD</option>
-          </select>
         </Field>
         <Field
           className={styles.field}
@@ -82,19 +102,6 @@ export function DocumentReviewForm({
             placeholder="4, 5"
           />
         </Field>
-        <Field className={styles.field} isFlagged={isIssue("Fecha de pago")}>
-          <span>Fecha de pago</span>
-          <input
-            defaultValue={document.paymentDate ?? ""}
-            name="paymentDate"
-            required
-            type="date"
-          />
-        </Field>
-        <Field className={styles.field} isFlagged={false}>
-          <span>Identificador / operacion</span>
-          <input defaultValue={document.reference ?? ""} name="reference" />
-        </Field>
         <Field
           className={`${styles.field} ${styles.fieldFull}`}
           isFlagged={false}
@@ -107,15 +114,39 @@ export function DocumentReviewForm({
         </Field>
       </div>
       <div className={styles.actions}>
-        <Button href={cancelHref} variant="secondary">
+        <Button
+          className={styles.actionButton}
+          href={cancelHref}
+          variant="secondary"
+        >
           Cancelar
         </Button>
-        <Button type="submit" variant="primary">
-          Guardar correccion
+        <Button
+          className={styles.actionButton}
+          type="submit"
+          variant="primary"
+        >
+          Guardar corrección
         </Button>
       </div>
     </form>
   );
+}
+
+function formatAmountForInput(amount: string | null): string {
+  if (!amount) {
+    return "";
+  }
+
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount)) {
+    return amount;
+  }
+
+  return new Intl.NumberFormat("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(numericAmount);
 }
 
 function formatCoveredFiscalMonths(document: DocumentRow): string {

@@ -17,8 +17,19 @@
 }
 
 .preview {
-  grid-template-rows: auto minmax(520px, 1fr);
-  min-height: 640px;
+  grid-template-rows: auto minmax(620px, 1fr);
+  min-height: 720px;
+}
+
+.previewModal {
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100%;
+}
+
+.previewModal .viewerShell,
+.previewModal .viewerPlaceholder,
+.previewModal .documentFrame {
+  min-height: 0;
 }
 
 .previewMeta {
@@ -34,7 +45,7 @@
 }
 
 .viewerShell {
-  min-height: 520px;
+  min-height: 620px;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -44,7 +55,7 @@
 .documentFrame {
   width: 100%;
   height: 100%;
-  min-height: 520px;
+  min-height: 620px;
   border: 0;
   background: #080d16;
 }
@@ -62,7 +73,7 @@
   display: grid;
   place-content: center;
   gap: 6px;
-  min-height: 520px;
+  min-height: 620px;
   color: var(--text-muted);
   text-align: center;
 }
@@ -80,6 +91,20 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.formCompact {
+  align-content: start;
+  gap: 14px;
+}
+
+.formCompact .formGrid {
+  column-gap: 18px;
+  row-gap: 14px;
+}
+
+.formCompact textarea {
+  min-height: 54px;
 }
 
 .issueSummary {
@@ -121,6 +146,8 @@
 .field input,
 .field select,
 .field textarea {
+  width: 100%;
+  min-width: 0;
   min-height: 40px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -147,15 +174,25 @@
 }
 
 .field textarea {
-  min-height: 90px;
-  resize: vertical;
+  min-height: 56px;
+  resize: none;
+}
+
+.amountField input {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
+  gap: 18px;
+  justify-content: center;
+}
+
+.actionButton {
+  min-height: 34px;
+  padding: 0 14px;
 }
 
 @media (max-width: 860px) {
