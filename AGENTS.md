@@ -50,6 +50,15 @@ Si una tarea contradice el PRD o no esta cubierta por el plan, detenerse y pregu
 - Passwords con hash fuerte, nunca texto plano.
 - Metabase, si se expone o embebe, debe usar permisos de solo lectura contra la base cuando sea posible.
 
+## Git y ramas
+
+- Antes de empezar cualquier tarea en este repositorio, leer este `AGENTS.md` completo y ejecutar `git status --short --branch`.
+- Nunca trabajar directamente sobre `main` para cambios, fixes, pruebas o modificaciones operativas.
+- Si la rama actual es `main`, crear una rama nueva desde `main` o cambiar a `develop`, segun corresponda, antes de tocar archivos o estado externo.
+- El flujo normal es trabajar en una rama de ajuste/fix/feature, validar, commitear, mergear a `develop`, subir `develop`, mergear a `main` y subir `main`.
+- Solo se puede modificar directamente `main` si el usuario lo pide explicitamente para ese cambio puntual.
+- Si el trabajo toca sistemas externos como n8n, VPS, base de datos o Drive, la rama debe crearse igual antes de empezar, aunque el cambio principal no viva en el repo.
+
 ## Testing y cierre de tareas
 
 - Antes de dar por terminada cualquier tarea, leer este `AGENTS.md` completo y ejecutar verificaciones suficientes para garantizar que el pedido quedo cumplido end-to-end. No alcanza con que compile si el flujo pedido falla en uso real.
