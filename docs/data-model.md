@@ -121,6 +121,31 @@ Para la interfaz, los campos tecnicos se traducen a opciones operativas:
 - pago anual en un mes del anio siguiente usa `fiscal_period_kind = 'year'`, `payment_month` y `payment_year_offset = 1`;
 - `active_to` se completa automaticamente cuando se crea una nueva regla vigente para la misma categoria.
 
+### `compliance_issue_resolutions`
+
+Decisiones humanas sobre incidencias calculadas en tiempo de consulta. No reemplaza a `documents`, no crea pagos esperados y no modifica reglas historicas: solo indica que una incidencia puntual ya fue tomada en cuenta y no debe volver a mostrarse mientras siga siendo la misma.
+
+Campos principales:
+
+- `id`
+- `issue_type`: `missing` o `duplicate`.
+- `category_node_id`: categoria donde se calculo la incidencia.
+- `fiscal_period_year`
+- `fiscal_period_month`
+- `fiscal_period_kind`
+- `payment_rule_id`: regla que genero el faltante, cuando aplica.
+- `duplicate_document_ids`: documentos que componian el duplicado al resolverlo.
+- `fingerprint`: clave estable de la incidencia calculada.
+- `resolution_kind`: `acknowledged`, `waived` o `compensated_next_period`.
+- `note`
+- `resolved_by_user_id`
+- `resolved_at`
+- `active`
+- `created_at`
+- `updated_at`
+
+Para faltantes, el `fingerprint` incluye categoria, periodo fiscal, tipo de periodo y regla. Para duplicados, incluye categoria, periodo fiscal, tipo de periodo y los ids ordenados de los documentos duplicados. Si aparece otro documento duplicado en el mismo periodo, cambia el `fingerprint` y la incidencia vuelve a mostrarse.
+
 ### `drive_items`
 
 Inventario tecnico de archivos y carpetas vistos por los flujos de sincronizacion de Drive. No representa pagos; sirve para comparar estado anterior contra eventos nuevos.

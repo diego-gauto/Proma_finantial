@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { flexRender } from "@tanstack/react-table";
 import {
   getCoreRowModel,
@@ -20,6 +21,7 @@ import styles from "./ComplianceIssueTable.module.css";
 
 interface ComplianceIssueTableProps {
   emptyText: string;
+  resolveAction?: (formData: FormData) => void | Promise<void>;
   rows: ComplianceIssueTableRow[];
 }
 
@@ -87,9 +89,16 @@ const statusColumns = [
 
 export function ComplianceIssueTable({
   emptyText,
+  resolveAction,
   rows
 }: ComplianceIssueTableProps) {
   const [pageIndex, setPageIndex] = useState(0);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const redirectTo = useMemo(() => {
+    const query = searchParams.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }, [pathname, searchParams]);
   const { boundedPageIndex, firstRowIndex, lastRowIndex, pageCount } =
     getComplianceIssuePagination(rows.length, pageIndex);
   const visibleRows = rows.slice(firstRowIndex, lastRowIndex);
@@ -129,6 +138,7 @@ export function ComplianceIssueTable({
                         )}
                   </th>
                 ))}
+                {resolveAction ? <th>Accion</th> : null}
               </tr>
             ))}
           </thead>
@@ -152,6 +162,15 @@ export function ComplianceIssueTable({
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
+                {resolveAction ? (
+                  <td data-label="Accion">
+                    <ResolveIssueForm
+                      action={resolveAction}
+                      redirectTo={redirectTo}
+                      row={row.original}
+                    />
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>
@@ -183,6 +202,39 @@ export function ComplianceIssueTable({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function ResolveIssueForm({
+  action,
+  redirectTo,
+  row
+}: {
+  action: (formData: FormData) => void | Promise<void>;
+  redirectTo: string;
+  row: ComplianceIssueTableRow;
+}) {
+  return (
+    <form action={action} className={styles.resolveForm}>
+      <input name="issueType" type="hidden" value={row.issueType} />
+      <input name="categoryNodeId" type="hidden" value={row.categoryNodeId} />
+      <input name="fiscalPeriod" type="hidden" value={row.fiscalPeriod} />
+      <input name="fiscalPeriodKind" type="hidden" value={row.fiscalPeriodKind} />
+      <input name="paymentRuleId" type="hidden" value={row.paymentRuleId ?? ""} />
+      <input
+        name="duplicateDocumentIds"
+        type="hidden"
+        value={row.duplicateDocumentIds?.join(",") ?? ""}
+      />
+      <input name="fingerprint" type="hidden" value={row.fingerprint} />
+      <input name="resolutionKind" type="hidden" value="acknowledged" />
+      <input name="redirectTo" type="hidden" value={redirectTo} />
+      <button className={styles.resolveButton} type="submit">
+        {row.issueType === "duplicate"
+          ? "Dejar de mostrar duplicado"
+          : "Dejar de mostrar faltante"}
+      </button>
+    </form>
   );
 }
 

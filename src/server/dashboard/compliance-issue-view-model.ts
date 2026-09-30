@@ -1,4 +1,9 @@
 import type { CategoryNodeRow } from "@/db/types";
+import {
+  buildDuplicateIssueFingerprint,
+  buildMissingIssueFingerprint,
+  getDuplicateDocumentIds
+} from "@/server/compliance/apply-issue-resolutions";
 import { getCategoryBreadcrumbs } from "@/server/categories/category-tree";
 import type {
   ComplianceStatus,
@@ -15,6 +20,12 @@ export interface ComplianceIssueTableRow {
   expectedPaymentDay: string;
   href: string;
   documentCount: number | null;
+  categoryNodeId: string;
+  duplicateDocumentIds: string[] | null;
+  fingerprint: string;
+  fiscalPeriodKind: ExpectedPeriod["fiscalPeriodKind"];
+  issueType: "missing" | "duplicate";
+  paymentRuleId: string | null;
   statusMetric?: string;
   duplicateDocuments: Array<{
     id: string;
@@ -31,12 +42,18 @@ export function buildMissingIssueRows(
   return toSortedIssueRows(
     missing.map((period) => ({
       id: `missing-${period.categoryNodeId}-${period.fiscalPeriod}-${period.fiscalPeriodKind}`,
+      categoryNodeId: period.categoryNodeId,
       categoryPath: getIssueCategoryPath(categories, period.categoryNodeId),
       categorySortPath: getIssueCategorySortPath(categories, period.categoryNodeId),
       expectedPaymentDay: getExpectedPaymentDay(period.dueDate),
+      duplicateDocumentIds: null,
+      fingerprint: buildMissingIssueFingerprint(period),
       fiscalPeriod: period.fiscalPeriod,
+      fiscalPeriodKind: period.fiscalPeriodKind,
       href: buildDashboardFilterHref(period.categoryNodeId, period.fiscalPeriod),
+      issueType: "missing",
       paymentMonth: getPaymentMonth(period.dueDate),
+      paymentRuleId: period.rule.id,
       documentCount: null,
       duplicateDocuments: []
     }))
@@ -57,22 +74,28 @@ export function buildDuplicateIssueRows(
 
     return {
       id: `duplicate-${duplicate.categoryNodeId}-${duplicate.fiscalPeriod}-${duplicate.fiscalPeriodKind}`,
+      categoryNodeId: duplicate.categoryNodeId,
       categoryPath: getIssueCategoryPath(categories, duplicate.categoryNodeId),
       categorySortPath: getIssueCategorySortPath(
         categories,
         duplicate.categoryNodeId
       ),
+      duplicateDocumentIds: getDuplicateDocumentIds(duplicate),
       expectedPaymentDay: expectedPeriod
         ? getExpectedPaymentDay(expectedPeriod.dueDate)
         : "Sin regla",
+      fingerprint: buildDuplicateIssueFingerprint(duplicate),
       fiscalPeriod: duplicate.fiscalPeriod,
+      fiscalPeriodKind: duplicate.fiscalPeriodKind,
       href: buildDashboardFilterHref(
         duplicate.categoryNodeId,
         duplicate.fiscalPeriod
       ),
+      issueType: "duplicate",
       paymentMonth: expectedPeriod
         ? getPaymentMonth(expectedPeriod.dueDate)
         : "Sin regla",
+      paymentRuleId: expectedPeriod?.rule.id ?? null,
       documentCount: duplicate.documents.length,
       duplicateDocuments: duplicate.documents
         .map((document) => ({
@@ -111,12 +134,18 @@ function buildStatusIssueRows(
   return toSortedIssueRows(
     periods.map((period) => ({
       id: `${status}-${period.categoryNodeId}-${period.fiscalPeriod}-${period.fiscalPeriodKind}`,
+      categoryNodeId: period.categoryNodeId,
       categoryPath: getIssueCategoryPath(categories, period.categoryNodeId),
       categorySortPath: getIssueCategorySortPath(categories, period.categoryNodeId),
       expectedPaymentDay: getExpectedPaymentDay(period.dueDate),
+      duplicateDocumentIds: null,
+      fingerprint: buildMissingIssueFingerprint(period),
       fiscalPeriod: period.fiscalPeriod,
+      fiscalPeriodKind: period.fiscalPeriodKind,
       href: buildDashboardFilterHref(period.categoryNodeId, period.fiscalPeriod),
+      issueType: "missing",
       paymentMonth: getPaymentMonth(period.dueDate),
+      paymentRuleId: period.rule.id,
       documentCount: null,
       duplicateDocuments: [],
       statusMetric:
@@ -174,26 +203,38 @@ function toSortedIssueRows(rows: ComplianceIssueTableRowDraft[]): ComplianceIssu
 }
 
 function toIssueTableRow({
+  categoryNodeId,
   categoryPath,
+  duplicateDocumentIds,
   duplicateDocuments,
   documentCount,
   expectedPaymentDay,
+  fingerprint,
   fiscalPeriod,
+  fiscalPeriodKind,
   href,
   id,
+  issueType,
   paymentMonth,
+  paymentRuleId,
   statusMetric
 }: ComplianceIssueTableRowDraft, categoryTone: ComplianceIssueTableRow["categoryTone"]): ComplianceIssueTableRow {
   return {
+    categoryNodeId,
     categoryPath,
     categoryTone,
+    duplicateDocumentIds,
     duplicateDocuments,
     documentCount,
     expectedPaymentDay,
+    fingerprint,
     fiscalPeriod,
+    fiscalPeriodKind,
     href,
     id,
+    issueType,
     paymentMonth,
+    paymentRuleId,
     statusMetric
   };
 }

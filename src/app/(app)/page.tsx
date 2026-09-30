@@ -24,6 +24,7 @@ import { getDashboardAlerts } from "@/server/dashboard/get-dashboard-alerts";
 import { getFiscalPeriodSeries } from "@/server/dashboard/get-fiscal-period-series";
 import { getMonthlySeries } from "@/server/dashboard/get-monthly-series";
 
+import { resolveComplianceIssueAction } from "./compliance-actions";
 import { reviewDocumentAction } from "./documents/review/[id]/actions";
 
 import styles from "./page.module.css";
@@ -117,11 +118,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <MissingDocumentsCard
             categories={data.categories}
             missing={data.compliance.missing}
+            resolveAction={resolveComplianceIssueAction}
           />
           <DuplicateDocumentsCard
             categories={data.categories}
             duplicates={data.compliance.duplicates}
             expected={data.compliance.expected}
+            resolveAction={resolveComplianceIssueAction}
           />
         </section>
       )}
