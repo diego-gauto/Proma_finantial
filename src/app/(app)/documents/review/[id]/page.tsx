@@ -31,7 +31,7 @@ export default async function ReviewDocumentPage({
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-review-page="true">
       <BackLink href="/documents/review" />
       <div className={styles.split}>
         <Card title="Vista del documento">
