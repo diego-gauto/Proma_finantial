@@ -5,10 +5,12 @@ import { buildMissingIssueRows } from "@/server/dashboard/compliance-issue-view-
 
 export function MissingDocumentsCard({
   categories,
-  missing
+  missing,
+  resolveAction
 }: {
   categories: CategoryNodeRow[];
   missing: ExpectedPeriod[];
+  resolveAction?: (formData: FormData) => void | Promise<void>;
 }) {
   const rows = buildMissingIssueRows(missing, categories);
 
@@ -21,6 +23,7 @@ export function MissingDocumentsCard({
       <ComplianceIssueTable
         emptyText="Sin faltantes vencidos."
         key={rows.map((row) => row.id).join("|")}
+        resolveAction={resolveAction}
         rows={rows}
       />
     </section>

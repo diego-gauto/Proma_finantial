@@ -50,15 +50,22 @@ describe("compliance issue view model", () => {
   it("builds missing rows with category hierarchy and expected payment date parts", () => {
     expect(buildMissingIssueRows([expectedPeriod], categories)).toEqual([
       {
+        categoryNodeId: "3",
         categoryPath: ["Categoria", "Subcategoria", "Nivel final"],
         categoryTone: "b",
+        documentCount: null,
+        duplicateDocumentIds: null,
         duplicateDocuments: [],
         expectedPaymentDay: "15",
+        fingerprint: "missing:3:2026-05:month:rule-1",
         fiscalPeriod: "2026-05",
+        fiscalPeriodKind: "month",
         href: "/?categoryId=3&fiscalPeriod=2026-05",
         id: "missing-3-2026-05-month",
+        issueType: "missing",
         paymentMonth: "2026-06",
-        documentCount: null
+        paymentRuleId: "rule-1",
+        statusMetric: undefined
       }
     ]);
   });
@@ -123,8 +130,11 @@ describe("compliance issue view model", () => {
 
     expect(buildDuplicateIssueRows(duplicates, [expectedPeriod], categories)).toEqual([
       {
+        categoryNodeId: "3",
         categoryPath: ["Categoria", "Subcategoria", "Nivel final"],
         categoryTone: "b",
+        documentCount: 2,
+        duplicateDocumentIds: ["doc-1", "doc-2"],
         duplicateDocuments: [
           {
             amount: "$ 1.000,50",
@@ -140,11 +150,15 @@ describe("compliance issue view model", () => {
           }
         ],
         expectedPaymentDay: "15",
+        fingerprint: "duplicate:3:2026-05:month:doc-1,doc-2",
         fiscalPeriod: "2026-05",
+        fiscalPeriodKind: "month",
         href: "/?categoryId=3&fiscalPeriod=2026-05",
         id: "duplicate-3-2026-05-month",
+        issueType: "duplicate",
         paymentMonth: "2026-06",
-        documentCount: 2
+        paymentRuleId: "rule-1",
+        statusMetric: undefined
       }
     ]);
   });
@@ -180,8 +194,11 @@ describe("compliance issue view model", () => {
       )
     ).toEqual([
       {
+        categoryNodeId: "404",
         categoryPath: ["Categoria sin ubicar"],
         categoryTone: "b",
+        documentCount: 2,
+        duplicateDocumentIds: ["doc-1", "doc-2"],
         duplicateDocuments: [
           {
             amount: "Sin monto",
@@ -197,11 +214,15 @@ describe("compliance issue view model", () => {
           }
         ],
         expectedPaymentDay: "Sin regla",
+        fingerprint: "duplicate:404:2026-05:month:doc-1,doc-2",
         fiscalPeriod: "2026-05",
+        fiscalPeriodKind: "month",
         href: "/?categoryId=404&fiscalPeriod=2026-05",
         id: "duplicate-404-2026-05-month",
+        issueType: "duplicate",
         paymentMonth: "Sin regla",
-        documentCount: 2
+        paymentRuleId: null,
+        statusMetric: undefined
       }
     ]);
   });
@@ -211,15 +232,21 @@ describe("compliance issue view model", () => {
       buildOverdueIssueRows([expectedPeriod], categories, "2026-06-20")
     ).toEqual([
       {
+        categoryNodeId: "3",
         categoryPath: ["Categoria", "Subcategoria", "Nivel final"],
         categoryTone: "b",
+        documentCount: null,
+        duplicateDocumentIds: null,
         duplicateDocuments: [],
         expectedPaymentDay: "15",
+        fingerprint: "missing:3:2026-05:month:rule-1",
         fiscalPeriod: "2026-05",
+        fiscalPeriodKind: "month",
         href: "/?categoryId=3&fiscalPeriod=2026-05",
         id: "overdue-3-2026-05-month",
+        issueType: "missing",
         paymentMonth: "2026-06",
-        documentCount: null,
+        paymentRuleId: "rule-1",
         statusMetric: "5 dias vencidos"
       }
     ]);
@@ -230,15 +257,21 @@ describe("compliance issue view model", () => {
       buildUpcomingIssueRows([expectedPeriod], categories, "2026-06-10")
     ).toEqual([
       {
+        categoryNodeId: "3",
         categoryPath: ["Categoria", "Subcategoria", "Nivel final"],
         categoryTone: "b",
+        documentCount: null,
+        duplicateDocumentIds: null,
         duplicateDocuments: [],
         expectedPaymentDay: "15",
+        fingerprint: "missing:3:2026-05:month:rule-1",
         fiscalPeriod: "2026-05",
+        fiscalPeriodKind: "month",
         href: "/?categoryId=3&fiscalPeriod=2026-05",
         id: "upcoming-3-2026-05-month",
+        issueType: "missing",
         paymentMonth: "2026-06",
-        documentCount: null,
+        paymentRuleId: "rule-1",
         statusMetric: "5 dias faltantes"
       }
     ]);

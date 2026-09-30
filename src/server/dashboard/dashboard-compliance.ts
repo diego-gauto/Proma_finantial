@@ -1,7 +1,9 @@
 import { listCategoryNodes } from "@/db/categories.repository";
+import { listActiveComplianceIssueResolutions } from "@/db/compliance-issue-resolutions.repository";
 import { listDocuments } from "@/db/documents.repository";
 import { listPaymentRules } from "@/db/payment-rules.repository";
 import { getDescendantCategoryIds, getLeafCategoryIds } from "@/server/categories/category-tree";
+import { applyComplianceIssueResolutions } from "@/server/compliance/apply-issue-resolutions";
 import { calculateComplianceStatus } from "@/server/compliance/calculate-status";
 import type { ComplianceStatus } from "@/server/compliance/compliance-types";
 import { getOverduePayments } from "@/server/compliance/get-overdue-payments";
@@ -60,18 +62,25 @@ export async function getFilteredComplianceData(
     effectiveFilters.fiscalPeriod,
     todayDate
   );
+  const targetCategoryIds = getLeafCategoryIds(categories, effectiveFilters.categoryId);
+  const compliance = calculateComplianceStatus({
+    categories,
+    rules,
+    documents,
+    fromFiscalPeriod,
+    toFiscalPeriod,
+    targetCategoryIds,
+    today: todayDate.toISOString().slice(0, 10)
+  });
+  const resolutions = await listActiveComplianceIssueResolutions({
+    categoryIds: categoryIds ?? undefined,
+    fromFiscalPeriod,
+    toFiscalPeriod
+  });
 
   return {
     categories,
-    compliance: calculateComplianceStatus({
-      categories,
-      rules,
-      documents,
-      fromFiscalPeriod,
-      toFiscalPeriod,
-      targetCategoryIds: getLeafCategoryIds(categories, effectiveFilters.categoryId),
-      today: todayDate.toISOString().slice(0, 10)
-    }),
+    compliance: applyComplianceIssueResolutions(compliance, resolutions),
     documents,
     filters: effectiveFilters,
     fiscalPeriods: buildAvailableFiscalPeriods(periodSourceDocuments, todayDate)
@@ -98,12 +107,20 @@ export async function getCurrentMonthPaymentStatusData(
     targetCategoryIds: getLeafCategoryIds(categories, null),
     today
   });
+  const resolutions = await listActiveComplianceIssueResolutions({
+    fromFiscalPeriod,
+    toFiscalPeriod
+  });
+  const visibleCompliance = applyComplianceIssueResolutions(
+    compliance,
+    resolutions
+  );
 
   return {
     categories,
-    overdue: getOverduePayments(compliance, today),
+    overdue: getOverduePayments(visibleCompliance, today),
     today,
-    upcoming: getUpcomingPayments(compliance, today)
+    upcoming: getUpcomingPayments(visibleCompliance, today)
   };
 }
 

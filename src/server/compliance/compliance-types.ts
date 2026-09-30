@@ -47,6 +47,31 @@ export interface ExpectedPeriod {
   rule: ComplianceRule;
 }
 
+
+export type ComplianceIssueType = "missing" | "duplicate";
+
+export type ComplianceIssueResolutionKind =
+  | "acknowledged"
+  | "waived"
+  | "compensated_next_period";
+
+export interface ComplianceIssueResolution {
+  id: string;
+  issueType: ComplianceIssueType;
+  categoryNodeId: string;
+  fiscalPeriod: string;
+  fiscalPeriodKind: FiscalPeriodKind;
+  paymentRuleId: string | null;
+  duplicateDocumentIds: string[] | null;
+  fingerprint: string;
+  resolutionKind: ComplianceIssueResolutionKind;
+  note: string | null;
+  resolvedByUserId: string | null;
+  resolvedAt: string;
+  active: boolean;
+  createdAt: string;
+}
+
 export interface ComplianceStatus {
   expected: ExpectedPeriod[];
   missing: ExpectedPeriod[];
