@@ -9,11 +9,13 @@ import { buildDuplicateIssueRows } from "@/server/dashboard/compliance-issue-vie
 export function DuplicateDocumentsCard({
   categories,
   duplicates,
-  expected
+  expected,
+  resolveAction
 }: {
   categories: CategoryNodeRow[];
   duplicates: ComplianceStatus["duplicates"];
   expected: ExpectedPeriod[];
+  resolveAction?: (formData: FormData) => void | Promise<void>;
 }) {
   const rows = buildDuplicateIssueRows(duplicates, expected, categories);
 
@@ -26,6 +28,7 @@ export function DuplicateDocumentsCard({
       <ComplianceIssueTable
         emptyText="Sin duplicados detectados."
         key={rows.map((row) => row.id).join("|")}
+        resolveAction={resolveAction}
         rows={rows}
       />
     </section>

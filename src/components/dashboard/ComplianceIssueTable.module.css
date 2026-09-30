@@ -158,6 +158,34 @@
   line-height: 1.25;
 }
 
+.resolveForm {
+  display: flex;
+  justify-content: flex-start;
+  min-width: 156px;
+}
+
+.resolveButton {
+  min-height: 32px;
+  border: 1px solid rgb(69 218 203 / 34%);
+  border-radius: 6px;
+  background: rgb(69 218 203 / 8%);
+  color: var(--accent-strong);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.15;
+  padding: 6px 9px;
+  text-align: left;
+}
+
+.resolveButton:hover,
+.resolveButton:focus-visible {
+  border-color: rgb(69 218 203 / 62%);
+  background: rgb(69 218 203 / 14%);
+  outline: none;
+}
+
 .pagination {
   display: flex;
   align-items: center;
@@ -261,6 +289,15 @@
   .duplicateDocument {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+
+  .resolveForm {
+    min-width: 0;
+  }
+
+  .resolveButton {
+    width: 100%;
+    text-align: center;
   }
 
   .pagination {

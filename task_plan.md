@@ -1,72 +1,60 @@
-# Task Plan: Deploy VPS Promatex / proma_finanzas
+# Task Plan: Compliance Issue Resolutions
 
 ## Goal
-
-Llevar al VPS la app Next.js, la base PostgreSQL separada y los workflows n8n necesarios para Indumentaria Promatex, usando el prefijo `proma_finanzas` para separar todos los recursos de otros proyectos existentes.
+Persist human decisions for calculated missing-payment and duplicate-document issues, then filter those resolved issues out of the dashboard while preserving real documents and historical rules.
 
 ## Current Phase
-
-In progress
+Phase 5
 
 ## Phases
 
-### Phase 1: Inventario y nombres
-- [ ] Revisar docs de deploy, schema local, workflows JSON y config de app.
-- [ ] Revisar en VPS contenedores, redes Docker, n8n y PostgreSQL existentes.
-- [ ] Definir nombres finales `proma_finanzas_*`.
-- **Status:** in_progress
+### Phase 1: Discovery And Design
+- [x] Confirm repo rules and branch.
+- [x] Review compliance calculation and dashboard data flow.
+- [x] Decide one table for both issue types.
+- **Status:** complete
 
-### Phase 2: Preparar artefactos versionables
-- [ ] Ajustar nombres de workflows/variables/export si hace falta.
-- [ ] Preparar compose/schema/scripts/env example para deploy sin secretos reales.
-- [ ] Verificar build/tests locales relevantes.
-- **Status:** pending
+### Phase 2: Test-First Compliance Filtering
+- [x] Add failing tests for hiding resolved missing issues.
+- [x] Add failing tests for hiding resolved duplicate issues only when document IDs still match.
+- [x] Implement minimal pure filtering logic.
+- **Status:** complete
 
-### Phase 3: Base PostgreSQL en VPS
-- [ ] Crear contenedor/servicio PostgreSQL separado.
-- [ ] Crear/restaurar schema y aplicar migraciones existentes.
-- [ ] Verificar tablas, usuario/base y aislamiento.
-- **Status:** pending
+### Phase 3: Persistence And Actions
+- [x] Add SQL for `compliance_issue_resolutions`.
+- [x] Add DB repository/types for listing and creating resolutions.
+- [x] Add server action for resolving missing and duplicate rows.
+- [x] Apply SQL to configured database.
+- **Status:** complete
 
-### Phase 4: App en Dokploy
-- [ ] Crear/configurar app Dokploy o preparar repo/source esperado.
-- [ ] Configurar variables de entorno reales en VPS/Dokploy.
-- [ ] Verificar HTTPS/login/build/start.
-- **Status:** pending
+### Phase 4: Dashboard UI
+- [x] Pass resolution action through missing/duplicate cards.
+- [x] Add buttons to stop showing a missing/duplicate issue.
+- [x] Preserve current dashboard filters after action.
+- **Status:** complete
 
-### Phase 5: n8n workflows
-- [ ] Importar/renombrar workflows con prefijo Promatex.
-- [ ] Revisar credenciales PostgreSQL/Drive y tokens.
-- [ ] Activar incremental/renewal cuando el dominio real este listo.
-- **Status:** pending
+### Phase 5: Verification
+- [x] Run targeted tests.
+- [x] Run full test suite.
+- [x] Run production build.
+- [x] Review git diff and report touched files/commands/results.
+- **Status:** complete
 
-### Phase 6: Verificacion end-to-end
-- [ ] Ejecutar backfill/carga inicial si corresponde.
-- [ ] Registrar watch.
-- [ ] Probar subida PDF y eventos Drive.
-- **Status:** pending
+## Key Questions
+1. One table or two? Answer: one table, because both are human resolutions for calculated compliance issues.
+2. How to avoid hiding new duplicate changes? Answer: store a fingerprint based on category, period, kind and sorted document IDs.
 
 ## Decisions Made
-
 | Decision | Rationale |
-|---|---|
-| Usar `proma_finanzas` | La empresa es Indumentaria Promatex y el prefijo separa recursos de otros proyectos. |
-| Mantener PostgreSQL separado | Evita mezclar datos/volumen/credenciales con bases existentes del VPS. |
-| Reusar n8n existente con nombres/credenciales separados | Es el enfoque previsto por `docs/vps-deploy-drive-workflows.md`. |
+|----------|-----------|
+| Use `compliance_issue_resolutions` as one table | Missing and duplicate cases share lifecycle, audit needs, category/period identity, and active/inactive behavior. |
+| Keep `calculateComplianceStatus` pure | It remains the source calculation; resolutions are applied as a separate filter before UI. |
+| Store duplicate document IDs and fingerprint | If the duplicate set changes, the old resolution no longer suppresses a new issue. |
 
 ## Errors Encountered
-
 | Error | Attempt | Resolution |
-|---|---|---|
-| `jq` intento leer exports n8n como objeto | Inventario de workflows | Los exports son arrays; usar `.[0]` al inspeccionar nombre/nodos. |
-| Consulta Dokploy uso snake_case | Inventario de proyectos/apps | El schema usa camelCase con comillas, consultar `"projectId"`, `"applicationId"`, etc. |
-| Consulta psql local escapo comillas como `\x27` | Inventario de schema | Usar SQL con comillas simples reales dentro del comando. |
-| Shell expandio `DATABASE_URL` antes de cargar `.env.local` | Inventario de schema | Usar comillas simples exteriores para que bash interno cargue env primero. |
-| Restore parcial omitio funciones PostgreSQL | Restaurar dump operativo en VPS | Crear `set_updated_at()` y `resolve_category_node()` explicitamente y verificar triggers. |
-| Diseno anterior fragmentado en tres workflows | Etapas 5-7 previas | Reemplazado por workflow incremental unico y nuevo plan. |
-| `psql -U postgres` fallo | Aplicar migracion etapa 2 | El contenedor usa rol `finanzas_user`; migracion aplicada con ese usuario. |
-| Build fallo por tipo de forwarder | Primer `pnpm build` etapa 2 | Se amplio el tipo para representar fallos HTTP de n8n con status numerico. |
-| n8n devolvia 404 al webhook incremental | Prueba real etapa 5 | Faltaba `webhookId` en el nodo Webhook; n8n registraba un path interno. |
-| n8n devolvia 500 sin cambios pendientes | Prueba real etapa 5 | El Postgres node emitia `{ success: true }`; se agrego IF `Hay archivos nuevos?`. |
-| El fallback OCR/Vision rompia el incremental | Prueba real etapa 5 | Se reemplazo en incremental por fallback deterministico que guarda `review_required`. |
-| `readPDF` perdia metadata de hash | Prueba real etapa 5 | El normalizador incremental ahora mezcla metadata desde `Preparar metadata con hash`. |
+|-------|---------|------------|
+| Sandbox command startup failed with `mountinfo path is not absolute` | 1 | Used approved escalated command reads because no file changes could run in sandbox. |
+| `apply_patch` failed with same sandbox error | 1 | Used escalated Python file write because patch tool has no escalation path. |
+| Full test suite failed after view-model metadata addition | 1 | Updated existing view-model tests to assert new metadata fields. |
+| Build failed on `FiscalPeriodKind` import | 1 | Imported `FiscalPeriodKind` from `@/db/types` instead of compliance types. |
