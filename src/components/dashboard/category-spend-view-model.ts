@@ -1,4 +1,5 @@
 import type { CategorySpend } from "@/server/dashboard/get-category-spend";
+import { formatMoney } from "@/shared/format";
 
 import { getCategoryColor } from "./chart-colors";
 
@@ -15,7 +16,7 @@ export function buildCompactSpendLegend(
   spend: CategorySpend
 ): CompactSpendLegendItem[] {
   return spend.items.map((item, index) => ({
-    amountLabel: formatCurrency(item.amount),
+    amountLabel: formatMoney(item.amount),
     categoryId: item.categoryId,
     categoryName: item.categoryName,
     color: getCategoryColor(index),
@@ -27,13 +28,5 @@ export function buildCompactSpendLegend(
 }
 
 export function formatSpendCurrency(amount: number): string {
-  return formatCurrency(amount);
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    currency: "ARS",
-    maximumFractionDigits: 0,
-    style: "currency"
-  }).format(amount).replace("\u00a0", " ");
+  return formatMoney(amount);
 }

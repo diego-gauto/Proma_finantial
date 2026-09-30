@@ -1,4 +1,5 @@
 import type { PaymentRuleRow } from "@/db/types";
+import { formatDisplayDate } from "@/shared/format";
 
 import type { PaymentRuleInput } from "./payment-rule-form";
 
@@ -26,8 +27,8 @@ export function assertRuleDoesNotOverlap(
 
   if (overlappingRule) {
     throw new Error(
-      `La regla se superpone con "${overlappingRule.name}" (${overlappingRule.activeFrom} a ${
-        overlappingRule.activeTo ?? "abierta"
+      `La regla se superpone con "${overlappingRule.name}" (${formatDisplayDate(overlappingRule.activeFrom)} a ${
+        formatDisplayDate(overlappingRule.activeTo, "abierta")
       }).`
     );
   }

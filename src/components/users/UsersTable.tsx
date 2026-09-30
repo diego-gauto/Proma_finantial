@@ -1,4 +1,5 @@
 import type { PublicUser } from "@/server/users/users.repository";
+import { formatDisplayDateTime } from "@/shared/format";
 
 import styles from "./UsersTable.module.css";
 
@@ -21,19 +22,12 @@ export function UsersTable({ users }: { users: PublicUser[] }) {
           {users.map((user) => (
             <tr key={user.id}>
               <td>{user.email}</td>
-              <td>{formatDate(user.createdAt)}</td>
-              <td>{formatDate(user.updatedAt)}</td>
+              <td>{formatDisplayDateTime(user.createdAt)}</td>
+              <td>{formatDisplayDateTime(user.updatedAt)}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
-}
-
-function formatDate(value: string): string {
-  return new Intl.DateTimeFormat("es-AR", {
-    dateStyle: "short",
-    timeStyle: "short"
-  }).format(new Date(value));
 }

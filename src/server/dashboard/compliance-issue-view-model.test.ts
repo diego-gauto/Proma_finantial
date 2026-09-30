@@ -127,16 +127,16 @@ describe("compliance issue view model", () => {
         categoryTone: "b",
         duplicateDocuments: [
           {
-            amount: "ARS 1000.50",
+            amount: "$ 1.000,50",
             fileName: "comprobante-1.pdf",
             id: "doc-1",
-            paymentDate: "2026-06-10"
+            paymentDate: "10-06-2026"
           },
           {
-            amount: "ARS 1100.00",
+            amount: "$ 1.100,00",
             fileName: "comprobante-2.pdf",
             id: "doc-2",
-            paymentDate: "2026-06-12"
+            paymentDate: "12-06-2026"
           }
         ],
         expectedPaymentDay: "15",

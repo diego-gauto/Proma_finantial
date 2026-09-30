@@ -1,5 +1,6 @@
 import type { CategoryNodeRow, DocumentRow } from "@/db/types";
 import { getCategoryBreadcrumbs } from "@/server/categories/category-tree";
+import { formatDisplayDate, formatMoney } from "@/shared/format";
 
 export interface DocumentTableRow {
   amountLabel: string;
@@ -33,7 +34,7 @@ export function buildDocumentTableRows(
     documentTitle: getDocumentTitle(document),
     fiscalPeriod: document.fiscalPeriod ?? "Sin periodo",
     id: document.id,
-    paymentDate: document.paymentDate ?? "Sin fecha",
+    paymentDate: formatDisplayDate(document.paymentDate),
     processingStatus: document.processingStatus,
     reference: document.reference ?? document.fileName ?? "Sin identificador",
     reviewHref:
@@ -78,17 +79,7 @@ export function getDocumentStatusLabel(
 }
 
 export function formatDocumentAmount(document: DocumentRow): string {
-  const amount = document.amount ? Number(document.amount) : null;
-  if (amount === null || Number.isNaN(amount)) {
-    return "Sin monto";
-  }
-
-  const value = new Intl.NumberFormat("es-AR", {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 2
-  }).format(amount);
-
-  return `${document.currency === "USD" ? "USD" : "$"} ${value}`;
+  return formatMoney(document.amount, document.currency);
 }
 
 function getDocumentCategoryPath(
