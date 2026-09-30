@@ -35,7 +35,7 @@ export default async function ReviewDocumentPage({
       <BackLink href="/documents/review" />
       <div className={styles.split}>
         <Card title="Vista del documento">
-          <DocumentPreviewPane document={document} />
+          <DocumentPreviewPane document={document} variant="modal" />
         </Card>
         <Card title="Correccion operativa">
           <DocumentReviewForm
@@ -43,6 +43,7 @@ export default async function ReviewDocumentPage({
             cancelHref="/documents/review"
             categories={categories}
             document={document}
+            variant="compact"
           />
         </Card>
       </div>
