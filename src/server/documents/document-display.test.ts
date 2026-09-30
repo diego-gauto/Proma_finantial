@@ -58,6 +58,7 @@ describe("document-display", () => {
       reviewHref: null,
       unresolvedFields: []
     });
+    expect(rows[0]?.paymentDate).toBe("20-08-2026");
   });
 
   it("uses a non-primary fallback title when the file name is missing", () => {

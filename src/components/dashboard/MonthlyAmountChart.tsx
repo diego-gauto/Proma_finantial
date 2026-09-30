@@ -11,6 +11,7 @@ import {
 } from "recharts";
 
 import type { MonthlySeriesItem } from "@/server/dashboard/get-monthly-series";
+import { formatMoney } from "@/shared/format";
 
 import styles from "./MonthlyAmountChart.module.css";
 
@@ -37,10 +38,10 @@ export function MonthlyAmountChart({ series }: { series: MonthlySeriesItem[] }) 
               <YAxis
                 axisLine={false}
                 tick={{ fill: "var(--text-muted)", fontSize: 12 }}
-                tickFormatter={formatCompactAmount}
+                tickFormatter={formatAxisAmount}
                 tickLine={false}
                 tickMargin={8}
-                width={74}
+                width={118}
               />
               <Tooltip content={<AmountTooltip />} />
               <Line
@@ -80,33 +81,11 @@ function AmountTooltip({ active, label, payload }: AmountTooltipProps) {
   return (
     <div className={styles.tooltip}>
       <span>{label}</span>
-      <strong>{formatCurrency(amount)}</strong>
+      <strong>{formatMoney(amount)}</strong>
     </div>
   );
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    currency: "ARS",
-    maximumFractionDigits: 0,
-    style: "currency"
-  }).format(amount);
-}
-
-function formatAmount(amount: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    maximumFractionDigits: 0
-  }).format(amount);
-}
-
-function formatCompactAmount(amount: number): string {
-  if (amount >= 1_000_000) {
-    return `${formatAmount(amount / 1_000_000)}M`;
-  }
-
-  if (amount >= 1_000) {
-    return `${formatAmount(amount / 1_000)}k`;
-  }
-
-  return formatAmount(amount);
+function formatAxisAmount(amount: number): string {
+  return formatMoney(amount);
 }
