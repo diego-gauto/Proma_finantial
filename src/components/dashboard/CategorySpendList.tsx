@@ -1,4 +1,5 @@
 import type { CategorySpend } from "@/server/dashboard/get-category-spend";
+import { formatMoney } from "@/shared/format";
 
 import { getCategoryColor } from "./chart-colors";
 import styles from "./CategorySpendList.module.css";
@@ -20,7 +21,7 @@ export function CategorySpendList({ spend }: { spend: CategorySpend }) {
             <span>{item.paymentCount} pagos</span>
           </div>
           <div>
-            <strong>{formatCurrency(item.amount)}</strong>
+            <strong>{formatMoney(item.amount)}</strong>
             <span>{item.percentage}%</span>
           </div>
         </div>
@@ -30,12 +31,4 @@ export function CategorySpendList({ spend }: { spend: CategorySpend }) {
       ) : null}
     </div>
   );
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    currency: "ARS",
-    maximumFractionDigits: 0,
-    style: "currency"
-  }).format(amount);
 }

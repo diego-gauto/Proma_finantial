@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { PaymentRuleRow } from "@/db/types";
+import { formatDisplayDate } from "@/shared/format";
 
 import { sortRulesForHistory } from "./payment-rule-presenter";
 import styles from "./PaymentRuleHistory.module.css";
@@ -61,8 +62,12 @@ export function PaymentRuleHistory({
                 <td data-label="Periodicidad">
                   {formatCadence(rule)}
                 </td>
-                <td data-label="Vigente desde">{rule.activeFrom}</td>
-                <td data-label="Vigente hasta">{rule.activeTo ?? "Abierta"}</td>
+                <td data-label="Vigente desde">
+                  {formatDisplayDate(rule.activeFrom)}
+                </td>
+                <td data-label="Vigente hasta">
+                  {formatDisplayDate(rule.activeTo, "Abierta")}
+                </td>
                 <td data-label="Se abona">{formatPaymentTiming(rule)}</td>
                 <td data-label="Tolerancia">{rule.graceDays} dias</td>
                 <td data-label="Aviso previo">{rule.reminderDaysBefore} dias</td>

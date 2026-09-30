@@ -33,7 +33,7 @@ export function CategorySpendPie({ spend }: { spend: CategorySpend }) {
   return (
     <div className={styles.shell} onMouseLeave={() => setActiveIndex(null)}>
       <div
-        aria-label={`Total gastado ${formatCurrency(spend.totalAmount)}`}
+        aria-label={`Total gastado ${formatSpendCurrency(spend.totalAmount)}`}
         className={styles.chart}
       >
         <ResponsiveContainer height="100%" width="100%">
@@ -72,7 +72,7 @@ export function CategorySpendPie({ spend }: { spend: CategorySpend }) {
         </ResponsiveContainer>
 
         <div className={styles.center}>
-          <strong>{formatCurrency(centerAmount)}</strong>
+          <strong>{formatSpendCurrency(centerAmount)}</strong>
           <span>{activeItem?.categoryName ?? "Total"}</span>
         </div>
       </div>
@@ -136,15 +136,11 @@ function SpendTooltip({ active, payload, totalAmount }: SpendTooltipProps) {
   return (
     <div className={styles.tooltip}>
       <span>{item.categoryName}</span>
-      <strong>{formatCurrency(item.amount)}</strong>
+      <strong>{formatSpendCurrency(item.amount)}</strong>
       <small>
-        {item.percentage.toFixed(2)}% de {formatCurrency(totalAmount)} ·{" "}
+        {item.percentage.toFixed(2)}% de {formatSpendCurrency(totalAmount)} ·{" "}
         {item.paymentCount} pagos
       </small>
     </div>
   );
-}
-
-function formatCurrency(amount: number): string {
-  return formatSpendCurrency(amount);
 }

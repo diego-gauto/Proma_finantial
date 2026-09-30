@@ -4,6 +4,7 @@ import type {
   ComplianceStatus,
   ExpectedPeriod
 } from "@/server/compliance/compliance-types";
+import { formatDisplayDate, formatMoney } from "@/shared/format";
 
 export interface ComplianceIssueTableRow {
   id: string;
@@ -76,9 +77,9 @@ export function buildDuplicateIssueRows(
       duplicateDocuments: duplicate.documents
         .map((document) => ({
           id: document.id,
-          amount: formatAmount(document.amount, document.currency),
+          amount: formatMoney(document.amount, document.currency),
           fileName: document.fileName || "Archivo sin nombre",
-          paymentDate: document.paymentDate || "Sin fecha"
+          paymentDate: formatDisplayDate(document.paymentDate)
         }))
         .sort((left, right) => left.paymentDate.localeCompare(right.paymentDate))
     };
@@ -240,13 +241,6 @@ function getExpectedPaymentDay(dueDate: string): string {
   return dueDate.slice(8, 10);
 }
 
-function formatAmount(amount: string | null, currency: string | null): string {
-  if (!amount) {
-    return "Sin monto";
-  }
-
-  return currency ? `${currency} ${amount}` : amount;
-}
 
 function getDaysBetween(fromDate: string, toDate: string): number {
   const from = Date.parse(`${fromDate}T00:00:00.000Z`);

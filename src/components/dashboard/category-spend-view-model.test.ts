@@ -33,7 +33,7 @@ describe("buildCompactSpendLegend", () => {
 
     expect(legend).toEqual([
       {
-        amountLabel: "$ 600",
+        amountLabel: "$ 600,00",
         categoryId: "taxes",
         categoryName: "Obligaciones Fiscales",
         color: "#76d64b",
@@ -41,7 +41,7 @@ describe("buildCompactSpendLegend", () => {
         percentageLabel: "60.00%"
       },
       {
-        amountLabel: "$ 300",
+        amountLabel: "$ 300,00",
         categoryId: "services",
         categoryName: "Servicios",
         color: "#f3b45d",
@@ -49,7 +49,7 @@ describe("buildCompactSpendLegend", () => {
         percentageLabel: "30.00%"
       },
       {
-        amountLabel: "$ 100",
+        amountLabel: "$ 100,00",
         categoryId: "other",
         categoryName: "Otros",
         color: "#6f8cff",

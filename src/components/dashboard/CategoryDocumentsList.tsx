@@ -2,6 +2,7 @@ import type { DocumentRow } from "@/db/types";
 import { buildDashboardDocumentReviewHref } from "@/server/dashboard/dashboard-document-links";
 import type { DashboardFilters } from "@/server/dashboard/dashboard-filters";
 import { getDocumentStatusLabel } from "@/server/documents/document-display";
+import { formatDisplayDate, formatMoney } from "@/shared/format";
 
 import styles from "./CategoryDocumentsList.module.css";
 
@@ -44,9 +45,11 @@ export function CategoryDocumentsList({
                   {document.fiscalPeriod ?? "Sin periodo"}
                 </td>
                 <td data-label="Fecha de pago">
-                  {document.paymentDate ?? "Sin fecha"}
+                  {formatDisplayDate(document.paymentDate)}
                 </td>
-                <td data-label="Importe">{formatCurrency(document.amount)}</td>
+                <td data-label="Importe">
+                  {formatMoney(document.amount, document.currency)}
+                </td>
                 <td data-label="Estado">
                   {getDocumentStatusLabel(document.processingStatus)}
                 </td>
@@ -62,12 +65,4 @@ export function CategoryDocumentsList({
       </div>
     </div>
   );
-}
-
-function formatCurrency(amount: string | null): string {
-  return new Intl.NumberFormat("es-AR", {
-    currency: "ARS",
-    maximumFractionDigits: 0,
-    style: "currency"
-  }).format(Number(amount ?? 0));
 }
